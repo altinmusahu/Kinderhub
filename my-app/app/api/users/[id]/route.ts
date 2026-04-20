@@ -10,7 +10,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     const { id } = await params
     const user = await UserService.getById(id)
     return NextResponse.json(user)
-  } catch {
+} catch {
     return NextResponse.json({ error: "User not found" }, { status: 404 })
   }
 }

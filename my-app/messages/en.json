@@ -1,0 +1,98 @@
+{
+  "nav": {
+    "features": "Features",
+    "pricing": "Pricing",
+    "dashboard": "Dashboard"
+  },
+  "hero": {
+    "badge": "Built for early childhood education",
+    "title": "Manage your kindergarten",
+    "titleHighlight": "effortlessly",
+    "subtitle": "KinderHub is the all-in-one platform that helps kindergartens handle attendance, parent communication, staff management, and reporting — all in one place.",
+    "seePlans": "See Plans",
+    "learnMore": "Learn More"
+  },
+  "stats": {
+    "kindergartens": { "value": "500+", "label": "Kindergartens" },
+    "children": { "value": "40,000+", "label": "Children managed" },
+    "satisfaction": { "value": "98%", "label": "Satisfaction rate" }
+  },
+  "featuresSection": {
+    "title": "Everything you need",
+    "subtitle": "Designed specifically for the needs of early childhood educators.",
+    "items": {
+      "attendance": {
+        "title": "Attendance & Scheduling",
+        "desc": "Track daily attendance, manage schedules, and get instant alerts for absences."
+      },
+      "communication": {
+        "title": "Parent Communication",
+        "desc": "Keep parents informed with real-time updates, messages, and activity reports."
+      },
+      "reports": {
+        "title": "Reports & Insights",
+        "desc": "Understand your school's performance with clear dashboards and exportable reports."
+      },
+      "security": {
+        "title": "Safe & Secure",
+        "desc": "GDPR-compliant data handling. Your children's data is always protected."
+      }
+    }
+  },
+  "pricingSection": {
+    "title": "Simple, transparent pricing",
+    "subtitle": "No hidden fees. Cancel anytime. Start with a 14-day free trial.",
+    "mostPopular": "Most Popular",
+    "perMonth": "/ month",
+    "perYear": "billed annually",
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "description": "Perfect for small kindergartens just getting started.",
+        "cta": "Get Started",
+        "features": [
+          "Up to 30 children",
+          "Attendance tracking",
+          "Parent messaging",
+          "1 staff account",
+          "Email support"
+        ]
+      },
+      "growth": {
+        "name": "Growth",
+        "description": "For growing schools that need more power and flexibility.",
+        "cta": "Start Free Trial",
+        "features": [
+          "Up to 150 children",
+          "Advanced reports & analytics",
+          "Parent portal",
+          "Activity planning",
+          "10 staff accounts",
+          "Priority support"
+        ]
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "description": "For large schools or groups with multiple locations.",
+        "cta": "Contact Sales",
+        "features": [
+          "Unlimited children",
+          "Multiple locations",
+          "Custom branding",
+          "Unlimited staff accounts",
+          "Dedicated account manager",
+          "API access",
+          "SLA guarantee"
+        ]
+      }
+    }
+  },
+  "ctaBanner": {
+    "title": "Ready to simplify your kindergarten?",
+    "subtitle": "Join hundreds of schools already using KinderHub.",
+    "button": "Start Free Trial"
+  },
+  "footer": {
+    "rights": "All rights reserved."
+  }
+}

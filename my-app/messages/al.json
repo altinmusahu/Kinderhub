@@ -1,0 +1,98 @@
+{
+  "nav": {
+    "features": "Veçoritë",
+    "pricing": "Çmimet",
+    "dashboard": "Paneli"
+  },
+  "hero": {
+    "badge": "Ndërtuar për arsimin parashkollor",
+    "title": "Menaxho kopshtin tënd",
+    "titleHighlight": "me lehtësi",
+    "subtitle": "KinderHub është platforma gjithëpërfshirëse që ndihmon kopshtet të menaxhojnë prezencën, komunikimin me prindërit, stafin dhe raportet — gjithçka në një vend.",
+    "seePlans": "Shiko Planet",
+    "learnMore": "Mëso Më Shumë"
+  },
+  "stats": {
+    "kindergartens": { "value": "500+", "label": "Kopshte" },
+    "children": { "value": "40,000+", "label": "Fëmijë të menaxhuar" },
+    "satisfaction": { "value": "98%", "label": "Shkalla e kënaqësisë" }
+  },
+  "featuresSection": {
+    "title": "Gjithçka që ju nevojitet",
+    "subtitle": "Projektuar posaçërisht për nevojat e edukatorëve parashkollorë.",
+    "items": {
+      "attendance": {
+        "title": "Prezenca & Orari",
+        "desc": "Gjurmoni prezencën ditore, menaxhoni oraret dhe merrni sinjalizime për mungesa."
+      },
+      "communication": {
+        "title": "Komunikimi me Prindërit",
+        "desc": "Mbani prindërit të informuar me njoftime, mesazhe dhe raporte aktivitetesh."
+      },
+      "reports": {
+        "title": "Raportet & Të Dhënat",
+        "desc": "Kuptoni performancën e shkollës tuaj me panele të qarta dhe raporte të eksportueshme."
+      },
+      "security": {
+        "title": "I Sigurt & I Mbrojtur",
+        "desc": "Menaxhim i të dhënave sipas GDPR. Të dhënat e fëmijëve janë gjithmonë të mbrojtura."
+      }
+    }
+  },
+  "pricingSection": {
+    "title": "Çmime të thjeshta dhe transparente",
+    "subtitle": "Pa tarifa të fshehura. Anulo kurdo. Fillo me 14 ditë provë falas.",
+    "mostPopular": "Më Popullori",
+    "perMonth": "/ muaj",
+    "perYear": "faturuar vjetërisht",
+    "plans": {
+      "starter": {
+        "name": "Fillestar",
+        "description": "Ideal për kopshte të vogla që sapo fillojnë.",
+        "cta": "Fillo Tani",
+        "features": [
+          "Deri në 30 fëmijë",
+          "Gjurmim prezence",
+          "Mesazhe për prindërit",
+          "1 llogari stafi",
+          "Mbështetje me email"
+        ]
+      },
+      "growth": {
+        "name": "Rritje",
+        "description": "Për shkolla në rritje që kanë nevojë për më shumë fuqi.",
+        "cta": "Fillo Provën Falas",
+        "features": [
+          "Deri në 150 fëmijë",
+          "Raporte të avancuara & analitikë",
+          "Portal për prindërit",
+          "Planifikim aktivitetesh",
+          "10 llogari stafi",
+          "Mbështetje prioritare"
+        ]
+      },
+      "enterprise": {
+        "name": "Ndërmarrje",
+        "description": "Për shkolla të mëdha ose grupe me vendndodhje të shumta.",
+        "cta": "Kontakto Shitjet",
+        "features": [
+          "Fëmijë të pakufizuar",
+          "Vendndodhje të shumta",
+          "Markë e personalizuar",
+          "Llogari stafi të pakufizuara",
+          "Menaxher i dedikuar i llogarisë",
+          "Qasje API",
+          "Garanci SLA"
+        ]
+      }
+    }
+  },
+  "ctaBanner": {
+    "title": "Gati të thjeshtoni kopshtin tuaj?",
+    "subtitle": "Bashkohuni me qindra shkolla që tashmë përdorin KinderHub.",
+    "button": "Fillo Provën Falas"
+  },
+  "footer": {
+    "rights": "Të gjitha të drejtat e rezervuara."
+  }
+}
