@@ -1,8 +1,6 @@
-import { getHealth } from "../../../lib/db";
+import { NextResponse } from 'next/server';
+// import { getHealth } from '@/lib/db';
 
-export async function GET() {
-  const health = getHealth();
-  return new Response(JSON.stringify(health), {
-    headers: { "Content-Type": "application/json" },
-  });
-}
+// export async function GET() {
+//   return NextResponse.json(getHealth());
+// }
