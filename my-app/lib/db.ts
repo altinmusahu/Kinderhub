@@ -56,7 +56,6 @@ export function getHealth() {
   };
 }
 
-// Close the pool when the app shuts down
 process.on('SIGINT', () => {
   pool.end();
 });
