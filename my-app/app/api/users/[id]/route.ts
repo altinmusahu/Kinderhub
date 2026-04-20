@@ -1,24 +1,40 @@
-import { NextRequest, NextResponse } from 'next/server';
-// import { getUserById, updateUser, deleteUser } from '@/lib/db';
+import { NextRequest, NextResponse } from "next/server"
+import { UserService } from "@/app/api/modules/user/user.service"
+import { updateUserSchema } from "@/app/api/modules/user/user.validation"
+import { ZodError } from "zod"
 
-// export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-//   const { id } = await params;
-//   const user = await getUserById(Number(id));
-//   if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-//   return NextResponse.json(user);
-// }
+type Params = { params: Promise<{ id: string }> }
 
-// export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-//   const { id } = await params;
-//   const body = await request.json();
-//   const user = await updateUser(Number(id), body);
-//   if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-//   return NextResponse.json(user);
-// }
+export async function GET(_req: NextRequest, { params }: Params) {
+  try {
+    const { id } = await params
+    const user = await UserService.getById(id)
+    return NextResponse.json(user)
+  } catch {
+    return NextResponse.json({ error: "User not found" }, { status: 404 })
+  }
+}
 
-// export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-//   const { id } = await params;
-//   const deleted = await deleteUser(Number(id));
-//   if (!deleted) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-//   return new NextResponse(null, { status: 204 });
-// }
+export async function PATCH(request: NextRequest, { params }: Params) {
+  try {
+    const { id } = await params
+    const body = updateUserSchema.parse(await request.json())
+    const user = await UserService.update(id, body)
+    return NextResponse.json(user)
+  } catch (err) {
+    if (err instanceof ZodError) {
+      return NextResponse.json({ error: err.issues }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Failed to update user" }, { status: 500 })
+  }
+}
+
+export async function DELETE(_req: NextRequest, { params }: Params) {
+  try {
+    const { id } = await params
+    await UserService.delete(id)
+    return new NextResponse(null, { status: 204 })
+  } catch {
+    return NextResponse.json({ error: "Failed to delete user" }, { status: 500 })
+  }
+}
