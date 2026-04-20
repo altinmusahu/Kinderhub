@@ -1,16 +1,12 @@
-import { createClient } from '@/utils/supabase/server'
-import { cookies } from 'next/headers'
+import { getUsers } from '@/lib/db'
 
 export default async function Page() {
-  const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
-
-  const { data: todos } = await supabase.from('todos').select()
+  const users = await getUsers()
 
   return (
     <ul>
-      {todos?.map((todo) => (
-        <li key={todo.id}>{todo.name}</li>
+      {users.map((user) => (
+        <li key={user.id}>{user.name} — {user.role}</li>
       ))}
     </ul>
   )
