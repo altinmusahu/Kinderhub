@@ -5,7 +5,7 @@ export async function getUsers() {
   const supabase = createClient(await cookies());
 
   const { data, error } = await supabase
-    .from("User")
+    .from("users")
     .select("*");
 
   if (error) {

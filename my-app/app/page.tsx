@@ -1,13 +1,13 @@
 import { getUsers } from '@/lib/db'
+import UsersTable from './components/UsersTable'
 
 export default async function Page() {
   const users = await getUsers()
 
   return (
-    <ul>
-      {users.map((user) => (
-        <li key={user.id}>{user.name} — {user.role}</li>
-      ))}
-    </ul>
+    <div>
+      <h1>Users</h1>
+      <UsersTable users={users} />
+    </div>
   )
 }
