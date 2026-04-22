@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { SubscriptionPlanService } from "@/app/api/modules/subscription_plans/subscription_plans.service"
 import type { Messages } from "@/lib/i18n"
 
@@ -9,7 +10,7 @@ type PlanTranslations = typeof import("@/messages/en.json")["pricingSection"]["p
 
 export default async function PricingSection({ t }: PricingProps) {
   const rawPlans = await SubscriptionPlanService.getAll()
-
+  
   const activePlans = rawPlans
     .filter((p) => p.IsActive)
     .sort((a, b) => a.YearlyPrice - b.YearlyPrice)
@@ -34,7 +35,6 @@ export default async function PricingSection({ t }: PricingProps) {
             {activePlans.map((plan, i) => {
               const planT = planTranslations[plan.Code.toLowerCase()]
               const highlight = i === midIndex
-              const monthlyPrice = Math.round(plan.YearlyPrice / 12)
 
               return (
                 <div
@@ -77,8 +77,8 @@ export default async function PricingSection({ t }: PricingProps) {
                     ))}
                   </ul>
 
-                  <a
-                    href="#"
+                  <Link
+                    href={`/subscribe?planId=${plan.Id}`}
                     className={`block text-center font-semibold py-3 rounded-xl transition-colors ${
                       highlight
                         ? "bg-white text-indigo-600 hover:bg-indigo-50"
@@ -86,7 +86,7 @@ export default async function PricingSection({ t }: PricingProps) {
                     }`}
                   >
                     {planT?.cta ?? "Get Started"}
-                  </a>
+                  </Link>
                 </div>
               )
             })}

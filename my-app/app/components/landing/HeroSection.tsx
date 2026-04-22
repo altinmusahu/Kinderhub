@@ -7,7 +7,7 @@ type HeroProps = {
 
 export default function HeroSection({ t, stats }: HeroProps) {
   return (
-    <section className="max-w-4xl mx-auto px-4 sm:px-8 pt-16 sm:pt-24 pb-16 sm:pb-20 text-center">
+    <section className="max-w-4xl mx-auto px-4 sm:px-8 pt-8 sm:pt-24 pb-8 sm:pb-20 text-center">
       <span className="inline-block bg-indigo-50 text-indigo-600 text-xs font-semibold px-3 py-1 rounded-full mb-6 tracking-wide uppercase">
         {t.badge}
       </span>
@@ -21,7 +21,7 @@ export default function HeroSection({ t, stats }: HeroProps) {
         {t.subtitle}
       </p>
 
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+      {/* <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
         <a
           href="#pricing"
           className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors text-center"
@@ -34,7 +34,7 @@ export default function HeroSection({ t, stats }: HeroProps) {
         >
           {t.learnMore}
         </a>
-      </div>
+      </div> */}
 
       {/* Stats */}
       <div className="mt-16 sm:mt-20 grid grid-cols-3 gap-4 sm:gap-8 border-t border-gray-100 pt-10 sm:pt-12">
