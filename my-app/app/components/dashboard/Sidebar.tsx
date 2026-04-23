@@ -30,7 +30,7 @@ export default function Sidebar() {
       className={`
         fixed left-0 top-0 h-full z-50
         flex flex-col
-        bg-white border-r border-white/5
+        border-r
         transition-all duration-300 ease-in-out
         ${expanded ? "w-56" : "w-16"}
       `}

@@ -145,14 +145,13 @@ export default function UsersTable({ users }: { users: User[] }) {
 
   const columns =
     localUsers.length > 0
-      ? Object.keys(localUsers[0]).filter((col) => col !== "Id")
+      ? Object.keys(localUsers[0]).filter((col) => col !== "Id" && col !== "TenantId")
       : []
 
   return (
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Users</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {localUsers.length} total users
           </p>
