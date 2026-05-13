@@ -1,5 +1,5 @@
 
-export default function Header({title}: {title?: string}) {
+export default function Header({title, subtitle}: {title?: string, subtitle?: string}) {
   return (
       <div className="border-b">
         <p className="text-black/35 text-xs tracking-widest uppercase">{title}</p>
