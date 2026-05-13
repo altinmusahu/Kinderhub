@@ -1,4 +1,5 @@
 import React from "react"
+import { DataTable, Column } from "@/app/components/dashboard/DataTable"
 
 const invoices = [
   { id: "INV-2051", family: "Okafor-Lind",   fid: "OL", color: "#E8866A", amount: "$2,840.00", status: "Paid",    due: "Apr 10", method: "Visa · 4242" },
@@ -12,6 +13,8 @@ const invoices = [
   { id: "INV-2043", family: "Delacroix",     fid: "D",  color: "#C49A7C", amount: "$2,840.00", status: "Paid",    due: "Apr 10", method: "ACH" },
 ]
 
+type Invoice = typeof invoices[0]
+
 const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
   Paid:    { bg: "#E8F5EC", color: "#3A8C50" },
   Overdue: { bg: "#FDEAEA", color: "#C0392B" },
@@ -21,6 +24,57 @@ const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
 const revenueMonths = [
   { label: "N", h: 55 }, { label: "D", h: 60 }, { label: "J", h: 58 },
   { label: "F", h: 62 }, { label: "M", h: 65 }, { label: "A", h: 70 },
+]
+
+const columns: Column<Invoice>[] = [
+  {
+    key: "id",
+    header: "Invoice",
+    cellStyle: { fontFamily: "var(--kh-font-mono)", fontSize: 12, color: "var(--kh-ink-400)" },
+    cell: (inv) => inv.id,
+  },
+  {
+    key: "family",
+    header: "Family",
+    cell: (inv) => (
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span className="kh-avatar" style={{ background: inv.color + "22", color: inv.color, width: 24, height: 24, fontSize: 9 }}>{inv.fid}</span>
+        <span style={{ fontSize: 13, fontWeight: 500, color: "var(--kh-ink-800)" }}>{inv.family}</span>
+      </div>
+    ),
+  },
+  {
+    key: "amount",
+    header: "Amount",
+    headerStyle: { textAlign: "right" },
+    cellStyle: { textAlign: "right", fontFamily: "var(--kh-font-mono)", fontSize: 13, fontWeight: 600, color: "var(--kh-ink-900)" },
+    cell: (inv) => inv.amount,
+  },
+  {
+    key: "status",
+    header: "Status",
+    cell: (inv) => {
+      const ss = STATUS_STYLE[inv.status] ?? STATUS_STYLE.Paid
+      return (
+        <span className="kh-status-badge" style={{ background: ss.bg, color: ss.color }}>
+          <span className="kh-pill-dot" style={{ background: ss.color }} />
+          {inv.status}
+        </span>
+      )
+    },
+  },
+  {
+    key: "due",
+    header: "Due",
+    cellStyle: { fontSize: 12, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)" },
+    cell: (inv) => inv.due,
+  },
+  {
+    key: "method",
+    header: "Method",
+    cellStyle: { fontSize: 12, color: "var(--kh-ink-500)" },
+    cell: (inv) => inv.method,
+  },
 ]
 
 export default function BillingPage() {
@@ -45,7 +99,6 @@ export default function BillingPage() {
           <p className="kh-sub">April cycle · 9 families · auto-charged Apr 10</p>
         </div>
 
-        {/* Stats */}
         <div className="kh-stats-grid" style={{ marginBottom: 4 }}>
           {[
             { label: "Collected this month", value: "$24,960", sub: "92% of expected" },
@@ -64,54 +117,15 @@ export default function BillingPage() {
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 12 }}>
-          {/* Invoices table */}
-          <div className="kh-card" style={{ overflow: "hidden" }}>
-            <div className="kh-card-header">
-              <span className="kh-card-title">Invoices · April</span>
-              <span className="kh-card-meta">9 total</span>
-            </div>
-            <table className="kh-table">
-              <thead>
-                <tr>
-                  <th>Invoice</th>
-                  <th>Family</th>
-                  <th style={{ textAlign: "right" }}>Amount</th>
-                  <th>Status</th>
-                  <th>Due</th>
-                  <th>Method</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.map((inv) => {
-                  const ss = STATUS_STYLE[inv.status] ?? STATUS_STYLE.Paid
-                  return (
-                    <tr key={inv.id}>
-                      <td style={{ fontFamily: "var(--kh-font-mono)", fontSize: 12, color: "var(--kh-ink-400)" }}>{inv.id}</td>
-                      <td>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span className="kh-avatar" style={{ background: inv.color + "22", color: inv.color, width: 24, height: 24, fontSize: 9 }}>{inv.fid}</span>
-                          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--kh-ink-800)" }}>{inv.family}</span>
-                        </div>
-                      </td>
-                      <td style={{ textAlign: "right", fontFamily: "var(--kh-font-mono)", fontSize: 13, fontWeight: 600, color: "var(--kh-ink-900)" }}>{inv.amount}</td>
-                      <td>
-                        <span className="kh-status-badge" style={{ background: ss.bg, color: ss.color }}>
-                          <span className="kh-pill-dot" style={{ background: ss.color }} />
-                          {inv.status}
-                        </span>
-                      </td>
-                      <td style={{ fontSize: 12, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)" }}>{inv.due}</td>
-                      <td style={{ fontSize: 12, color: "var(--kh-ink-500)" }}>{inv.method}</td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            columns={columns}
+            rows={invoices}
+            getRowKey={(inv) => inv.id}
+            title="Invoices · April"
+            meta="9 total"
+          />
 
-          {/* Sidebar panels */}
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {/* Revenue chart */}
             <div className="kh-card" style={{ padding: "16px 18px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                 <span className="kh-card-title">Revenue · last 6 months</span>
@@ -129,7 +143,6 @@ export default function BillingPage() {
               </div>
             </div>
 
-            {/* At risk */}
             <div className="kh-card" style={{ padding: "14px 16px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                 <span className="kh-card-title">At risk</span>
