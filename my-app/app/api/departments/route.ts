@@ -1,26 +1,26 @@
 import { NextRequest, NextResponse } from "next/server"
-import { UserService } from "@/app/api/modules/user/user.service"
-import { createUserSchema } from "@/app/api/modules/user/user.validation"
+import { DepartmentService } from "../modules/departments/department.service"
+import { createDepartmentSchema } from "../modules/departments/department.validation"
 import { getTenant } from "@/lib/get-tenant"
 
 export async function GET() {
   try {
     const { tenant_id } = await getTenant()
-    const users = await UserService.getAll(tenant_id)
-    return NextResponse.json(users)
+    const departments = await DepartmentService.getAll(tenant_id)
+    return NextResponse.json(departments)
   } catch (error) {
     const status = error instanceof Error && error.message === "Unauthorized" ? 401 : 500
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to fetch users" }, { status })
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to fetch departments" }, { status })
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    await getTenant()
+    const { tenant_id } = await getTenant()
     const body = await req.json()
-    const parsed = createUserSchema.parse(body)
-    const user = await UserService.create(parsed)
-    return NextResponse.json(user, { status: 201 })
+    const parsed = createDepartmentSchema.parse({ ...body, tenant_id })
+    const department = await DepartmentService.create(parsed)
+    return NextResponse.json(department, { status: 201 })
   } catch (error) {
     const status = error instanceof Error && error.message === "Unauthorized" ? 401 : 400
     return NextResponse.json(

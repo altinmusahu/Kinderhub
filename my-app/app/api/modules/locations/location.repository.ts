@@ -1,20 +1,19 @@
 import { supabaseAdmin } from "@/lib/supabase-admin"
-import type { User, CreateUserDto, UpdateUserDto } from "./user.types"
+import type { Location, CreateLocationDto, UpdateLocationDto } from "./location.types"
 
-export const UserRepository = {
-  async findAll(tenantId: string): Promise<User[]> {
+export const LocationRepository = {
+  async findAll(tenantId: string): Promise<Location[]> {
     const { data, error } = await supabaseAdmin
-      .from("users")
+      .from("locations")
       .select("*")
       .eq("tenant_id", tenantId)
-      .order("created_at", { ascending: false })
     if (error) throw new Error(error.message)
     return data
   },
 
-  async findById(id: string, tenantId: string): Promise<User | null> {
+  async findById(id: string, tenantId: string): Promise<Location | null> {
     const { data, error } = await supabaseAdmin
-      .from("users")
+      .from("locations")
       .select("*")
       .eq("id", id)
       .eq("tenant_id", tenantId)
@@ -23,19 +22,9 @@ export const UserRepository = {
     return data
   },
 
-  async findByEmail(email: string): Promise<User | null> {
+  async create(payload: CreateLocationDto): Promise<Location> {
     const { data, error } = await supabaseAdmin
-      .from("users")
-      .select("*")
-      .eq("email", email)
-      .maybeSingle()
-    if (error) throw new Error(error.message)
-    return data
-  },
-
-  async create(payload: CreateUserDto): Promise<User> {
-    const { data, error } = await supabaseAdmin
-      .from("users")
+      .from("locations")
       .insert([payload])
       .select()
       .single()
@@ -43,19 +32,9 @@ export const UserRepository = {
     return data
   },
 
-  async createWithId(payload: User): Promise<User> {
+  async update(id: string, tenantId: string, payload: UpdateLocationDto): Promise<Location> {
     const { data, error } = await supabaseAdmin
-      .from("users")
-      .insert([payload])
-      .select()
-      .single()
-    if (error) throw new Error(error.message)
-    return data
-  },
-
-  async update(id: string, tenantId: string, payload: UpdateUserDto): Promise<User> {
-    const { data, error } = await supabaseAdmin
-      .from("users")
+      .from("locations")
       .update(payload)
       .eq("id", id)
       .eq("tenant_id", tenantId)
@@ -67,7 +46,7 @@ export const UserRepository = {
 
   async delete(id: string, tenantId: string): Promise<void> {
     const { error } = await supabaseAdmin
-      .from("users")
+      .from("locations")
       .delete()
       .eq("id", id)
       .eq("tenant_id", tenantId)

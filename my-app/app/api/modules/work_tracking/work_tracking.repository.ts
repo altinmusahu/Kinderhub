@@ -1,20 +1,19 @@
 import { supabaseAdmin } from "@/lib/supabase-admin"
-import type { User, CreateUserDto, UpdateUserDto } from "./user.types"
+import type { WorkTracking, CreateWorkTrackingDto, UpdateWorkTrackingDto } from "./work_tracking.types"
 
-export const UserRepository = {
-  async findAll(tenantId: string): Promise<User[]> {
+export const WorkTrackingRepository = {
+  async findAll(tenantId: string): Promise<WorkTracking[]> {
     const { data, error } = await supabaseAdmin
-      .from("users")
+      .from("work_tracking")
       .select("*")
       .eq("tenant_id", tenantId)
-      .order("created_at", { ascending: false })
     if (error) throw new Error(error.message)
     return data
   },
 
-  async findById(id: string, tenantId: string): Promise<User | null> {
+  async findById(id: string, tenantId: string): Promise<WorkTracking | null> {
     const { data, error } = await supabaseAdmin
-      .from("users")
+      .from("work_tracking")
       .select("*")
       .eq("id", id)
       .eq("tenant_id", tenantId)
@@ -23,19 +22,19 @@ export const UserRepository = {
     return data
   },
 
-  async findByEmail(email: string): Promise<User | null> {
+  async findByUser(userId: string, tenantId: string): Promise<WorkTracking[]> {
     const { data, error } = await supabaseAdmin
-      .from("users")
+      .from("work_tracking")
       .select("*")
-      .eq("email", email)
-      .maybeSingle()
+      .eq("user_id", userId)
+      .eq("tenant_id", tenantId)
     if (error) throw new Error(error.message)
     return data
   },
 
-  async create(payload: CreateUserDto): Promise<User> {
+  async create(payload: CreateWorkTrackingDto): Promise<WorkTracking> {
     const { data, error } = await supabaseAdmin
-      .from("users")
+      .from("work_tracking")
       .insert([payload])
       .select()
       .single()
@@ -43,19 +42,9 @@ export const UserRepository = {
     return data
   },
 
-  async createWithId(payload: User): Promise<User> {
+  async update(id: string, tenantId: string, payload: UpdateWorkTrackingDto): Promise<WorkTracking> {
     const { data, error } = await supabaseAdmin
-      .from("users")
-      .insert([payload])
-      .select()
-      .single()
-    if (error) throw new Error(error.message)
-    return data
-  },
-
-  async update(id: string, tenantId: string, payload: UpdateUserDto): Promise<User> {
-    const { data, error } = await supabaseAdmin
-      .from("users")
+      .from("work_tracking")
       .update(payload)
       .eq("id", id)
       .eq("tenant_id", tenantId)
@@ -67,7 +56,7 @@ export const UserRepository = {
 
   async delete(id: string, tenantId: string): Promise<void> {
     const { error } = await supabaseAdmin
-      .from("users")
+      .from("work_tracking")
       .delete()
       .eq("id", id)
       .eq("tenant_id", tenantId)

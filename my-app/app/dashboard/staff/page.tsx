@@ -1,37 +1,37 @@
 import React from "react"
+import { cookies } from "next/headers"
 import { DataTable, Column } from "@/app/components/dashboard/DataTable"
+import { UserService } from "@/app/api/modules/user/user.service"
+import { DepartmentService } from "@/app/api/modules/departments/department.service"
+import { WorkTrackingService } from "@/app/api/modules/work_tracking/work_tracking.service"
+import { verifyToken, cookieName } from "@/lib/auth"
 
-const staff = [
-  { id: "PR", name: "Priya Raghavan",  role: "Lead Teacher",    dept: "Classroom & Care",        room: "Sunbeam",          status: "Active",   shift: "8:00–17:30", color: "#E8866A" },
-  { id: "MA", name: "Marcus Alemán",   role: "Lead Teacher",    dept: "Education & Curriculum",  room: "Meadow · Treehouse",status: "Active",   shift: "8:00–17:30", color: "#6BA07C" },
-  { id: "HS", name: "Hana Sato",       role: "Lead Teacher",    dept: "Classroom & Care",        room: "Bluebird",         status: "Active",   shift: "8:30–17:00", color: "#C9AE4E" },
-  { id: "OG", name: "Ottilie Green",   role: "Lead Teacher",    dept: "Education & Curriculum",  room: "Saturday Studio",  status: "Active",   shift: "9:00–12:00", color: "#D97F8C" },
-  { id: "DM", name: "Devon Maleki",    role: "Assistant",       dept: "Classroom & Care",        room: "Sunbeam",          status: "Active",   shift: "8:00–17:00", color: "#6A9EC8" },
-  { id: "JR", name: "Joaquin Ribeiro", role: "Assistant",       dept: "Classroom & Care",        room: "Treehouse",        status: "Active",   shift: "8:00–15:30", color: "#A07CB4" },
-  { id: "NK", name: "Nina Kowalski",   role: "Director",        dept: "Administration",          room: "—",                status: "Active",   shift: "8:00–18:00", color: "#7CA0B4" },
-  { id: "RB", name: "Rowan Baird",     role: "Admin Assistant", dept: "Administration",          room: "—",                status: "Active",   shift: "9:00–17:00", color: "#B4A07C" },
-  { id: "JP", name: "Jun Park",        role: "Kitchen Lead",    dept: "Kitchen & Facilities",    room: "Kitchen",          status: "Active",   shift: "7:30–14:00", color: "#7CB49A" },
-  { id: "EL", name: "Eliot (ext.)",    role: "Finance",         dept: "Finance & Billing",       room: "—",                status: "External", shift: "—",          color: "#C4B49A" },
-]
+const AVATAR_COLORS = ["#E8866A","#6BA07C","#C9AE4E","#D97F8C","#6A9EC8","#A07CB4","#7CA0B4","#B4A07C","#7CB49A","#C4B49A"]
+function avatarColor(id: string) {
+  let n = 0; for (const c of id) n += c.charCodeAt(0)
+  return AVATAR_COLORS[n % AVATAR_COLORS.length]
+}
+function initials(name: string, lastname: string) {
+  return `${name[0] ?? ""}${lastname[0] ?? ""}`.toUpperCase()
+}
 
-type StaffMember = typeof staff[0]
+type StaffRow = {
+  id: string
+  initials: string
+  color: string
+  name: string
+  role: string
+  dept: string
+  status: string
+}
 
-const depts = [
-  { name: "Administration",         color: "#E8866A", count: 3 },
-  { name: "Classroom & Care",       color: "#D97F8C", count: 9 },
-  { name: "Education & Curriculum", color: "#6BA07C", count: 4 },
-  { name: "Family Relations",       color: "#E8866A", count: 2 },
-  { name: "Finance & Billing",      color: "#C9AE4E", count: 1 },
-  { name: "Kitchen & Facilities",   color: "#6BA07C", count: 3 },
-]
-
-const columns: Column<StaffMember>[] = [
+const columns: Column<StaffRow>[] = [
   {
     key: "member",
     header: "Member",
     cell: (s) => (
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <span className="kh-avatar" style={{ background: s.color + "22", color: s.color }}>{s.id}</span>
+        <span className="kh-avatar" style={{ background: s.color + "22", color: s.color }}>{s.initials}</span>
         <span style={{ fontWeight: 600, fontSize: 13, color: "var(--kh-ink-900)" }}>{s.name}</span>
       </div>
     ),
@@ -49,12 +49,6 @@ const columns: Column<StaffMember>[] = [
     cell: (s) => s.dept,
   },
   {
-    key: "room",
-    header: "Room",
-    cellStyle: { fontSize: 13, color: "var(--kh-ink-500)" },
-    cell: (s) => s.room,
-  },
-  {
     key: "status",
     header: "Status",
     cell: (s) => (
@@ -67,15 +61,46 @@ const columns: Column<StaffMember>[] = [
       </span>
     ),
   },
-  {
-    key: "shift",
-    header: "Shift",
-    cellStyle: { fontSize: 12, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)" },
-    cell: (s) => s.shift,
-  },
 ]
 
-export default function StaffPage() {
+export default async function StaffPage() {
+  const store = await cookies()
+  const token = store.get(cookieName())?.value!
+  const session = await verifyToken(token)
+  const { tenant_id } = session!
+
+  const [users, departments, workTracking] = await Promise.all([
+    UserService.getAll(tenant_id),
+    DepartmentService.getAll(tenant_id),
+    WorkTrackingService.getAll(tenant_id),
+  ])
+
+  const deptMap = new Map(departments.map((d) => [d.id, d.name]))
+
+  const staff: StaffRow[] = users.map((u) => {
+    const wt = workTracking.find((w) => w.user_id === u.id && !w.end_date)
+    const dept = wt?.department_id ? (deptMap.get(wt.department_id) ?? "—") : "—"
+    const color = avatarColor(u.id)
+    return {
+      id: u.id,
+      initials: initials(u.name, u.lastname),
+      color,
+      name: `${u.name} ${u.lastname}`,
+      role: u.role,
+      dept,
+      status: u.is_active ? "Active" : "Inactive",
+    }
+  })
+
+  // Dept summary cards — group by name
+  const deptCounts = departments.map((d) => ({
+    name: d.name,
+    color: avatarColor(d.id),
+    count: workTracking.filter((w) => w.department_id === d.id && !w.end_date).length,
+  }))
+
+  const activeCount = staff.filter((s) => s.status === "Active").length
+
   return (
     <div className="kh-page">
       <header className="kh-topbar">
@@ -93,34 +118,42 @@ export default function StaffPage() {
       <div className="kh-content">
         <div style={{ marginBottom: 6 }}>
           <h1 className="kh-h1">Staff</h1>
-          <p className="kh-sub">18 members · 6 departments · 2 invites pending</p>
+          <p className="kh-sub">{staff.length} members · {departments.length} departments · {activeCount} active</p>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 4 }}>
-          {depts.map((d) => (
-            <div key={d.name} className="kh-card" style={{ padding: "14px 16px", cursor: "pointer" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--kh-ink-800)" }}>{d.name}</div>
-                <span style={{ fontFamily: "var(--kh-font-mono)", fontSize: 11, color: "var(--kh-ink-400)" }}>{d.count}</span>
+        {deptCounts.length > 0 && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 4 }}>
+            {deptCounts.map((d) => (
+              <div key={d.name} className="kh-card" style={{ padding: "14px 16px", cursor: "pointer" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--kh-ink-800)" }}>{d.name}</div>
+                  <span style={{ fontFamily: "var(--kh-font-mono)", fontSize: 11, color: "var(--kh-ink-400)" }}>{d.count}</span>
+                </div>
+                <div style={{ marginTop: 10, display: "flex" }}>
+                  {Array.from({ length: Math.min(d.count, 5) }).map((_, i) => (
+                    <span key={i} className="kh-avatar" style={{ background: d.color + "22", color: d.color, fontSize: 9, width: 22, height: 22, marginLeft: i > 0 ? -6 : 0, border: "2px solid #fff" }}>
+                      {String.fromCharCode(65 + i)}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <div style={{ marginTop: 10, display: "flex", gap: -4 }}>
-                {Array.from({ length: Math.min(d.count, 5) }).map((_, i) => (
-                  <span key={i} className="kh-avatar" style={{ background: d.color + "22", color: d.color, fontSize: 9, width: 22, height: 22, marginLeft: i > 0 ? -6 : 0, border: "2px solid #fff" }}>
-                    {String.fromCharCode(65 + i)}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
-        <DataTable
-          columns={columns}
-          rows={staff}
-          getRowKey={(s) => s.id}
-          title="All staff"
-          meta="18 members"
-        />
+        {staff.length === 0 ? (
+          <div className="kh-card" style={{ padding: "40px 24px", textAlign: "center", color: "var(--kh-ink-400)", fontSize: 13 }}>
+            No staff members yet. Add users to see them here.
+          </div>
+        ) : (
+          <DataTable
+            columns={columns}
+            rows={staff}
+            getRowKey={(s) => s.id}
+            title="All staff"
+            meta={`${staff.length} members`}
+          />
+        )}
       </div>
     </div>
   )

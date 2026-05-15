@@ -5,134 +5,100 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table"
+import type { User } from "@/app/api/modules/user/user.types"
 
-type User = {
-  Id: string
-  Name: string
-  Lastname: string
-  PhoneNumber: string
-  PersonalNumber: string
-  Role: "Admin" | "User"
-  CreatedAt: string
-  IsActive: boolean
-  DateOfBirth: string
-  [key: string]: unknown
-}
+type DisplayUser = Omit<User, "password_hash">
 
 type NewUserForm = {
-  Name: string
-  Lastname: string
-  PhoneNumber: string
-  PersonalNumber: string
-  Role: "Admin" | "User"
-  IsActive: boolean
-  DateOfBirth: string
+  name: string
+  lastname: string
+  email: string
+  phone_number: string
+  personal_number: string
+  role: string
+  is_active: boolean
+  date_of_birth: string
 }
 
 const emptyForm: NewUserForm = {
-  Name: "",
-  Lastname: "",
-  PhoneNumber: "",
-  PersonalNumber: "",
-  Role: "User",
-  IsActive: true,
-  DateOfBirth: "",
+  name: "",
+  lastname: "",
+  email: "",
+  phone_number: "",
+  personal_number: "",
+  role: "User",
+  is_active: true,
+  date_of_birth: "",
 }
-
-const textFields = [
-  { label: "Name", name: "Name", type: "text" },
-  { label: "Last Name", name: "Lastname", type: "text" },
-  { label: "Phone Number", name: "PhoneNumber", type: "text" },
-  { label: "Personal Number", name: "PersonalNumber", type: "text" },
-  { label: "Date of Birth", name: "DateOfBirth", type: "date" },
-] as const
 
 const fieldLabels: Record<string, string> = {
-  Name: "Name",
-  Lastname: "Last Name",
-  PhoneNumber: "Phone Number",
-  PersonalNumber: "Personal Number",
-  Role: "Role",
-  CreatedAt: "Created At",
-  IsActive: "Status",
-  DateOfBirth: "Date of Birth",
+  name: "Name",
+  lastname: "Last Name",
+  email: "Email",
+  phone_number: "Phone",
+  personal_number: "Personal No.",
+  role: "Role",
+  created_at: "Created At",
+  is_active: "Status",
+  date_of_birth: "Date of Birth",
+  tenant_id: "Tenant",
+  is_first_login_executed: "First Login Done",
 }
 
-export default function UsersTable({ users }: { users: User[] }) {
-  const [localUsers, setLocalUsers] = useState<User[]>(users)
+const HIDDEN_COLS = new Set(["id", "tenant_id"])
+
+export default function UsersTable({ users }: { users: DisplayUser[] }) {
+  const [localUsers, setLocalUsers] = useState<DisplayUser[]>(users)
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState<NewUserForm>(emptyForm)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-
-  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [selectedUser, setSelectedUser] = useState<DisplayUser | null>(null)
   const [viewLoading, setViewLoading] = useState(false)
 
-  useEffect(() => {
-    setLocalUsers(users)
-  }, [users])
+  useEffect(() => { setLocalUsers(users) }, [users])
+
+  const columns = localUsers.length > 0
+    ? Object.keys(localUsers[0]).filter((col) => !HIDDEN_COLS.has(col))
+    : []
 
   async function handleViewUser(id: string) {
     setViewLoading(true)
     const res = await fetch(`/api/users/${id}`)
     const data = await res.json()
     setViewLoading(false)
-
-    if (res.ok) setSelectedUser(data as User)
+    if (res.ok) setSelectedUser(data as DisplayUser)
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
+    setForm((prev) => ({ ...prev, [name]: value }))
   }
 
   async function handleAddUser(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
     setError("")
-
     const res = await fetch("/api/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...form,
-        IsActive: true,
-      }),
+      body: JSON.stringify({ ...form, is_active: true }),
     })
-
     const data = await res.json()
     setLoading(false)
-
     if (!res.ok) {
-      setError(data?.message || "Failed to add user. Please try again.")
+      setError(data?.message || "Failed to add user.")
       return
     }
-
-    setLocalUsers((prev) => [data as User, ...prev])
+    setLocalUsers((prev) => [data as DisplayUser, ...prev])
     setForm(emptyForm)
     setShowModal(false)
   }
@@ -143,68 +109,45 @@ export default function UsersTable({ users }: { users: User[] }) {
     setForm(emptyForm)
   }
 
-  const columns =
-    localUsers.length > 0
-      ? Object.keys(localUsers[0]).filter((col) => col !== "Id" && col !== "TenantId")
-      : []
-
   return (
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
-        <div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {localUsers.length} total users
-          </p>
-        </div>
-
+        <p className="text-sm text-muted-foreground">{localUsers.length} total users</p>
         <Button onClick={() => setShowModal(true)}>Add User</Button>
       </div>
 
       {localUsers.length === 0 ? (
-        <div className="py-16 text-center text-muted-foreground">
-          No users found.
-        </div>
+        <div className="py-16 text-center text-muted-foreground">No users found.</div>
       ) : (
         <div className="rounded-xl border">
           <Table>
             <TableHeader>
               <TableRow>
-                {columns.map((col) => (
-                  <TableHead key={col}>
-                    {fieldLabels[col] ?? col}
-                  </TableHead>
-                ))}
+                {columns.map((col) => <TableHead key={col}>{fieldLabels[col] ?? col}</TableHead>)}
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
-
             <TableBody>
               {localUsers.map((user) => (
-                <TableRow key={user.Id}>
-                  {columns.map((col) => (
-                    <TableCell key={col}>
-                      {col === "IsActive" ? (
-                        <Badge variant={user[col] ? "default" : "destructive"}>
-                          {user[col] ? "Active" : "Inactive"}
-                        </Badge>
-                      ) : col === "Role" ? (
-                        <Badge variant="secondary">{String(user[col])}</Badge>
-                      ) : (
-                        <span className="truncate">
-                          {String(user[col] ?? "")}
-                        </span>
-                      )}
-                    </TableCell>
-                  ))}
-
+                <TableRow key={user.id}>
+                  {columns.map((col) => {
+                    const val = (user as Record<string, unknown>)[col]
+                    return (
+                      <TableCell key={col}>
+                        {col === "is_active" ? (
+                          <Badge variant={val ? "default" : "destructive"}>{val ? "Active" : "Inactive"}</Badge>
+                        ) : col === "is_first_login_executed" ? (
+                          <Badge variant={val ? "default" : "secondary"}>{val ? "Yes" : "No"}</Badge>
+                        ) : col === "role" ? (
+                          <Badge variant="secondary">{String(val)}</Badge>
+                        ) : (
+                          <span className="truncate">{String(val ?? "")}</span>
+                        )}
+                      </TableCell>
+                    )
+                  })}
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleViewUser(user.Id)}
-                    >
-                      View
-                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleViewUser(user.id)}>View</Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -213,106 +156,61 @@ export default function UsersTable({ users }: { users: User[] }) {
         </div>
       )}
 
+      {/* Add User Modal */}
       <Dialog open={showModal} onOpenChange={(open) => !open && closeModal()}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add New User</DialogTitle>
-          </DialogHeader>
-
+          <DialogHeader><DialogTitle>Add New User</DialogTitle></DialogHeader>
           <form onSubmit={handleAddUser} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              {textFields.map(({ label, name, type }) => (
-                <div
-                  key={name}
-                  className={
-                    name === "PhoneNumber" || name === "PersonalNumber"
-                      ? "col-span-2"
-                      : ""
-                  }
-                >
-                  <label className="mb-1 block text-sm font-medium">
-                    {label}
-                  </label>
-                  <Input
-                    type={type}
-                    name={name}
-                    value={form[name] as string}
-                    onChange={handleChange}
-                    required
-                  />
+              {([
+                { label: "First Name",      name: "name",            type: "text" },
+                { label: "Last Name",       name: "lastname",        type: "text" },
+                { label: "Email",           name: "email",           type: "email" },
+                { label: "Phone Number",    name: "phone_number",    type: "text" },
+                { label: "Personal Number", name: "personal_number", type: "text" },
+                { label: "Date of Birth",   name: "date_of_birth",   type: "date" },
+              ] as const).map(({ label, name, type }) => (
+                <div key={name} className={name === "phone_number" || name === "personal_number" || name === "email" ? "col-span-2" : ""}>
+                  <label className="mb-1 block text-sm font-medium">{label}</label>
+                  <Input type={type} name={name} value={form[name] as string} onChange={handleChange} required />
                 </div>
               ))}
             </div>
-
             <div>
               <label className="mb-1 block text-sm font-medium">Role</label>
-              <Select
-                value={form.Role}
-                onValueChange={(value: "Admin" | "User") =>
-                  setForm((prev) => ({ ...prev, Role: value }))
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
+              <Select value={form.role} onValueChange={(v) => setForm((p) => ({ ...p, role: v }))}>
+                <SelectTrigger className="w-full"><SelectValue placeholder="Select role" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Admin">Admin</SelectItem>
                   <SelectItem value="User">User</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
-            {error && (
-              <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
-                {error}
-              </p>
-            )}
-
+            {error && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={closeModal}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Saving..." : "Save User"}
-              </Button>
+              <Button type="button" variant="outline" onClick={closeModal}>Cancel</Button>
+              <Button type="submit" disabled={loading}>{loading ? "Saving..." : "Save User"}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog
-        open={!!selectedUser || viewLoading}
-        onOpenChange={(open) => {
-          if (!open) setSelectedUser(null)
-        }}
-      >
+      {/* View User Modal */}
+      <Dialog open={!!selectedUser || viewLoading} onOpenChange={(open) => { if (!open) setSelectedUser(null) }}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>User Details</DialogTitle>
-          </DialogHeader>
-
+          <DialogHeader><DialogTitle>User Details</DialogTitle></DialogHeader>
           {viewLoading ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">
-              Loading...
-            </div>
+            <div className="py-10 text-center text-sm text-muted-foreground">Loading...</div>
           ) : selectedUser ? (
             <div className="space-y-3">
               {(Object.entries(selectedUser) as [string, unknown][])
-                .filter(([key]) => key !== "Id")
+                .filter(([key]) => key !== "id" && key !== "tenant_id")
                 .map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="flex items-center justify-between border-b pb-2 last:border-0"
-                  >
-                    <span className="text-sm font-medium text-muted-foreground">
-                      {fieldLabels[key] ?? key}
-                    </span>
-
-                    {key === "IsActive" ? (
-                      <Badge variant={value ? "default" : "destructive"}>
-                        {value ? "Active" : "Inactive"}
-                      </Badge>
-                    ) : key === "Role" ? (
+                  <div key={key} className="flex items-center justify-between border-b pb-2 last:border-0">
+                    <span className="text-sm font-medium text-muted-foreground">{fieldLabels[key] ?? key}</span>
+                    {key === "is_active" ? (
+                      <Badge variant={value ? "default" : "destructive"}>{value ? "Active" : "Inactive"}</Badge>
+                    ) : key === "role" ? (
                       <Badge variant="secondary">{String(value)}</Badge>
                     ) : (
                       <span className="text-sm">{String(value ?? "—")}</span>
@@ -321,11 +219,8 @@ export default function UsersTable({ users }: { users: User[] }) {
                 ))}
             </div>
           ) : null}
-
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSelectedUser(null)}>
-              Close
-            </Button>
+            <Button variant="outline" onClick={() => setSelectedUser(null)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
