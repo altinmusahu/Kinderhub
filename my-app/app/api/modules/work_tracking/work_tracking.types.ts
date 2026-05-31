@@ -6,6 +6,7 @@ export type WorkTracking = {
   end_date: string | null
   responsible_user_id: string | null
   user_id: string
+  position_name: string | null
 }
 
 export type CreateWorkTrackingDto = Omit<WorkTracking, "id">

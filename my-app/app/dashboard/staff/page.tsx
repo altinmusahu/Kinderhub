@@ -1,103 +1,107 @@
-import React from "react"
 import { cookies } from "next/headers"
 import { DataTable, Column } from "@/app/components/dashboard/DataTable"
+import ViewUserModal from "@/components/ui/ViewUserModal"
+import AddStaffModal from "@/components/ui/AddStaffModal"
 import { UserService } from "@/app/api/modules/user/user.service"
-import { DepartmentService } from "@/app/api/modules/departments/department.service"
-import { WorkTrackingService } from "@/app/api/modules/work_tracking/work_tracking.service"
 import { verifyToken, cookieName } from "@/lib/auth"
-
-const AVATAR_COLORS = ["#E8866A","#6BA07C","#C9AE4E","#D97F8C","#6A9EC8","#A07CB4","#7CA0B4","#B4A07C","#7CB49A","#C4B49A"]
-function avatarColor(id: string) {
-  let n = 0; for (const c of id) n += c.charCodeAt(0)
-  return AVATAR_COLORS[n % AVATAR_COLORS.length]
-}
-function initials(name: string, lastname: string) {
-  return `${name[0] ?? ""}${lastname[0] ?? ""}`.toUpperCase()
-}
-
-type StaffRow = {
-  id: string
-  initials: string
-  color: string
-  name: string
-  role: string
-  dept: string
-  status: string
-}
-
-const columns: Column<StaffRow>[] = [
-  {
-    key: "member",
-    header: "Member",
-    cell: (s) => (
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <span className="kh-avatar" style={{ background: s.color + "22", color: s.color }}>{s.initials}</span>
-        <span style={{ fontWeight: 600, fontSize: 13, color: "var(--kh-ink-900)" }}>{s.name}</span>
-      </div>
-    ),
-  },
-  {
-    key: "role",
-    header: "Role",
-    cellStyle: { fontSize: 13, color: "var(--kh-ink-600)" },
-    cell: (s) => s.role,
-  },
-  {
-    key: "dept",
-    header: "Department",
-    cellStyle: { fontSize: 13, color: "var(--kh-ink-500)" },
-    cell: (s) => s.dept,
-  },
-  {
-    key: "status",
-    header: "Status",
-    cell: (s) => (
-      <span className="kh-status-badge" style={{
-        background: s.status === "Active" ? "#E8F5EC" : "#F0EDE8",
-        color:      s.status === "Active" ? "#3A8C50" : "#7A7368",
-      }}>
-        <span className="kh-pill-dot" style={{ background: s.status === "Active" ? "#3A8C50" : "#9E968A" }} />
-        {s.status}
-      </span>
-    ),
-  },
-]
+import { redirect } from "next/navigation"
+import { avatarColor, initials } from "@/components/ui/helper"
+import { StaffRow } from "@/app/api/modules/user/user.types"
 
 export default async function StaffPage() {
   const store = await cookies()
-  const token = store.get(cookieName())?.value!
+  const token = store.get(cookieName())?.value ?? null
+
+  if (!token) {
+    redirect("/login")
+  }
+
   const session = await verifyToken(token)
+
+  if(!session) {
+    redirect("/login")
+  }
+
   const { tenant_id } = session!
 
-  const [users, departments, workTracking] = await Promise.all([
-    UserService.getAll(tenant_id),
-    DepartmentService.getAll(tenant_id),
-    WorkTrackingService.getAll(tenant_id),
+  const [users] = await Promise.all([
+    UserService.getUsersWithWorkTrackingAndDepartment(tenant_id),
+    // DepartmentService.getAll(tenant_id),
+    // WorkTrackingService.getAll(tenant_id),
   ])
 
-  const deptMap = new Map(departments.map((d) => [d.id, d.name]))
+  const columns: Column<StaffRow>[] = [
+    {
+      key: "member",
+      header: "Member",
+      cell: (s) => (
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span className="kh-avatar" style={{ background: s.color + "22", color: s.color }}>{s.initials}</span>
+          <span style={{ fontWeight: 600, fontSize: 13, color: "var(--kh-ink-900)" }}>{s.name}</span>
+        </div>
+      ),
+    },
+    {
+      key: "position",
+      header: "Position",
+      cellStyle: { fontSize: 13, color: "var(--kh-ink-600)" },
+      cell: (s) => s.position_name || "Not specified",
+    },
+    {
+      key: "dept",
+      header: "Department",
+      cellStyle: { fontSize: 13, color: "var(--kh-ink-500)" },
+      cell: (s) => s.dept,
+    },
+    {
+      key: "created_at",
+      header: "Joined",
+      cellStyle: { fontSize: 12, color: "var(--kh-ink-400)" },
+      cell: (s) => new Date(s.created_at).toLocaleDateString(),
+    },
+    {
+      key: "status",
+      header: "Status",
+      cell: (s) => (
+        <span className="kh-status-badge" style={{
+          background: s.status === "Active" ? "#E8F5EC" : "#F0EDE8",
+          color:      s.status === "Active" ? "#3A8C50" : "#7A7368",
+        }}>
+          <span className="kh-pill-dot" style={{ background: s.status === "Active" ? "#3A8C50" : "#9E968A" }} />
+          {s.status}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      header: "",
+      cell: (s) => (
+        <div style={{ display: "flex", gap: 8 }}>
+          <ViewUserModal userId={s.id} />
+        </div>
+      ),
+    }
+  ]
 
   const staff: StaffRow[] = users.map((u) => {
-    const wt = workTracking.find((w) => w.user_id === u.id && !w.end_date)
-    const dept = wt?.department_id ? (deptMap.get(wt.department_id) ?? "—") : "—"
     const color = avatarColor(u.id)
     return {
       id: u.id,
       initials: initials(u.name, u.lastname),
       color,
       name: `${u.name} ${u.lastname}`,
-      role: u.role,
-      dept,
+      position_name: u.position_name ?? "Not specified",
+      dept: u.department_name ?? "No department",
       status: u.is_active ? "Active" : "Inactive",
+      created_at: u.created_at,
     }
   })
 
-  // Dept summary cards — group by name
-  const deptCounts = departments.map((d) => ({
-    name: d.name,
-    color: avatarColor(d.id),
-    count: workTracking.filter((w) => w.department_id === d.id && !w.end_date).length,
-  }))
+  // const deptCounts = departments.map((d) => ({
+  //   name: d.name,
+  //   color: avatarColor(d.id),
+  //   count: workTracking.filter((w) => w.department_id === d.id && !w.end_date).length,
+  // }))
 
   const activeCount = staff.filter((s) => s.status === "Active").length
 
@@ -111,17 +115,17 @@ export default async function StaffPage() {
         </nav>
         <div className="kh-topbar-right">
           <button className="kh-btn">≡ Filter</button>
-          <button className="kh-btn kh-btn--primary">+ Add staff</button>
+          <AddStaffModal />
         </div>
       </header>
 
       <div className="kh-content">
-        <div style={{ marginBottom: 6 }}>
+        {/* <div style={{ marginBottom: 6 }}>
           <h1 className="kh-h1">Staff</h1>
           <p className="kh-sub">{staff.length} members · {departments.length} departments · {activeCount} active</p>
-        </div>
+        </div> */}
 
-        {deptCounts.length > 0 && (
+        {/* {deptCounts.length > 0 && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 4 }}>
             {deptCounts.map((d) => (
               <div key={d.name} className="kh-card" style={{ padding: "14px 16px", cursor: "pointer" }}>
@@ -139,7 +143,7 @@ export default async function StaffPage() {
               </div>
             ))}
           </div>
-        )}
+        )} */}
 
         {staff.length === 0 ? (
           <div className="kh-card" style={{ padding: "40px 24px", textAlign: "center", color: "var(--kh-ink-400)", fontSize: 13 }}>

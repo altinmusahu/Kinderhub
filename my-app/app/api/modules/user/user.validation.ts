@@ -9,6 +9,8 @@ export const createUserSchema = z.object({
   role: z.string().min(1, "Role is required"),
   is_active: z.boolean(),
   date_of_birth: z.string().min(1, "Date of birth is required"),
+  department_id: z.string().uuid("Invalid department ID").nullable().optional().default(null),
+  position_name: z.string().nullable().optional().default(null),
 })
 
 export const updateUserSchema = z.object({

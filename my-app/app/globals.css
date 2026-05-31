@@ -528,6 +528,73 @@
   border-bottom: 1px solid var(--kh-border-soft);
 }
 
+.kh-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.kh-modal-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.kh-modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--kh-ink-900);
+}
+
+.kh-modal-description {
+  font-size: 13px;
+  color: var(--kh-ink-500);
+}
+
+.kh-modal-form {
+  display: grid;
+  gap: 16px;
+}
+
+.kh-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.kh-input {
+  width: 100%;
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-sm);
+  background: var(--kh-surface);
+  color: var(--kh-ink-800);
+  padding: 12px 14px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+
+.kh-input:focus {
+  border-color: var(--kh-ink-700);
+  box-shadow: 0 0 0 4px rgba(134, 120, 104, 0.12);
+}
+
+.kh-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kh-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px solid var(--kh-border-soft);
+}
+
 .kh-card-title {
   font-size: 13px;
   font-weight: 600;

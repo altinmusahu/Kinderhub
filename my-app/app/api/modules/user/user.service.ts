@@ -1,8 +1,9 @@
 import bcrypt from "bcryptjs"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 import { UserRepository } from "./user.repository"
+import { WorkTrackingService } from "../work_tracking/work_tracking.service"
 import type { CreateUserInput, UpdateUserInput } from "./user.validation"
-import type { User } from "./user.types"
+import type { User, UserWithWorkTrackingAndDepartment } from "./user.types"
 
 const TENANT_ID = "8c0785e5-83cc-4fa3-9957-75ae61b50d37"
 
@@ -10,6 +11,10 @@ export const UserService = {
   async getAll(tenantId: string): Promise<Omit<User, "password_hash">[]> {
     const users = await UserRepository.findAll(tenantId)
     return users.map(({ password_hash, ...u }) => u)
+  },
+
+  async getUsersWithWorkTrackingAndDepartment(tenantId: string): Promise<UserWithWorkTrackingAndDepartment[]> {
+    return await UserRepository.findAllWithWorkTrackingAndDepartment(tenantId)
   },
 
   async getById(id: string, tenantId: string): Promise<Omit<User, "password_hash">> {
@@ -38,14 +43,32 @@ export const UserService = {
     })
     if (authError) throw new Error(authError.message)
 
+    const { department_id, position_name, ...userInput } = input
+
     const user = await UserRepository.createWithId({
       id: authData.user.id,
-      ...input,
+      ...userInput,
       tenant_id: TENANT_ID,
       password_hash,
       is_first_login_executed: false,
       created_at: new Date().toISOString().split("T")[0],
     })
+
+    try {
+      await WorkTrackingService.create({
+        tenant_id: TENANT_ID,
+        user_id: authData.user.id,
+        department_id: department_id ?? null,
+        position_name: position_name ?? null,
+        start_date: new Date().toISOString().split("T")[0],
+        end_date: null,
+        responsible_user_id: null,
+      })
+    } catch (error) {
+      await UserRepository.delete(authData.user.id, TENANT_ID)
+      await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+      throw error
+    }
 
     const { password_hash: removedHash, ...rest } = user
     return rest

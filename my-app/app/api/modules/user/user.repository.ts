@@ -1,7 +1,8 @@
 import { supabaseAdmin } from "@/lib/supabase-admin"
-import type { User, CreateUserDto, UpdateUserDto } from "./user.types"
+import type { User, CreateUserDto, UpdateUserDto, UserWithWorkTrackingAndDepartment } from "./user.types"
 
 export const UserRepository = {
+  // GET
   async findAll(tenantId: string): Promise<User[]> {
     const { data, error } = await supabaseAdmin
       .from("users")
@@ -33,6 +34,51 @@ export const UserRepository = {
     return data
   },
 
+  async findAllWithWorkTrackingAndDepartment(tenantId: string): Promise<UserWithWorkTrackingAndDepartment[]> {
+    const { data, error } = await supabaseAdmin
+      .from("users")
+      .select(`
+        id,
+        name,
+        lastname,
+        phone_number,
+        created_at,
+        is_active,
+        date_of_birth,
+        email,
+        work_tracking!work_tracking_user_id_fkey (
+          department_id,
+          department:departments (
+            name
+          ),
+          position_name
+        )
+      `)
+      .eq("tenant_id", tenantId)
+
+    if (error) throw new Error(error.message)
+
+    return (data ?? []).map((u) => {
+      const wt = u.work_tracking?.[0]
+      const dept = wt?.department?.[0]
+
+      return {
+        id: u.id,
+        name: u.name,
+        lastname: u.lastname,
+        phone_number: u.phone_number,
+        created_at: u.created_at,
+        is_active: u.is_active,
+        date_of_birth: u.date_of_birth,
+        email: u.email,
+        department_id: wt?.department_id ?? null,
+        department_name: dept?.name ?? null,
+        position_name: wt?.position_name ?? null,
+      }
+    })
+  },
+
+  // POST
   async create(payload: CreateUserDto): Promise<User> {
     const { data, error } = await supabaseAdmin
       .from("users")
@@ -53,6 +99,7 @@ export const UserRepository = {
     return data
   },
 
+  // PUT
   async update(id: string, tenantId: string, payload: UpdateUserDto): Promise<User> {
     const { data, error } = await supabaseAdmin
       .from("users")
@@ -65,6 +112,7 @@ export const UserRepository = {
     return data
   },
 
+  // DELETE
   async delete(id: string, tenantId: string): Promise<void> {
     const { error } = await supabaseAdmin
       .from("users")
