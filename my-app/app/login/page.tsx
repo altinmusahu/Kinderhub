@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { FirstLoginModal } from "@/app/components/dashboard/FirstLoginModal"
 
 function LoginForm() {
@@ -133,6 +134,28 @@ function LoginForm() {
               {loading ? "Signing in…" : "Sign in"}
             </button>
           </form>
+
+          <div
+            style={{
+              textAlign: "center",
+              marginTop: 20,
+              fontSize: 13,
+              color: "var(--kh-ink-400, #9A9187)",
+            }}
+          >
+            Don't have an account?{" "}
+            <Link
+              href="/signup"
+              style={{
+                color: "#E8866A",
+                textDecoration: "none",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Sign up
+            </Link>
+          </div>
         </div>
       </div>
     </>
