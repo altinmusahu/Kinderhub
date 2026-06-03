@@ -30,9 +30,9 @@ export default async function SubscribePage({ searchParams }: Props) {
           Fill in your organization details to get started.
         </p>
         <SubscribeForm
-          planId={plan.Id}
+          planId={plan.id}
           planName={plan.Name}
-          yearlyPrice={plan.YearlyPrice}
+          yearlyPrice={plan.yearly_price}
         />
       </div>
     </div>

@@ -10,10 +10,9 @@ type PlanTranslations = typeof import("@/messages/en.json")["pricingSection"]["p
 
 export default async function PricingSection({ t }: PricingProps) {
   const rawPlans = await SubscriptionPlanService.getAll()
+  console.log(rawPlans)
   
   const activePlans = rawPlans
-    .filter((p) => p.IsActive)
-    .sort((a, b) => a.YearlyPrice - b.YearlyPrice)
 
   const planTranslations = t.plans as unknown as Record<string, PlanTranslations[keyof PlanTranslations]>
   const midIndex = Math.floor(activePlans.length / 2)
@@ -33,12 +32,12 @@ export default async function PricingSection({ t }: PricingProps) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:items-center">
             {activePlans.map((plan, i) => {
-              const planT = planTranslations[plan.Code.toLowerCase()]
+              const planT = planTranslations[plan.code]
               const highlight = i === midIndex
 
               return (
                 <div
-                  key={plan.Id}
+                  key={plan.id}
                   className={`relative rounded-2xl border p-7 sm:p-8 flex flex-col ${
                     highlight
                       ? "bg-indigo-600 border-indigo-600 shadow-xl md:scale-[1.04]"
@@ -60,7 +59,7 @@ export default async function PricingSection({ t }: PricingProps) {
                     </p>
                     <div className="flex items-end gap-1">
                       <span className={`text-4xl font-extrabold ${highlight ? "text-white" : "text-gray-900"}`}>
-                        ${plan.YearlyPrice}
+                        ${plan.yearly_price.toFixed(2)}
                       </span>
                       <span className={`text-sm mb-1 ${highlight ? "text-indigo-200" : "text-gray-400"}`}>
                         / {t.perYear}
@@ -78,7 +77,7 @@ export default async function PricingSection({ t }: PricingProps) {
                   </ul>
 
                   <Link
-                    href={`/subscribe?planId=${plan.Id}`}
+                    href={`/subscribe?planId=${plan.id}`}
                     className={`block text-center font-semibold py-3 rounded-xl transition-colors ${
                       highlight
                         ? "bg-white text-indigo-600 hover:bg-indigo-50"

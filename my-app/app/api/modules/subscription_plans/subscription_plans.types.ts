@@ -1,16 +1,16 @@
 export type SubscriptionPlan = {
-  Id: string
-  Code: string
+  id: string
+  code: string
   Name: string
-  YearlyPrice: number
-  IsActive: boolean
+  yearly_price: number
+  isActive: boolean
 }
 
 export type CreateSubscriptionPlanDto = {
-  Code: string
+  code: string
   Name: string
-  YearlyPrice: number
-  IsActive: boolean
+  yearly_price: number
+  isActive: boolean
 }
 
 export type UpdateSubscriptionPlanDto = Partial<CreateSubscriptionPlanDto>
