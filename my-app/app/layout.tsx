@@ -28,7 +28,14 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "Kinderhub",
-  description: "Server-side Next.js backend starter with App Router and API routes.",
+    icons: {
+    icon: [
+      {
+        url: '/app-icon.svg',
+        type: 'image/svg+xml',
+      },
+    ]
+  }
 }
 
 export default function RootLayout({
