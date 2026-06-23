@@ -1,169 +1,138 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import { useState, useEffect, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogClose,
-} from "@/components/ui/dialog"
+import { Modal, MField, MSection, MInput, MSelect, MToggle, MSegmented, MGrid, MBtn } from "./Modal"
+
+type Dept = { id: string; name: string }
 
 export default function AddStaffModal({ triggerLabel = "+ Add staff" }: { triggerLabel?: string }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [saving, startSave] = useTransition()
+  const [error, setError] = useState("")
+  const [departments, setDepartments] = useState<Dept[]>([])
+  const [sendInvite, setSendInvite] = useState(true)
 
-  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([])
-  const [loadingDepartments, setLoadingDepartments] = useState(true)
   const [form, setForm] = useState({
-    name: "",
-    lastname: "",
-    email: "",
-    phone_number: "",
-    personal_number: "",
-    role: "",
-    department_id: "",
-    position_name: "",
-    is_active: true,
-    date_of_birth: "",
+    name: "", lastname: "", email: "", phone_number: "",
+    personal_number: "", role: "", department_id: "", position_name: "",
+    is_active: true, date_of_birth: "",
   })
 
-  function onChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
-    const { name, value, type, checked } = e.target as HTMLInputElement
-    setForm((f) => ({ ...f, [name]: type === "checkbox" ? checked : value }))
-  }
-
   useEffect(() => {
-    setLoadingDepartments(true)
+    if (!open) return
     fetch("/api/departments")
-      .then(async (res) => {
-        if (!res.ok) throw new Error("Failed to load departments")
-        return res.json()
-      })
-      .then((data) => {
-        setDepartments(
-          Array.isArray(data)
-            ? data.map((dept: any) => ({ id: dept.id, name: dept.name }))
-            : []
-        )
-      })
+      .then(r => r.json())
+      .then(d => setDepartments(Array.isArray(d) ? d : []))
       .catch(() => setDepartments([]))
-      .finally(() => setLoadingDepartments(false))
-  }, [])
+  }, [open])
 
-  async function handleSubmit(e: React.FormEvent) {
+  function set(k: string, v: string | boolean) { setForm(f => ({ ...f, [k]: v })) }
+
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError(null)
-    setLoading(true)
-    try {
-      const body = {
-        name: form.name,
-        lastname: form.lastname,
-        email: form.email,
-        phone_number: form.phone_number,
-        personal_number: form.personal_number,
-        role: form.role,
-        is_active: form.is_active,
-        date_of_birth: form.date_of_birth,
-        department_id: form.department_id || undefined,
-        position_name: form.position_name || undefined,
-      }
-
-      const res = await fetch(`/api/users`, {
+    setError("")
+    startSave(async () => {
+      const res = await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...form, department_id: form.department_id || null, position_name: form.position_name || null }),
       })
-
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({ error: "Create failed" }))
-        throw new Error(json?.message || json?.error || "Create failed")
+      if (res.ok) {
+        setOpen(false)
+        setForm({ name: "", lastname: "", email: "", phone_number: "", personal_number: "", role: "", department_id: "", position_name: "", is_active: true, date_of_birth: "" })
+        router.refresh()
+      } else {
+        const j = await res.json().catch(() => ({}))
+        setError(j?.error || j?.message || "Failed to create employee.")
       }
-
-      // success: close modal and refresh server components
-      setOpen(false)
-      router.refresh()
-    } catch (err: any) {
-      setError(err?.message || String(err))
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="default">{triggerLabel}</Button>
-      </DialogTrigger>
+    <>
+      <button className="kh-btn kh-btn--primary" onClick={() => setOpen(true)}>{triggerLabel}</button>
 
-      <DialogContent>
-        <div className="kh-modal-content">
-          <DialogHeader>
-            <DialogTitle className="kh-modal-title">Add staff</DialogTitle>
-            <DialogDescription className="kh-modal-description">Create a new staff member and assign them to your team.</DialogDescription>
-          </DialogHeader>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Add employee"
+        sub="Create a staff profile, place them in a department, and optionally invite them."
+        icon="👤"
+        iconBg="#EAF3EC"
+        iconColor="#3A7D44"
+        width={640}
+        footer={
+          <>
+            <MBtn variant="ghost" onClick={() => setOpen(false)}>Cancel</MBtn>
+            <MBtn variant="accent" type="submit" disabled={saving}
+              onClick={() => (document.getElementById("add-staff-form") as HTMLFormElement)?.requestSubmit()}>
+              {saving ? "Creating…" : "Create employee"}
+            </MBtn>
+          </>
+        }
+      >
+        <form id="add-staff-form" onSubmit={handleSubmit} style={{ padding: "18px 22px 6px" }}>
+          <MSection idx="01" title="Personal details">
+            <MGrid>
+              <MField label="First name" required>
+                <MInput value={form.name} onChange={e => set("name", e.target.value)} placeholder="First name" required autoFocus />
+              </MField>
+              <MField label="Last name" required>
+                <MInput value={form.lastname} onChange={e => set("lastname", e.target.value)} placeholder="Last name" required />
+              </MField>
+              <MField label="Work email" required colSpan={2} hint="Becomes their login.">
+                <MInput type="email" value={form.email} onChange={e => set("email", e.target.value)} placeholder="name@kinderhub.co" required />
+              </MField>
+              <MField label="Phone">
+                <MInput value={form.phone_number} onChange={e => set("phone_number", e.target.value)} placeholder="+1 (415) 555-0000" />
+              </MField>
+              <MField label="Date of birth">
+                <MInput type="date" value={form.date_of_birth} onChange={e => set("date_of_birth", e.target.value)} required />
+              </MField>
+              <MField label="Personal / ID number" optional colSpan={2}>
+                <MInput value={form.personal_number} onChange={e => set("personal_number", e.target.value)} placeholder="National ID or SSN" />
+              </MField>
+            </MGrid>
+          </MSection>
 
-          <form onSubmit={handleSubmit} className="kh-modal-form">
-            <div className="kh-field-grid">
-              <input name="name" placeholder="First name" value={form.name} onChange={onChange} className="kh-input" required />
-              <input name="lastname" placeholder="Last name" value={form.lastname} onChange={onChange} className="kh-input" required />
-            </div>
+          <MSection idx="02" title="Role & placement">
+            <MGrid>
+              <MField label="Role" required>
+                <MSelect value={form.role} onChange={e => set("role", e.target.value)} required>
+                  <option value="">Select role</option>
+                  <option>Admin</option>
+                  <option>Director</option>
+                  <option>Lead teacher</option>
+                  <option>Assistant</option>
+                  <option>Staff</option>
+                </MSelect>
+              </MField>
+              <MField label="Department">
+                <MSelect value={form.department_id} onChange={e => set("department_id", e.target.value)}>
+                  <option value="">Select department</option>
+                  {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </MSelect>
+              </MField>
+              <MField label="Position title" optional colSpan={2} hint='Free-text label shown on schedules, e.g. "Room assistant".'>
+                <MInput value={form.position_name} onChange={e => set("position_name", e.target.value)} placeholder="Room assistant · Sunbeam" />
+              </MField>
+            </MGrid>
+          </MSection>
 
-            <div className="kh-field-grid">
-              <input name="email" type="email" placeholder="Email" value={form.email} onChange={onChange} className="kh-input" required />
-              <input name="phone_number" placeholder="Phone" value={form.phone_number} onChange={onChange} className="kh-input" />
-            </div>
+          <MSection idx="03" title="Access">
+            <MToggle
+              on={sendInvite}
+              onChange={setSendInvite}
+              title="Send portal invite"
+              desc="Emails a first-login link so they can set their own password."
+            />
+          </MSection>
 
-            <div className="kh-field-grid">
-              <input name="personal_number" placeholder="Personal number" value={form.personal_number} onChange={onChange} className="kh-input" />
-              <input name="date_of_birth" type="date" placeholder="Date of birth" value={form.date_of_birth} onChange={onChange} className="kh-input" />
-            </div>
-
-            <div className="kh-field-grid">
-              <select name="department_id" value={form.department_id} onChange={onChange} className="kh-input">
-                <option value="">Select department</option>
-                {departments.map((dept) => (
-                  <option key={dept.id} value={dept.id}>
-                    {dept.name}
-                  </option>
-                ))}
-              </select>
-              <input name="position_name" placeholder="Position" value={form.position_name} onChange={onChange} className="kh-input" />
-            </div>
-
-            <div className="kh-toggle-row">
-              <select name="role" value={form.role} onChange={onChange} className="kh-input" required>
-                <option value="">Select role</option>
-                <option value="Admin">Admin</option>
-                <option value="Teacher">Teacher</option>
-                <option value="Staff">Staff</option>
-              </select>
-
-              <label className="flex items-center gap-3 text-sm text-slate-700">
-                <input type="checkbox" name="is_active" checked={form.is_active} onChange={onChange} className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-400" />
-                Active
-              </label>
-            </div>
-
-            {loadingDepartments && <div className="text-sm text-slate-500">Loading departments...</div>}
-
-            {error && <div className="text-sm text-destructive">{error}</div>}
-
-            <div className="kh-modal-footer">
-              <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </DialogClose>
-              <Button type="submit" disabled={loading}>{loading ? "Creating..." : "Create"}</Button>
-            </div>
-          </form>
-        </div>
-      </DialogContent>
-    </Dialog>
+          {error && <p style={{ fontSize: 12.5, color: "#D2592F", marginTop: 8 }}>{error}</p>}
+        </form>
+      </Modal>
+    </>
   )
 }

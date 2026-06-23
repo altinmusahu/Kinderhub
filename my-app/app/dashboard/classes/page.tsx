@@ -1,4 +1,7 @@
+"use client"
+
 import React from "react"
+import AddClassModal from "@/components/ui/AddClassModal"
 
 const classes = [
   {
@@ -134,7 +137,7 @@ export default function ClassesPage() {
         </nav>
         <div className="kh-topbar-right">
           <button className="kh-btn">📅 Week view</button>
-          <button className="kh-btn kh-btn--primary">+ New class</button>
+          <AddClassModal />
         </div>
       </header>
 

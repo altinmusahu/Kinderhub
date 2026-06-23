@@ -33,9 +33,8 @@ function fmt(t: string) {
 }
 
 function fileName(url: string) {
-  const parts = url.split("/")
-  const raw = parts[parts.length - 1]
-  // strip timestamp prefix "1234567890_filename.pdf" → "filename.pdf"
+  const withoutQuery = url.split("?")[0]
+  const raw = withoutQuery.split("/").pop() ?? ""
   return raw.replace(/^\d+_/, "")
 }
 

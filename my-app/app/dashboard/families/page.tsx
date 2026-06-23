@@ -1,5 +1,8 @@
+"use client"
+
 import React from "react"
 import { DataTable, Column } from "@/app/components/dashboard/DataTable"
+import AddFamilyModal from "@/components/ui/AddFamilyModal"
 
 const families = [
   { id: "AO",  name: "Okafor-Lind",   parent: "Amara Okafor",      status: "Active",   plan: "Full-time",       kids: 2, room: "Sunbeam · Bluebird",  balance: "$0.00",    since: "Sep 2023", balanceRed: false, checked: true  },
@@ -119,7 +122,7 @@ export default function FamiliesPage() {
         <div className="kh-topbar-right">
           <button className="kh-btn">≡ Filter</button>
           <button className="kh-btn">⊡</button>
-          <button className="kh-btn kh-btn--primary">+ Add family</button>
+          <AddFamilyModal />
         </div>
       </header>
 
