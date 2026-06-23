@@ -10,7 +10,6 @@ type PlanTranslations = typeof import("@/messages/en.json")["pricingSection"]["p
 
 export default async function PricingSection({ t }: PricingProps) {
   const rawPlans = await SubscriptionPlanService.getAll()
-  console.log(rawPlans)
   
   const activePlans = rawPlans
 

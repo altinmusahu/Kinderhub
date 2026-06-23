@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
+import Link from "next/link"
 import { DataTable, Column } from "@/app/components/dashboard/DataTable"
-import ViewUserModal from "@/components/ui/ViewUserModal"
 import AddStaffModal from "@/components/ui/AddStaffModal"
 import { UserService } from "@/app/api/modules/user/user.service"
 import { verifyToken, cookieName } from "@/lib/auth"
@@ -76,9 +76,15 @@ export default async function StaffPage() {
       key: "actions",
       header: "",
       cell: (s) => (
-        <div style={{ display: "flex", gap: 8 }}>
-          <ViewUserModal userId={s.id} />
-        </div>
+        <Link
+          href={`/dashboard/staff/${s.id}`}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 4,
+            fontSize: 12, color: "var(--kh-peach)", textDecoration: "none", fontWeight: 500,
+          }}
+        >
+          Open →
+        </Link>
       ),
     }
   ]
