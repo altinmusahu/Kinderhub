@@ -37,6 +37,7 @@ export const UserRepository = {
       .maybeSingle()
 
     if (error) throw new Error(error.message)
+      
     if (!data) return null
 
     // Pick the active work_tracking record (end_date is null), fall back to most recent
