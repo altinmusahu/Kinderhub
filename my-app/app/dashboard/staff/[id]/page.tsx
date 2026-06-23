@@ -21,21 +21,17 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
   try {
     user = await UserService.getById(id, tenant_id)
   } catch {
-    notFound()
+    return notFound()
   }
 
-  const color = avatarColor(user.id)
-  const userInitials = initials(user.name, user.lastname)
-  const fullName = `${user.name} ${user.lastname}`
-  const joinedDate = new Date(user.created_at).toLocaleDateString("en-US", {
+  if (!user) return notFound()
+
+  const color = avatarColor(user.user.id)
+  const userInitials = initials(user.user.name, user.user.lastname)
+  const fullName = `${user.user.name} ${user.user.lastname}`
+  const joinedDate = new Date(user.user.created_at).toLocaleDateString("en-US", {
     year: "numeric", month: "long", day: "numeric",
   })
-  const dob = user.date_of_birth
-    ? new Date(user.date_of_birth).toLocaleDateString("en-US", {
-        year: "numeric", month: "long", day: "numeric",
-      })
-    : "—"
-
   return (
     <div className="kh-page">
       {/* Topbar */}
@@ -79,7 +75,7 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
               <span style={{
                 position: "absolute", bottom: 2, right: 2,
                 width: 16, height: 16, borderRadius: "50%",
-                background: user.is_active ? "var(--kh-sage)" : "var(--kh-ink-300)",
+                background: user.user.is_active ? "var(--kh-sage)" : "var(--kh-ink-300)",
                 border: "2.5px solid var(--kh-surface)",
               }} />
             </div>
@@ -89,31 +85,36 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <h1 className="kh-h1" style={{ margin: 0 }}>{fullName}</h1>
                 <span className="kh-status-badge" style={{
-                  background: user.is_active ? "#E8F5EC" : "#F0EDE8",
-                  color: user.is_active ? "#3A8C50" : "#7A7368",
+                  background: user.user.is_active ? "#E8F5EC" : "#F0EDE8",
+                  color: user.user.is_active ? "#3A8C50" : "#7A7368",
                 }}>
-                  <span className="kh-pill-dot" style={{ background: user.is_active ? "#3A8C50" : "#9E968A" }} />
-                  {user.is_active ? "Active" : "Inactive"}
+                  <span className="kh-pill-dot" style={{ background: user.user.is_active ? "#3A8C50" : "#9E968A" }} />
+                  {user.user.is_active ? "Active" : "Inactive"}
                 </span>
               </div>
               <div style={{ fontSize: 13.5, color: "var(--kh-ink-600)", marginTop: 3 }}>
-                {user.role || "Staff Member"}
+                {user.user.role || "Staff Member"}
               </div>
               <div style={{ display: "flex", gap: 18, marginTop: 10, fontSize: 12, color: "var(--kh-ink-500)", flexWrap: "wrap" }}>
-                {user.email && (
+                {user.position_name && (
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M1 4l7 5 7-5"/></svg>
-                    {user.email}
+                    {user.position_name}
                   </span>
                 )}
-                {user.phone_number && (
+                {user.user.email && (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M1 4l7 5 7-5"/></svg>
+                    {user.user.email}
+                  </span>
+                )}
+                {user.user.phone_number && (
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: "var(--kh-font-mono)" }}>
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 2h3l1.5 3.5-1.5 1a8 8 0 004 4l1-1.5L14.5 10V13c0 .5-.5 1-1 1A11 11 0 012 3c0-.5.5-1 1-1z"/></svg>
-                    {user.phone_number}
+                    {user.user.phone_number}
                   </span>
                 )}
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: "var(--kh-font-mono)", fontSize: 11 }}>
-                  ID: {user.id.slice(0, 8).toUpperCase()}
+                  ID: {user.user.id.slice(0, 8).toUpperCase()}
                 </span>
               </div>
             </div>
@@ -128,15 +129,15 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
               <div>
                 <div style={{ fontSize: 10, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)", textTransform: "uppercase", letterSpacing: ".06em" }}>Joined</div>
                 <div style={{ fontFamily: "var(--kh-font-serif)", fontSize: 18, color: "var(--kh-ink-900)", marginTop: 4 }}>
-                  {new Date(user.created_at).getFullYear()}
+                  {new Date(user.user.created_at).getFullYear()}
                 </div>
                 <div style={{ fontSize: 11, color: "var(--kh-ink-400)" }}>since {joinedDate}</div>
               </div>
               <div style={{ width: 1, background: "var(--kh-border)" }} />
               <div>
                 <div style={{ fontSize: 10, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)", textTransform: "uppercase", letterSpacing: ".06em" }}>Status</div>
-                <div style={{ fontFamily: "var(--kh-font-serif)", fontSize: 18, color: user.is_active ? "var(--kh-sage)" : "var(--kh-ink-400)", marginTop: 4 }}>
-                  {user.is_active ? "Active" : "Inactive"}
+                <div style={{ fontFamily: "var(--kh-font-serif)", fontSize: 18, color: user.user.is_active ? "var(--kh-sage)" : "var(--kh-ink-400)", marginTop: 4 }}>
+                  {user.user.is_active ? "Active" : "Inactive"}
                 </div>
                 <div style={{ fontSize: 11, color: "var(--kh-ink-400)" }}>employment</div>
               </div>
@@ -144,9 +145,9 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
               <div>
                 <div style={{ fontSize: 10, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)", textTransform: "uppercase", letterSpacing: ".06em" }}>Role</div>
                 <div style={{ fontFamily: "var(--kh-font-serif)", fontSize: 18, color: "var(--kh-ink-900)", marginTop: 4 }}>
-                  {user.role ? user.role.slice(0, 1).toUpperCase() : "—"}
+                  {user.user.role ? user.user.role.slice(0, 1).toUpperCase() : "—"}
                 </div>
-                <div style={{ fontSize: 11, color: "var(--kh-ink-400)" }}>{user.role || "not set"}</div>
+                <div style={{ fontSize: 11, color: "var(--kh-ink-400)" }}>{user.user.role || "not set"}</div>
               </div>
             </div>
           </div>
@@ -178,10 +179,10 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
               </div>
               <div style={{ padding: "4px 18px 14px" }}>
                 <InfoRow label="Full name" value={fullName} />
-                <InfoRow label="Email" value={user.email} mono />
-                <InfoRow label="Phone" value={user.phone_number || "—"} mono />
-                <InfoRow label="Personal No." value={user.personal_number || "—"} mono />
-                <InfoRow label="Date of birth" value={dob} mono />
+                <InfoRow label="Email" value={user.user.email} mono />
+                <InfoRow label="Phone" value={user.user.phone_number || "—"} mono />
+                <InfoRow label="Personal No." value={user.user.personal_number || "—"} mono />
+                <InfoRow label="Date of birth" value={user.user.date_of_birth} mono />
               </div>
             </div>
 
@@ -191,10 +192,10 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
                 <span className="kh-card-title">Account Details</span>
               </div>
               <div style={{ padding: "4px 18px 14px" }}>
-                <InfoRow label="Employee ID" value={user.id} mono />
-                <InfoRow label="Role" value={user.role || "—"} />
-                <InfoRow label="Joined" value={joinedDate} mono />
-                <InfoRow label="First login" value={user.is_first_login_executed ? "Completed" : "Pending"} />
+                <InfoRow label="Employee ID" value={user.user.id} mono />
+                <InfoRow label="Role" value={user.user.role || "—"} />
+                <InfoRow label="Joined" value={user.user.created_at} mono />
+                <InfoRow label="First login" value={user.user.is_first_login_executed ? "Completed" : "Pending"} />
               </div>
             </div>
           </div>
@@ -208,11 +209,14 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
                 <span className="kh-card-title">Employment</span>
               </div>
               <div style={{ padding: "4px 18px 14px" }}>
-                <InfoRow label="Status" value={user.is_active ? "Active" : "Inactive"} />
-                <InfoRow label="Tenant ID" value={user.tenant_id} mono />
+                {/* <InfoRow label="Status" value={user.user.is_active ? "Active" : "Inactive"} /> */}
+                <InfoRow label="Company name" value={user.tenant_name ? user.tenant_name : ""} mono />
+                <InfoRow label="Department name" value={user.department_name ? user.department_name : ""} mono />
+                <InfoRow label="Position name" value={user.position_name ? user.position_name : ""} mono />
+                <InfoRow label="Start date" value={user.start_date ? user.start_date : ""} mono />
+                <InfoRow label="Responsible user name" value={user.responsible_user_name ? user.responsible_user_name : ""} mono />
               </div>
             </div>
-
           </div>
         </div>
       </div>

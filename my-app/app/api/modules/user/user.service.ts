@@ -3,7 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin"
 import { UserRepository } from "./user.repository"
 import { WorkTrackingService } from "../work_tracking/work_tracking.service"
 import type { CreateUserInput, UpdateUserInput } from "./user.validation"
-import type { User, UserWithWorkTrackingAndDepartment } from "./user.types"
+import type { User, UserById, UserWithWorkTrackingAndDepartment } from "./user.types"
 
 const TENANT_ID = "8c0785e5-83cc-4fa3-9957-75ae61b50d37"
 
@@ -17,11 +17,10 @@ export const UserService = {
     return await UserRepository.findAllWithWorkTrackingAndDepartment(tenantId)
   },
 
-  async getById(id: string, tenantId: string): Promise<Omit<User, "password_hash">> {
+  async getById(id: string, tenantId: string): Promise<UserById> {
     const user = await UserRepository.findById(id, tenantId)
     if (!user) throw new Error("User not found")
-    const { password_hash, ...rest } = user
-    return rest
+    return user
   },
 
   async findByEmail(email: string): Promise<Omit<User, "password_hash"> | null> {

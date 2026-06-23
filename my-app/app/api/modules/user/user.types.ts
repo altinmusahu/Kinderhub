@@ -14,6 +14,16 @@ export type User = {
   is_first_login_executed: boolean
 }
 
+export type UserById = {
+  user: Omit<User, "password_hash">
+  position_name: string | null
+  tenant_name: string | null
+  department_name: string | null
+  responsible_user_id: string | null
+  responsible_user_name: string | null
+  start_date: string | null
+}
+
 export type UserWithWorkTrackingAndDepartment = {
   id: string
   name: string

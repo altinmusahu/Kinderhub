@@ -1,5 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase-admin"
-import type { User, CreateUserDto, UpdateUserDto, UserWithWorkTrackingAndDepartment } from "./user.types"
+import type { User, CreateUserDto, UpdateUserDto, UserWithWorkTrackingAndDepartment, UserById } from "./user.types"
 
 export const UserRepository = {
   // GET
@@ -13,15 +13,57 @@ export const UserRepository = {
     return data
   },
 
-  async findById(id: string, tenantId: string): Promise<User | null> {
+  async findById(id: string, tenantId: string): Promise<UserById | null> {
     const { data, error } = await supabaseAdmin
       .from("users")
-      .select("*")
+      .select(`
+        *,
+        tenants (
+          name
+        ),
+        work_tracking!work_tracking_user_id_fkey (
+          position_name,
+          end_date,
+          department_id,
+          responsible_user_id,
+          start_date,
+          department:departments (
+            name
+          )
+        )
+      `)
       .eq("id", id)
       .eq("tenant_id", tenantId)
       .maybeSingle()
+
     if (error) throw new Error(error.message)
-    return data
+    if (!data) return null
+
+    // Pick the active work_tracking record (end_date is null), fall back to most recent
+    const activeWt = data.work_tracking?.find((wt: any) => wt.end_date === null) ?? data.work_tracking?.[0] ?? null
+
+    return {
+      user: {
+        id: data.id,
+        name: data.name,
+        lastname: data.lastname,
+        phone_number: data.phone_number,
+        personal_number: data.personal_number,
+        role: data.role,
+        created_at: data.created_at,
+        is_active: data.is_active,
+        date_of_birth: data.date_of_birth,
+        tenant_id: data.tenant_id,
+        email: data.email,
+        is_first_login_executed: data.is_first_login_executed,
+      },
+      position_name: activeWt?.position_name ?? null,
+      tenant_name: data.tenants?.name ?? null,
+      department_name: activeWt?.department?.name ?? null,
+      responsible_user_id: activeWt?.responsible_user_id ?? null,
+      responsible_user_name: null,
+      start_date: activeWt?.start_date ?? null,
+    }
   },
 
   async findByEmail(email: string): Promise<User | null> {

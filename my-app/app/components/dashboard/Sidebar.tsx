@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -15,6 +14,30 @@ import {
   Settings,
   Search,
 } from "lucide-react"
+
+// Brand arch mark — arched doorway with rising sun, from Kinderhub Brand design
+function ArchMarkSVG({ size = 32 }: { size?: number }) {
+  const W = 120, H = 132
+  const outer = "M10 124 L10 62 A50 50 0 0 1 110 62 L110 124 Z"
+  const inner = "M28 124 L28 62 A32 32 0 0 1 92 62 L92 124 Z"
+  const sun   = "M36 124 A24 24 0 0 1 84 124 Z"
+  const sunRays = [
+    "M60 84 L60 74", "M44 90 L37 83", "M76 90 L83 83",
+    "M34 106 L25 104", "M86 106 L95 104",
+  ]
+  return (
+    <svg width={size} height={size * H / W} viewBox={`0 0 ${W} ${H}`} fill="none" aria-label="Kinderhub" style={{ flexShrink: 0 }}>
+      <path d={outer} fill="var(--kh-peach)" />
+      <path d={inner} fill="var(--kh-sky)" />
+      <path d={sun} fill="var(--kh-marigold)" style={{ mixBlendMode: "multiply" }} />
+      {sunRays.map((d, i) => <path key={i} d={d} stroke="var(--kh-peach-d)" strokeWidth={5} strokeLinecap="round" opacity="0.65" />)}
+      <circle cx="44" cy="50" r="5" fill="var(--kh-sage-d)" />
+      <circle cx="60" cy="42" r="6" fill="var(--kh-pink)" />
+      <circle cx="76" cy="50" r="5" fill="var(--kh-paper)" />
+      <path d={inner} fill="none" stroke="var(--kh-peach-d)" strokeWidth="2.5" opacity="0.35" />
+    </svg>
+  )
+}
 
 const WORKSPACE_ITEMS = [
   { href: "/dashboard",          icon: LayoutDashboard, label: "Overview",  badge: null },
@@ -38,13 +61,10 @@ export default function Sidebar() {
     <aside className="kh-sidebar">
       {/* Logo */}
       <div className="kh-sidebar-logo">
-        <div className="kh-logo-mark">
-          <span>K</span>
-        </div>
-        <div className="kh-logo-text">
-          <span className="kh-logo-name">Kinderhub</span>
-          <span className="kh-logo-version">V 2</span>
-        </div>
+        <ArchMarkSVG size={32} />
+        <span className="kh-logo-wordmark">
+          kinder<em>hub</em>
+        </span>
       </div>
 
       {/* Search */}
