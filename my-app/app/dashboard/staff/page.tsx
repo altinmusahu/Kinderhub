@@ -33,7 +33,7 @@ export default async function StaffPage() {
   const columns: Column<StaffRow>[] = [
     {
       key: "member",
-      header: "Member",
+      header: "Employee",
       cell: (s) => (
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span className="kh-avatar" style={{ background: s.color + "22", color: s.color }}>{s.initials}</span>
@@ -48,7 +48,7 @@ export default async function StaffPage() {
       cell: (s) => s.position_name || "Not specified",
     },
     {
-      key: "dept",
+      key: "department_name",
       header: "Department",
       cellStyle: { fontSize: 13, color: "var(--kh-ink-500)" },
       cell: (s) => s.dept,

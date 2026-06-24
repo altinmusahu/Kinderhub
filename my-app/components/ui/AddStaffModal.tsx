@@ -1,17 +1,15 @@
 "use client"
 
-import { useState, useEffect, useTransition } from "react"
+import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { Modal, MField, MSection, MInput, MSelect, MToggle, MSegmented, MGrid, MBtn } from "./Modal"
-
-type Dept = { id: string; name: string }
+import { Modal, MField, MSection, MInput, MSelect, MToggle, MGrid, MBtn } from "./Modal"
+import { DepartmentSelect } from "./DepartmentSelect"
 
 export default function AddStaffModal({ triggerLabel = "+ Add staff" }: { triggerLabel?: string }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [saving, startSave] = useTransition()
   const [error, setError] = useState("")
-  const [departments, setDepartments] = useState<Dept[]>([])
   const [sendInvite, setSendInvite] = useState(true)
 
   const [form, setForm] = useState({
@@ -19,14 +17,6 @@ export default function AddStaffModal({ triggerLabel = "+ Add staff" }: { trigge
     personal_number: "", role: "", department_id: "", position_name: "",
     is_active: true, date_of_birth: "",
   })
-
-  useEffect(() => {
-    if (!open) return
-    fetch("/api/departments")
-      .then(r => r.json())
-      .then(d => setDepartments(Array.isArray(d) ? d : []))
-      .catch(() => setDepartments([]))
-  }, [open])
 
   function set(k: string, v: string | boolean) { setForm(f => ({ ...f, [k]: v })) }
 
@@ -110,10 +100,7 @@ export default function AddStaffModal({ triggerLabel = "+ Add staff" }: { trigge
                 </MSelect>
               </MField>
               <MField label="Department">
-                <MSelect value={form.department_id} onChange={e => set("department_id", e.target.value)}>
-                  <option value="">Select department</option>
-                  {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                </MSelect>
+                <DepartmentSelect value={form.department_id} onChange={v => set("department_id", v)} />
               </MField>
               <MField label="Position title" optional colSpan={2} hint='Free-text label shown on schedules, e.g. "Room assistant".'>
                 <MInput value={form.position_name} onChange={e => set("position_name", e.target.value)} placeholder="Room assistant · Sunbeam" />

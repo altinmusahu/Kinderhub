@@ -1,225 +1,376 @@
-# Project Overview
+# Project Overview — Kinderhub CRM
 
 ## Summary
 
-This repository is a Next.js application built with the App Router (`app/`) and a server-side API layer. It is structured as a backend-focused starter project with tenant-aware authentication, Supabase integration, and modular service/repository patterns for entities like users, departments, locations, subscription plans, and work tracking.
+Kinderhub is a multi-tenant CRM dashboard for childcare management built with Next.js App Router, React 19, TypeScript, and Supabase. It features a custom design system (Kinderhub Design System, `kh-*` classes), JWT-based authentication, Supabase Storage for documents, and a modular service/repository architecture for backend logic.
 
-The app includes a simple authentication flow, tenant scoping, and server-side API routes designed around Next.js `app/api` route handlers.
+---
 
 ## Primary Technologies
 
-- Next.js 16.2.6 (App Router)
-- React 19.2.4
-- TypeScript
-- Tailwind CSS v4
-- Supabase JavaScript client (`@supabase/supabase-js` and `@supabase/ssr`)
-- Supabase Admin client for server-side user management
-- `bcryptjs` for password hashing
-- `jsonwebtoken`-style JWT support via Web Crypto API custom implementation
-- `zod` for request validation
-- `pg` types, likely for PostgreSQL compatibility with Supabase
-- `@vercel/analytics` for analytics support
-- UI libraries: `lucide-react`, `class-variance-authority`, `clsx`, `radix-ui`, `tailwind-merge`, `tw-animate-css`
-- 3D rendering support with `three`, `@react-three/fiber`, and `@react-three/drei`
+- **Next.js** (App Router, server components, route handlers)
+- **React 19.2.4** with `useTransition`, `useEffect`, `useState`
+- **TypeScript** throughout
+- **Tailwind CSS v4** + custom CSS design system (`globals.css`)
+- **Supabase** (`@supabase/supabase-js`, `@supabase/ssr`)
+  - Admin client for server-side CRUD (bypasses RLS)
+  - Supabase Auth for user accounts
+  - Supabase Storage (private `documents` bucket, signed URLs)
+- **bcryptjs** for password hashing
+- **Custom JWT** via Web Crypto API (HMAC-SHA256, no external JWT lib)
+- **Zod** for API request validation
+- **next/font/google**: Geist, Geist Mono, Instrument Serif, JetBrains Mono
+- `lucide-react`, `class-variance-authority`, `clsx`, `radix-ui`, `tailwind-merge`
+
+---
 
 ## Application Structure
 
-### Root files
+```
+my-app/
+├── app/
+│   ├── layout.tsx                        Root layout (fonts, metadata)
+│   ├── globals.css                       Design system tokens + component classes
+│   ├── dashboard/
+│   │   ├── layout.tsx                    Sidebar + main shell
+│   │   ├── page.tsx                      Dashboard overview (stats, rooms, activity)
+│   │   ├── staff/
+│   │   │   ├── page.tsx                  Staff directory (server, fetches DB)
+│   │   │   └── [id]/
+│   │   │       ├── page.tsx              Employee detail hero (server)
+│   │   │       ├── EmployeeTabs.tsx      Tab switcher (client)
+│   │   │       └── components/
+│   │   │           ├── types.ts          Shared types (ClassRow, DocRow, WorkTrackingRow, UserById)
+│   │   │           ├── Field.tsx         Field + SaveBar form primitives
+│   │   │           ├── PersonalCard.tsx  Editable personal info card
+│   │   │           ├── AccountCard.tsx   Read-only account details card
+│   │   │           ├── EmploymentCard.tsx Editable role/status + History button
+│   │   │           ├── WorkHistoryModal.tsx Side drawer timeline + add position form
+│   │   │           ├── ScheduleTab.tsx   Weekly schedule view (lazy-loaded)
+│   │   │           └── DocumentsTab.tsx  Document upload/view/delete (lazy-loaded)
+│   │   ├── families/page.tsx             Family list with status/balance (client, mock data)
+│   │   ├── classes/page.tsx              Class cards with enrollment/staff (client, mock data)
+│   │   ├── billing/page.tsx              Invoices + revenue chart (client, mock data)
+│   │   ├── messages/page.tsx             3-pane messaging UI (client, mock data)
+│   │   ├── documents/page.tsx            Org-wide documents table (client, mock data)
+│   │   ├── calendar/page.tsx             Week-view calendar (server, mock data)
+│   │   └── settings/page.tsx             Departments, team members, roles (server, mock data)
+│   ├── api/
+│   │   ├── auth/
+│   │   │   ├── login/route.ts            POST login → JWT cookie
+│   │   │   ├── signup/route.ts           POST signup → creates user
+│   │   │   └── logout/route.ts           POST clears cookie
+│   │   ├── users/
+│   │   │   ├── route.ts                  GET all users / POST create user
+│   │   │   └── [id]/
+│   │   │       ├── route.ts              GET / PATCH / DELETE single user
+│   │   │       ├── classes/route.ts      GET classes (lead or assistant)
+│   │   │       ├── documents/route.ts    GET / POST / DELETE documents (Supabase Storage)
+│   │   │       ├── work-tracking/route.ts GET all / POST new position (closes current)
+│   │   │       └── change-password/route.ts POST change password
+│   │   ├── departments/route.ts          GET / POST departments
+│   │   ├── departments/[id]/route.ts     GET / PUT / DELETE department
+│   │   ├── locations/route.ts            GET / POST locations
+│   │   ├── families/route.ts             GET / POST families
+│   │   ├── parents/route.ts              POST parent/guardian
+│   │   ├── kids/route.ts                 POST child record
+│   │   ├── classes/route.ts              GET / POST classes
+│   │   ├── work_tracking/route.ts        GET / POST (module-level)
+│   │   ├── tenants/route.ts              Tenant CRUD
+│   │   ├── subscription_plans/route.ts   Plan management
+│   │   └── tenant_subscriptions/route.ts Subscription management
+│   ├── modules/                          Backend domain logic
+│   │   ├── user/{service,repository,types,validation}.ts
+│   │   ├── departments/{service,repository,types,validation}.ts
+│   │   ├── locations/{service,repository,types,validation}.ts
+│   │   ├── work_tracking/{service,repository,types,validation}.ts
+│   │   ├── subscription_plans/...
+│   │   └── tenant_subscriptions/...
+│   └── components/
+│       └── dashboard/
+│           ├── Sidebar.tsx               Navigation sidebar with ArchMark logo
+│           ├── DataTable.tsx             Generic typed table component
+│           └── FirstLoginModal.tsx       First-login prompt
+├── components/
+│   └── ui/
+│       ├── Modal.tsx                     Base modal + MField/MSection/MInput/MSelect/MBtn/MGrid/MToggle
+│       ├── DepartmentSelect.tsx          useDepartments hook + DepartmentSelect + DepartmentSelectPlain
+│       ├── AddStaffModal.tsx             3-section staff creation modal
+│       ├── AddFamilyModal.tsx            4-step family wizard modal
+│       ├── AddClassModal.tsx             Class creation modal
+│       ├── ConfirmModal.tsx              Reusable destructive confirm dialog
+│       ├── helper.tsx                    avatarColor(), initials()
+│       ├── ViewUserModal.tsx             Row-level user detail shell
+│       └── (shadcn base) button, input, select, table, badge, dialog
+├── lib/
+│   ├── auth.ts                           signToken(), verifyToken(), cookieName(), cookieOptions()
+│   ├── get-tenant.ts                     getTenant() — reads + verifies JWT from cookie
+│   ├── supabase-admin.ts                 supabaseAdmin client (service role)
+│   ├── db.ts                             getUsers() / addUser() shortcuts (hardcoded tenant)
+│   └── utils.ts                          cn() Tailwind merge
+└── public/                               Static assets
+```
 
-- `package.json` - dependencies and basic scripts
-- `next.config.ts` - default Next.js configuration placeholder
-- `app/layout.tsx` - root layout using `next/font/google` for Geist fonts and global metadata
-- `app/page.tsx` - likely main landing page content (not inspected in full)
-- `app/globals.css` - global styling and Tailwind setup
+---
 
-### Pages and routes
+## Design System
 
-- `app/login/page.tsx` - login page
-- `app/signup/page.tsx` - signup page
-- `app/subscribe/page.tsx` and `SubscribeForm.tsx` - subscription onboarding or plan selection page
-- `app/dashboard/...` - authenticated dashboard area with sub-pages for billing, classes, documents, families, messages, staff, users
+### Fonts (loaded in `app/layout.tsx`, CSS vars in `globals.css`)
+| Font | Variable | Use |
+|------|----------|-----|
+| Geist | `--kh-font-sans` | Body text |
+| JetBrains Mono | `--kh-font-mono` | Data, IDs, timestamps |
+| Instrument Serif | `--kh-font-serif` | Headings (`kh-h1`), stat values |
 
-### API routes
+### Color Tokens
+| Token | Value | Use |
+|-------|-------|-----|
+| `--kh-bg` | `#F5F5F5` | Page background |
+| `--kh-surface` | `#FFFFFF` | Cards, panels |
+| `--kh-peach` | `#D2592F` | Primary accent, buttons, active states |
+| `--kh-peach-d` | `#B24420` | Hover/dark peach |
+| `--kh-marigold` | `#F3B43C` | Warning/secondary accent |
+| `--kh-sage` | `#7FA06A` | Success/active green |
+| `--kh-pink` | `#E48F8F` | Soft accent |
+| `--kh-sky` | `#8FB7C9` | Info accent |
+| `--kh-border` | `#E8E4DD` | Default borders |
+| `--kh-ink-900` | `#1A1714` | Primary text |
+| `--kh-ink-400` | `#A09890` | Muted/label text |
 
-The project uses Next.js route handlers under `app/api`.
+### Key Component Classes
+- **Layout**: `kh-app`, `kh-sidebar`, `kh-main`, `kh-page`, `kh-topbar`, `kh-content`
+- **Cards**: `kh-card`, `kh-card-header`, `kh-card-title`
+- **Navigation**: `kh-nav-item`, `kh-nav-item--active`, `kh-nav-badge`
+- **Buttons**: `kh-btn`, `kh-btn--primary`
+- **Typography**: `kh-h1`, `kh-sub`
+- **Tables**: `kh-table`, `kh-table-row--selected`
+- **Status**: `kh-status-badge`, `kh-pill-dot`
+- **Tabs**: `kh-tab`, `kh-tab--active`, `kh-tab-count`
+- **Stats**: `kh-stats-grid`, `kh-stat-card`, `kh-stat-value`, `kh-stat-label`
+- **Avatar**: `kh-avatar` (28px circle, deterministic color via `avatarColor()`)
+- **Room bars**: `kh-room-bar`, `kh-room-bar-fill`
+- **Breadcrumb**: `kh-breadcrumb`, `kh-breadcrumb-parent`, `kh-breadcrumb-current`
 
-Key routes:
-- `app/api/auth/login/route.ts` - login and JWT cookie issuance
-- `app/api/auth/signup/route.ts` - user registration
-- `app/api/auth/logout/route.ts` - clears auth cookie
-- `app/api/users/route.ts` - GET list and POST create
-- `app/api/users/[id]/route.ts` - likely GET/PUT/DELETE for individual users
-- `app/api/users/[id]/change-password/route.ts` - password change route
-- `app/api/departments/route.ts` - department list/create
-- `app/api/departments/[id]/route.ts` - department detail route
-- `app/api/locations`, `subscription_plans`, `tenant_subscriptions`, `tenants`, `work_tracking` - similarly structured domain APIs
+### Logo / Brand Mark
+`ArchMarkSVG` component in `Sidebar.tsx` — custom SVG archway with rising sun using brand colors (peach portal, sky window, marigold sun, sage/pink dots). Wordmark "kinder*hub*" with serif italic *hub* in peach.
 
-### Modular services and repositories
+---
 
-The backend follows a separation of concerns with:
+## Authentication & Authorization
 
-- `app/api/modules/*/*.service.ts` - business logic layer
-- `app/api/modules/*/*.repository.ts` - direct Supabase DB access
-- `app/api/modules/*/*.validation.ts` - Zod schemas for request validation
-- `app/api/modules/*/*.types.ts` - type definitions for entity shape
+- **Custom JWT**: HMAC-SHA256 signed via Web Crypto API in `lib/auth.ts`
+- **Cookie name**: `auth_token`, `httpOnly`, `sameSite: lax`, `secure` in production
+- **Payload**: `{ sub, email, tenant_id, role, exp }` (8-hour TTL)
+- **Tenant extraction**: `getTenant()` reads cookie in every API route handler
+- **All protected routes**: Call `getTenant()` first, scope all DB queries by `tenant_id`
+- **Unauthorized**: Returns HTTP 401
 
-This pattern appears for modules such as users, departments, locations, subscription plans, tenant subscriptions, and work tracking.
+---
 
-## Authentication and Authorization
+## API Architecture
 
-### JWT and session handling
+### Pattern (all protected routes)
+```typescript
+export async function GET/POST/PATCH/DELETE(req, { params }) {
+  const { tenant_id } = await getTenant()  // auth check
+  // ... business logic via Service or direct supabaseAdmin
+  return NextResponse.json(data)
+}
+```
 
-- Custom JWT signing and verification exists in `lib/auth.ts`
-- Tokens are signed using HMAC-SHA256 via the Web Crypto API and stored in a cookie named `auth_token`
-- Tokens include:
-  - `sub` (user id)
-  - `email`
-  - `tenant_id`
-  - `role`
-  - `exp` expiration timestamp
-- The cookie is set with `httpOnly`, `sameSite: lax`, `secure` in production, and a path of `/`
+### Service / Repository / Validation / Types modules
+Located under `app/api/modules/{entity}/`:
+- `{entity}.repository.ts` — Supabase queries (raw DB access)
+- `{entity}.service.ts` — Business logic layer
+- `{entity}.validation.ts` — Zod schemas
+- `{entity}.types.ts` — TypeScript interfaces
 
-### Tenant extraction
+Entities: `user`, `departments`, `locations`, `work_tracking`, `subscription_plans`, `tenant_subscriptions`
 
-- `lib/get-tenant.ts` reads the cookie from Next.js `cookies()` and verifies the token
-- If verification fails, the request is rejected with `Unauthorized`
-- This makes tenant-aware API requests possible without an external session store
+---
 
-## Supabase Integration
+## Key Data Models
 
-- `lib/supabase-admin.ts` exports a server-side Supabase admin client using:
-  - `NEXT_PUBLIC_SUPABASE_URL`
-  - `SUPABASE_SERVICE_ROLE_KEY`
-- This client bypasses RLS and is intended only for server-side routes
+### User (`user.types.ts`)
+```typescript
+User: {
+  id, name, lastname, email, password_hash,
+  phone_number, personal_number, date_of_birth,
+  role, is_active, tenant_id,
+  is_first_login_executed, created_at
+}
 
-### Auth user creation and management
+UserById: {
+  user: Omit<User, "password_hash">
+  position_name: string | null
+  tenant_name: string | null
+  department_name: string | null      // joined from departments via work_tracking
+  responsible_user_id: string | null
+  responsible_user_name: null         // intentionally null (no FK constraint)
+  start_date: string | null
+}
+```
 
-- `UserService` uses `supabaseAdmin.auth.admin.createUser` to create Supabase auth users
-- On signup and internal user creation, the project stores credentials in a Supabase `users` table and also registers the user in Supabase Auth
-- Password changes trigger both DB updates and Supabase Auth updates
-- Deletion removes the user from the DB and Supabase Auth
+### WorkTrackingRow (components/types.ts)
+```typescript
+{
+  id, position_name, start_date, end_date,
+  department_id, responsible_user_id,
+  department: { name } | null         // joined from departments table
+}
+```
 
-## Data Model Patterns
+### DocRow (components/types.ts)
+```typescript
+{
+  id, file_url,        // signed URL (7-day TTL)
+  storage_path,        // stored path in Supabase Storage (not URL)
+  created_at
+}
+```
 
-### Users
+### ClassRow (components/types.ts)
+```typescript
+{
+  id, name, average_year,
+  starts_at, ends_at,    // "HH:MM:SS+00" format
+  capacity,
+  locations: { name } | null
+}
+```
 
-User service and repository reveal fields like:
-- `id`
-- `name`
-- `lastname`
-- `email`
-- `password_hash`
-- `phone_number`
-- `personal_number`
-- `date_of_birth`
-- `role`
-- `is_active`
-- `tenant_id`
-- `is_first_login_executed`
-- `created_at`
+---
 
-The service hides `password_hash` before returning user objects to clients.
+## Employee Detail Page (recently refactored)
 
-### Departments, locations, subscriptions, work tracking
+The `/dashboard/staff/[id]` route is the most feature-rich page and was heavily refactored into a component-split architecture.
 
-The repository design is similar across domains and likely uses Supabase tables named after the module.
-- `DepartmentService.getAll(tenantId)`
-- `DepartmentService.create(...)`
-- The exact entity fields are defined in corresponding `*.types.ts` files.
+### Server Layer (`page.tsx`)
+- Fetches `UserService.getById(id, tenant_id)`
+- Returns `notFound()` if user missing or error
+- Renders full-page hero with avatar, status badge, name, position, contact info
+- Passes `user` and `userId` to client `<EmployeeTabs>`
 
-## Technical Behavior and Flow
+### `user.repository.ts` — `findById` key logic
+- Selects `work_tracking` joined with `departments`
+- Picks active record JS-side: `find(wt => wt.end_date === null) ?? [0] ?? null`
+- **Never filters joined rows in Supabase** (would null-out parent row if no match)
 
-### Signup flow
+### Client Tab Components
+| Component | Data source | Edit |
+|-----------|-------------|------|
+| `PersonalCard` | `user.user.*` | PATCH `/api/users/[id]` |
+| `AccountCard` | `user.user.*` | No (read-only) |
+| `EmploymentCard` | `user.*` (work tracking fields) | PATCH `/api/users/[id]` (role + is_active) |
+| `ScheduleTab` | GET `/api/users/[id]/classes` | No |
+| `DocumentsTab` | GET `/api/users/[id]/documents` | POST / DELETE |
+| `WorkHistoryModal` | GET/POST `/api/users/[id]/work-tracking` | POST (add new position) |
 
-1. Client POSTs signup payload to `app/api/auth/signup/route.ts`
-2. Request body validated by Zod
-3. `UserService.findByEmail()` ensures no duplicate email
-4. `UserService.createFromSignup()` hashes password and creates a Supabase auth user
-5. A record is inserted into the `users` table with a fixed tenant ID
-6. Response returns created user metadata
+### Supabase Storage (Documents)
+- **Bucket**: `documents` (private)
+- **Upload path**: `{userId}/{timestamp}_{filename}`
+- **DB stores**: Storage path (not URL) in `file_url` column
+- **Read**: Batch `createSignedUrls()` with 7-day TTL on every GET
+- **`toStoragePath()`**: Backward-compat helper extracts path from old full URLs
 
-### Add Staff flow
+### Work Tracking Create (POST `/api/users/[id]/work-tracking`)
+1. Verifies user belongs to tenant
+2. Sets `end_date = today` on any record where `end_date IS NULL` (closes current)
+3. Inserts new record with `end_date = null` (becomes new current)
+4. Returns new row with department join
 
-1. The staff page uses `components/ui/AddStaffModal.tsx` to open a shared modal form
-2. The modal fetches departments from `GET /api/departments` and displays `id`/`name` for the dropdown
-3. On submit, the modal sends the new user payload including `department_id` and `position_name` to `POST /api/users`
-4. The backend creates the Supabase auth user, inserts a `users` row, and also creates a `work_tracking` record for the new staff member
+### `fileName()` helper (DocumentsTab)
+```typescript
+function fileName(url: string) {
+  const withoutQuery = url.split("?")[0]   // strip ?token=...
+  const raw = withoutQuery.split("/").pop() ?? ""
+  return raw.replace(/^\d+_/, "")          // strip timestamp prefix
+}
+```
 
-### Login flow
+---
 
-1. Client POSTs credentials to `app/api/auth/login/route.ts`
-2. Credentials validated by `loginSchema`
-3. `UserRepository.findByEmail()` retrieves user record
-4. Password is verified with `bcrypt.compare`
-5. JWT is signed and set as a cookie
-6. User data is returned to the client
+## Shared UI Components
 
-### Protected API requests
+### `Modal.tsx` — Base modal + form primitives
+- Backdrop click + ESC key to close
+- Exports: `Modal`, `MField`, `MSection`, `MInput`, `MSelect`, `MToggle`, `MSegmented`, `MGrid`, `MBtn`
 
-- Routes call `getTenant()` to verify auth cookie and extract `tenant_id`
-- Operations are scoped to that tenant using `.eq("tenant_id", tenantId)` in Supabase queries
-- Unauthorized access returns `401`
+### `DepartmentSelect.tsx`
+- `useDepartments()` — fetches `/api/departments`, cached in state
+- `DepartmentSelect` — wraps `MSelect`, for use inside Modal forms
+- `DepartmentSelectPlain` — plain `<select>`, for use outside Modal (e.g., WorkHistoryModal)
 
-## UI and Pages
+### `AddStaffModal.tsx`
+- 3 sections: Personal details, Role & placement, Access (send invite toggle)
+- Uses `DepartmentSelect` (Modal variant)
+- Removed local `departments` state — uses shared `useDepartments` hook via `DepartmentSelect`
+- POST `/api/users`
 
-The UI folder structure suggests a mix of landing content and authenticated dashboard experience.
+### `AddFamilyModal.tsx`
+- 4-step wizard: Family → Guardians → Children → Review
+- Step rail on left with progress indicators
+- POST `/api/families` → POST `/api/parents` (×n) → POST `/api/kids` (×n)
 
-- `components/landing/` holds marketing and hero sections
-- `components/dashboard/` includes sidebar, data tables, and modal components
-- `components/LanguageSwitcher.tsx` suggests multi-language UI support
-- `app/dashboard/` pages show dashboard sections like billing, classes, documents, families, messages, staff, users
-- `subscribe/SubscribeForm.tsx` indicates a subscription signup flow or plan chooser
-- `components/ui/` contains shared UI primitives and a reusable dialog/modal implementation
-- `components/ui/index.ts` provides a shared export surface for common UI components
-- `components/ui/AddStaffModal.tsx` provides a reusable Add Staff modal with department selection
+### `AddClassModal.tsx`
+- Day picker, time fields, staff/location selects
+- POST `/api/classes`
 
-## Shared UI and Modal Architecture
+### `ConfirmModal.tsx`
+- Reusable destructive confirm dialog
 
-- `components/ui/dialog.tsx` is a reusable Radix Dialog wrapper with consistent button, overlay, and content styling.
-- `components/ui/AddStaffModal.tsx` is a client-side modal form used by the staff page to create new users via `POST /api/users`.
-- `components/ui/ViewUserModal.tsx` is a reusable row-level modal shell that can render details without data fetching built in.
-- `lib/utils.ts` exports `cn()` for consistent Tailwind class merging across UI components.
+### `DataTable.tsx`
+- Generic `<T>` typed table
+- Props: `columns`, `rows`, `getRowKey`, `getRowClassName`, `title`, `meta`
+- Column shape: `{ key, header, headerStyle, cell, cellStyle }`
 
-## Theoretical Purpose
+---
 
-This project appears to be a SaaS-style multi-tenant backend with a first-party admin/user dashboard. The architecture is intended for:
+## Pages Summary
 
-- tenant-scoped data access
-- managed users with roles
-- structured business entities like departments, locations, subscription plans, and work tracking
-- server-side authentication using cookies and JWTs
-- Supabase as database and auth provider
+| Page | Route | Data | Real DB |
+|------|-------|------|---------|
+| Overview | `/dashboard` | Mock | No |
+| Staff | `/dashboard/staff` | Live (UserService) | Yes |
+| Employee Detail | `/dashboard/staff/[id]` | Live (UserService + APIs) | Yes |
+| Families | `/dashboard/families` | Mock | No |
+| Classes | `/dashboard/classes` | Mock | No |
+| Billing | `/dashboard/billing` | Mock | No |
+| Messages | `/dashboard/messages` | Mock | No |
+| Documents | `/dashboard/documents` | Mock | No |
+| Calendar | `/dashboard/calendar` | Mock | No |
+| Settings | `/dashboard/settings` | Mock | No |
 
-## Notes and Observations
+---
 
-- There is a hard-coded tenant ID (`8c0785e5-83cc-4fa3-9957-75ae61b50d37`) in `UserService` and possibly elsewhere, which indicates a prototype or initial tenant bootstrap pattern.
-- The `app/api/modules` folder is the central place for backend domain logic.
-- Some routes are not inspected directly, but the naming conventions strongly imply REST-style handlers for CRUD operations.
-- The project structure is aligned with modern Next.js App Router best practices: route handlers, server-only libs, and a clear separation between UI pages and API logic.
+## Known Issues / Technical Notes
+
+1. **Hardcoded tenant ID** in `lib/db.ts` (`8c0785e5-83cc-4fa3-9957-75ae61b50d37`) — prototype bootstrap pattern, not production-ready
+2. **`responsible_user_name` always null** — `work_tracking.responsible_user_id` has no FK constraint to `users`, so PostgREST join is impossible without schema change
+3. **No mobile breakpoints** — UI is desktop-first, no responsive layout defined
+4. **Mock data on most pages** — only Staff + Employee Detail pages use live Supabase data
+5. **Supabase PostgREST join filter limitation** — filtering on joined table rows in `.select()` acts as an inner join and can null the parent; workarounds use JS-side filtering post-fetch
+
+---
 
 ## How to Run
-
-From the project root:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Then open http://localhost:3000
+Open `http://localhost:3000`
 
-Environment variables likely required:
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `JWT_SECRET` (optional, falls back to a development fallback)
+### Required environment variables
+```env
+NEXT_PUBLIC_SUPABASE_URL=...
+SUPABASE_SERVICE_ROLE_KEY=...
+JWT_SECRET=...
+```
 
-## Suggested Improvements
-
-- Remove hard-coded tenant IDs and replace them with dynamic tenant creation or tenant assignment logic.
-- Add proper error payload structure in API routes for consistent client-side handling.
-- Ensure `JWT_SECRET` is configured in production and avoid fallback defaults.
-- Expand welcome README with project-specific running instructions and environment requirements.
-
----
-
-This file was generated from the current workspace files available in `my-app/`. It reflects observed code patterns, architecture, and behavior from the Next.js App Router API and Supabase-backed user management system.
+### Supabase Storage
+- Bucket name: `documents`
+- Endpoint: `https://zhlehpihbfcpwfbhmyqm.storage.supabase.co/storage/v1/s3`
+- Region: `eu-west-1`
+- Bucket must be **private** — access via signed URLs only
