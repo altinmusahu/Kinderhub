@@ -3,6 +3,7 @@ import { ZodError } from "zod"
 import { LocationService } from "../../modules/locations/location.service"
 import { updateLocationSchema } from "../../modules/locations/location.validation"
 import { getTenant } from "@/lib/get-tenant"
+import { logActivity } from "@/lib/log-activity"
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -20,10 +21,11 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
 export async function PATCH(req: NextRequest, { params }: Params) {
   try {
-    const { tenant_id } = await getTenant()
+    const session = await getTenant()
     const { id } = await params
     const body = updateLocationSchema.parse(await req.json())
-    const location = await LocationService.update(id, tenant_id, body)
+    const location = await LocationService.update(id, session.tenant_id, body)
+    logActivity(session, "updated", "Location", location.name)
     return NextResponse.json(location)
   } catch (err) {
     if (err instanceof ZodError) return NextResponse.json({ error: err.issues }, { status: 400 })

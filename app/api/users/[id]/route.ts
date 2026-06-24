@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { UserService } from "@/app/api/modules/user/user.service"
 import { updateUserSchema } from "@/app/api/modules/user/user.validation"
 import { getTenant } from "@/lib/get-tenant"
+import { logActivity } from "@/lib/log-activity"
 import { ZodError } from "zod"
 
 type Params = { params: Promise<{ id: string }> }
@@ -20,10 +21,11 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
-    const { tenant_id } = await getTenant()
+    const session = await getTenant()
     const { id } = await params
     const body = updateUserSchema.parse(await request.json())
-    const user = await UserService.update(id, tenant_id, body)
+    const user = await UserService.update(id, session.tenant_id, body)
+    logActivity(session, "updated", "Staff", `${user.name} ${user.lastname}`)
     return NextResponse.json(user)
   } catch (err) {
     if (err instanceof ZodError) return NextResponse.json({ error: err.issues }, { status: 400 })

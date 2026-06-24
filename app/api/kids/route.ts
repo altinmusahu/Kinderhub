@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getTenant } from "@/lib/get-tenant"
+import { logActivity } from "@/lib/log-activity"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 
 export async function POST(req: NextRequest) {
   try {
-    const { tenant_id } = await getTenant()
+    const session = await getTenant()
     const body = await req.json()
     const { data, error } = await supabaseAdmin
       .from("kids")
@@ -16,11 +17,12 @@ export async function POST(req: NextRequest) {
         gender:          body.gender          ?? "Other",
         personal_number: body.personal_number ?? null,
         class_id:        body.class_id        ?? null,
-        tenant_id,
+        tenant_id:       session.tenant_id,
       })
       .select()
       .single()
     if (error) throw new Error(error.message)
+    logActivity(session, "added", "Child", `${body.firstname} ${body.lastname}`)
     return NextResponse.json(data, { status: 201 })
   } catch (e) {
     const status = e instanceof Error && e.message === "Unauthorized" ? 401 : 500

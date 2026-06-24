@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { UserService } from "@/app/api/modules/user/user.service"
 import { createUserSchema } from "@/app/api/modules/user/user.validation"
 import { getTenant } from "@/lib/get-tenant"
+import { logActivity } from "@/lib/log-activity"
 
 export async function GET() {
   try {
@@ -16,10 +17,11 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    await getTenant()
+    const session = await getTenant()
     const body = await req.json()
     const parsed = createUserSchema.parse(body)
     const user = await UserService.create(parsed)
+    logActivity(session, "added", "Staff", `${parsed.name} ${parsed.lastname}`)
     return NextResponse.json(user, { status: 201 })
   } catch (error) {
     const status = error instanceof Error && error.message === "Unauthorized" ? 401 : 400

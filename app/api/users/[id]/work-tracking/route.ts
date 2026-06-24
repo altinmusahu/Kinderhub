@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getTenant } from "@/lib/get-tenant"
+import { logActivity } from "@/lib/log-activity"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 
 export async function POST(
@@ -7,7 +8,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { tenant_id } = await getTenant()
+    const session = await getTenant()
     const { id } = await params
     const body = await req.json()
 
@@ -16,7 +17,7 @@ export async function POST(
       .from("users")
       .select("id")
       .eq("id", id)
-      .eq("tenant_id", tenant_id)
+      .eq("tenant_id", session.tenant_id)
       .maybeSingle()
 
     if (!userCheck) return NextResponse.json({ error: "Not found" }, { status: 404 })
@@ -47,6 +48,15 @@ export async function POST(
 
     if (error) throw new Error(error.message)
 
+    // Resolve the staff member's name for the activity message
+    const { data: staffUser } = await supabaseAdmin
+      .from("users")
+      .select("name, lastname")
+      .eq("id", id)
+      .single()
+    const staffName = staffUser ? `${staffUser.name} ${staffUser.lastname}` : undefined
+
+    logActivity(session, "updated", "Work tracking record", staffName)
     return NextResponse.json(data, { status: 201 })
   } catch (e) {
     const status = e instanceof Error && e.message === "Unauthorized" ? 401 : 500

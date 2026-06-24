@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { DepartmentService } from "../modules/departments/department.service"
 import { createDepartmentSchema } from "../modules/departments/department.validation"
 import { getTenant } from "@/lib/get-tenant"
+import { logActivity } from "@/lib/log-activity"
 
 export async function GET() {
   try {
@@ -16,10 +17,11 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const { tenant_id } = await getTenant()
+    const session = await getTenant()
     const body = await req.json()
-    const parsed = createDepartmentSchema.parse({ ...body, tenant_id })
+    const parsed = createDepartmentSchema.parse({ ...body, tenant_id: session.tenant_id })
     const department = await DepartmentService.create(parsed)
+    logActivity(session, "added", "Department", department.name)
     return NextResponse.json(department, { status: 201 })
   } catch (error) {
     const status = error instanceof Error && error.message === "Unauthorized" ? 401 : 400
