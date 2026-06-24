@@ -11,10 +11,10 @@ const STEPS = [
   { t: "Review",    d: "Confirm & create" },
 ]
 
-type Guardian = { firstname: string; lastname: string; phone_number: string; address: string; is_active: boolean; personal_number: string; date_of_birth: string }
+type Guardian = { firstname: string; lastname: string; phone_number: string; address: string; pick_up: boolean; personal_number: string; date_of_birth: string }
 type Kid = { firstname: string; lastname: string; date_of_birth: string; gender: string; personal_number: string }
 
-const emptyGuardian = (): Guardian => ({ firstname: "", lastname: "", phone_number: "", address: "", is_active: true, personal_number: "", date_of_birth: "" })
+const emptyGuardian = (): Guardian => ({ firstname: "", lastname: "", phone_number: "", address: "", pick_up: false, personal_number: "", date_of_birth: "" })
 const emptyKid = (): Kid => ({ firstname: "", lastname: "", date_of_birth: "", gender: "", personal_number: "" })
 
 function StepRail({ active }: { active: number }) {
@@ -86,21 +86,40 @@ export default function AddFamilyModal({ triggerLabel = "+ Add family" }: { trig
       // Step 2: create guardians (parents)
       for (const g of guardians) {
         if (!g.firstname) continue
-        await fetch("/api/parents", {
+        const res = await fetch("/api/parents", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...g, family_id: fam.id }),
+          body: JSON.stringify({
+            family_id:       fam.id,
+            firstname:       g.firstname,
+            lastname:        g.lastname,
+            phone_number:    g.phone_number,
+            personal_number: g.personal_number,
+            date_of_birth:   g.date_of_birth,
+            address:         g.address,
+            pick_up:         g.pick_up,
+            is_active:       true,
+          }),
         })
+        if (!res.ok) { setError("Failed to create guardian."); return }
       }
 
       // Step 3: create kids
       for (const k of kids) {
         if (!k.firstname) continue
-        await fetch("/api/kids", {
+        const res = await fetch("/api/kids", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...k, family_id: fam.id }),
+          body: JSON.stringify({
+            family_id:       fam.id,
+            firstname:       k.firstname,
+            lastname:        k.lastname,
+            date_of_birth:   k.date_of_birth,
+            gender:          k.gender || "Other",
+            personal_number: k.personal_number || null,
+          }),
         })
+        if (!res.ok) { setError("Failed to create child."); return }
       }
 
       close()
@@ -188,7 +207,7 @@ export default function AddFamilyModal({ triggerLabel = "+ Add family" }: { trig
                       <MField label="Address" optional><MInput value={g.address} onChange={e => setG(i, "address", e.target.value)} placeholder="Street, city" /></MField>
                     </MGrid>
                     <div style={{ marginTop: 12 }}>
-                      <MToggle on={g.is_active} onChange={v => setG(i, "is_active", v)} title="Authorized for pickup" desc="Can collect children" />
+                      <MToggle on={g.pick_up} onChange={v => setG(i, "pick_up", v)} title="Authorized for pickup" desc="Can collect children" />
                     </div>
                   </div>
                 ))}

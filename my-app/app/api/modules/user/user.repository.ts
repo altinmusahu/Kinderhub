@@ -91,6 +91,7 @@ export const UserRepository = {
         email,
         work_tracking!work_tracking_user_id_fkey (
           department_id,
+          end_date,
           department:departments (
             name
           ),
@@ -102,8 +103,12 @@ export const UserRepository = {
     if (error) throw new Error(error.message)
 
     return (data ?? []).map((u) => {
-      const wt = u.work_tracking?.[0]
-      const dept = wt?.department?.[0]
+      // Pick active record (end_date null), fall back to most recent
+      const wt = (u.work_tracking ?? []).find((r: any) => r.end_date === null)
+             ?? u.work_tracking?.[0]
+             ?? null
+      // PostgREST returns the joined department as object or array depending on cardinality
+      const dept = Array.isArray(wt?.department) ? wt.department[0] : wt?.department
 
       return {
         id: u.id,

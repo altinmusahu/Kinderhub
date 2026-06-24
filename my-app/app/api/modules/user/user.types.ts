@@ -41,15 +41,3 @@ export type UserWithWorkTrackingAndDepartment = {
 export type CreateUserDto = Omit<User, "id">
 
 export type UpdateUserDto = Partial<Omit<User, "id" | "tenant_id" | "created_at">>
-
-// Using in frontend :
-export type StaffRow = {
-  id: string
-  initials: string
-  color: string
-  name: string
-  position_name: string | null
-  dept: string
-  status: string
-  created_at: string
-}

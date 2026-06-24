@@ -35,10 +35,10 @@ my-app/
 │   │   ├── layout.tsx                    Sidebar + main shell
 │   │   ├── page.tsx                      Dashboard overview (stats, rooms, activity)
 │   │   ├── staff/
-│   │   │   ├── page.tsx                  Staff directory (server, fetches DB)
+│   │   │   ├── page.tsx                  Staff directory (server, live DB, avatar colors, department)
 │   │   │   └── [id]/
 │   │   │       ├── page.tsx              Employee detail hero (server)
-│   │   │       ├── EmployeeTabs.tsx      Tab switcher (client)
+│   │   │       ├── EmployeeTabs.tsx      Tab switcher (client, thin orchestrator)
 │   │   │       └── components/
 │   │   │           ├── types.ts          Shared types (ClassRow, DocRow, WorkTrackingRow, UserById)
 │   │   │           ├── Field.tsx         Field + SaveBar form primitives
@@ -48,7 +48,11 @@ my-app/
 │   │   │           ├── WorkHistoryModal.tsx Side drawer timeline + add position form
 │   │   │           ├── ScheduleTab.tsx   Weekly schedule view (lazy-loaded)
 │   │   │           └── DocumentsTab.tsx  Document upload/view/delete (lazy-loaded)
-│   │   ├── families/page.tsx             Family list with status/balance (client, mock data)
+│   │   ├── families/
+│   │   │   ├── page.tsx                  Family list (server, live DB, clickable rows)
+│   │   │   └── [id]/
+│   │   │       ├── page.tsx              Family detail hero (server)
+│   │   │       └── FamilyTabs.tsx        Tab switcher + Overview/Documents (client)
 │   │   ├── classes/page.tsx              Class cards with enrollment/staff (client, mock data)
 │   │   ├── billing/page.tsx              Invoices + revenue chart (client, mock data)
 │   │   ├── messages/page.tsx             3-pane messaging UI (client, mock data)
@@ -66,26 +70,29 @@ my-app/
 │   │   │       ├── route.ts              GET / PATCH / DELETE single user
 │   │   │       ├── classes/route.ts      GET classes (lead or assistant)
 │   │   │       ├── documents/route.ts    GET / POST / DELETE documents (Supabase Storage)
-│   │   │       ├── work-tracking/route.ts GET all / POST new position (closes current)
+│   │   │       ├── work-tracking/route.ts GET all / POST new position (closes current open)
 │   │   │       └── change-password/route.ts POST change password
 │   │   ├── departments/route.ts          GET / POST departments
 │   │   ├── departments/[id]/route.ts     GET / PUT / DELETE department
 │   │   ├── locations/route.ts            GET / POST locations
-│   │   ├── families/route.ts             GET / POST families
-│   │   ├── parents/route.ts              POST parent/guardian
-│   │   ├── kids/route.ts                 POST child record
+│   │   ├── families/route.ts             GET / POST families (tenant_id injected from JWT)
+│   │   ├── parents/route.ts              POST parent/guardian (tenant_id injected from JWT)
+│   │   ├── kids/route.ts                 POST child record (tenant_id injected from JWT)
 │   │   ├── classes/route.ts              GET / POST classes
 │   │   ├── work_tracking/route.ts        GET / POST (module-level)
 │   │   ├── tenants/route.ts              Tenant CRUD
 │   │   ├── subscription_plans/route.ts   Plan management
 │   │   └── tenant_subscriptions/route.ts Subscription management
-│   ├── modules/                          Backend domain logic
-│   │   ├── user/{service,repository,types,validation}.ts
-│   │   ├── departments/{service,repository,types,validation}.ts
-│   │   ├── locations/{service,repository,types,validation}.ts
-│   │   ├── work_tracking/{service,repository,types,validation}.ts
-│   │   ├── subscription_plans/...
-│   │   └── tenant_subscriptions/...
+│   └── api/modules/                      Backend domain logic
+│       ├── user/{service,repository,types,validation}.ts
+│       ├── departments/{service,repository,types,validation}.ts
+│       ├── locations/{service,repository,types,validation}.ts
+│       ├── work_tracking/{service,repository,types,validation}.ts
+│       ├── families/{service,repository,types,validation}.ts
+│       ├── parents/{service,repository,types,validation}.ts
+│       ├── kids/{service,repository,types,validation}.ts
+│       ├── subscription_plans/...
+│       └── tenant_subscriptions/...
 │   └── components/
 │       └── dashboard/
 │           ├── Sidebar.tsx               Navigation sidebar with ArchMark logo
@@ -95,7 +102,7 @@ my-app/
 │   └── ui/
 │       ├── Modal.tsx                     Base modal + MField/MSection/MInput/MSelect/MBtn/MGrid/MToggle
 │       ├── DepartmentSelect.tsx          useDepartments hook + DepartmentSelect + DepartmentSelectPlain
-│       ├── AddStaffModal.tsx             3-section staff creation modal
+│       ├── AddStaffModal.tsx             3-section staff creation modal (uses DepartmentSelect)
 │       ├── AddFamilyModal.tsx            4-step family wizard modal
 │       ├── AddClassModal.tsx             Class creation modal
 │       ├── ConfirmModal.tsx              Reusable destructive confirm dialog
@@ -164,6 +171,7 @@ my-app/
 - **Tenant extraction**: `getTenant()` reads cookie in every API route handler
 - **All protected routes**: Call `getTenant()` first, scope all DB queries by `tenant_id`
 - **Unauthorized**: Returns HTTP 401
+- **`tenant_id` injection**: Client forms never know the tenant — all POST routes extract it from the JWT server-side via `getTenant()` and inject it into every DB insert
 
 ---
 
@@ -185,7 +193,7 @@ Located under `app/api/modules/{entity}/`:
 - `{entity}.validation.ts` — Zod schemas
 - `{entity}.types.ts` — TypeScript interfaces
 
-Entities: `user`, `departments`, `locations`, `work_tracking`, `subscription_plans`, `tenant_subscriptions`
+Entities: `user`, `departments`, `locations`, `work_tracking`, `families`, `parents`, `kids`, `subscription_plans`, `tenant_subscriptions`
 
 ---
 
@@ -209,9 +217,54 @@ UserById: {
   responsible_user_name: null         // intentionally null (no FK constraint)
   start_date: string | null
 }
+
+UserWithWorkTrackingAndDepartment: {
+  id, name, lastname, email, role, is_active, created_at,
+  phone_number, personal_number, date_of_birth,
+  position_name: string | null
+  department_name: string | null
+}
 ```
 
-### WorkTrackingRow (components/types.ts)
+### Families (`families/families.types.ts`)
+```typescript
+Families: { id, name, status, plan, balance, tenant_id, created_at }
+
+FamilyWithDetails: {
+  id, name, status, plan, balance, created_at,
+  primary_contact: string | null    // firstname + lastname of first parent
+  kids_count: number
+}
+
+FamilyParent: {
+  id, firstname, lastname, phone_number, address,
+  pick_up: boolean, is_active: boolean,
+  date_of_birth, personal_number
+}
+
+FamilyKid: {
+  id, firstname, lastname, date_of_birth,
+  gender, personal_number: string | null, class_id: string | null
+}
+
+FamilyDetail: {
+  id, name, status, plan, balance, created_at,
+  parents: FamilyParent[],
+  kids: FamilyKid[]
+}
+```
+
+### Parents (`parents/parents.types.ts`)
+```typescript
+Parents: {
+  id, family_id, firstname, lastname, date_of_birth,
+  personal_number, is_active: boolean, phone_number,
+  address, pick_up: boolean, tenant_id, created_at
+}
+CreateParentsDto: { family_id, firstname, lastname, date_of_birth, personal_number, is_active, phone_number, address, pick_up, tenant_id }
+```
+
+### WorkTrackingRow (staff components/types.ts)
 ```typescript
 {
   id, position_name, start_date, end_date,
@@ -220,7 +273,7 @@ UserById: {
 }
 ```
 
-### DocRow (components/types.ts)
+### DocRow (staff components/types.ts)
 ```typescript
 {
   id, file_url,        // signed URL (7-day TTL)
@@ -229,7 +282,7 @@ UserById: {
 }
 ```
 
-### ClassRow (components/types.ts)
+### ClassRow (staff components/types.ts)
 ```typescript
 {
   id, name, average_year,
@@ -241,9 +294,9 @@ UserById: {
 
 ---
 
-## Employee Detail Page (recently refactored)
+## Employee Detail Page (`/dashboard/staff/[id]`)
 
-The `/dashboard/staff/[id]` route is the most feature-rich page and was heavily refactored into a component-split architecture.
+The most feature-rich page — component-split architecture.
 
 ### Server Layer (`page.tsx`)
 - Fetches `UserService.getById(id, tenant_id)`
@@ -252,8 +305,9 @@ The `/dashboard/staff/[id]` route is the most feature-rich page and was heavily 
 - Passes `user` and `userId` to client `<EmployeeTabs>`
 
 ### `user.repository.ts` — `findById` key logic
-- Selects `work_tracking` joined with `departments`
+- Selects `work_tracking` joined with `departments`, including `end_date`
 - Picks active record JS-side: `find(wt => wt.end_date === null) ?? [0] ?? null`
+- Guards `Array.isArray(wt?.department)` for PostgREST join cardinality variance
 - **Never filters joined rows in Supabase** (would null-out parent row if no match)
 
 ### Client Tab Components
@@ -279,14 +333,53 @@ The `/dashboard/staff/[id]` route is the most feature-rich page and was heavily 
 3. Inserts new record with `end_date = null` (becomes new current)
 4. Returns new row with department join
 
-### `fileName()` helper (DocumentsTab)
+---
+
+## Family Detail Page (`/dashboard/families/[id]`)
+
+Mirrors the employee detail page architecture.
+
+### Server Layer (`page.tsx`)
+- Fetches `FamiliesService.getByIdWithDetails(id, tenant_id)` → `FamilyDetail`
+- Returns `notFound()` if missing
+- Renders hero: family avatar initials, status badge, plan subtitle, primary contact + phone
+- Quick stats panel: Children count, Parents count, Balance (red if > 0)
+- Passes `family` to client `<FamilyTabs>`
+
+### `families.repository.ts` — `findByIdWithDetails`
 ```typescript
-function fileName(url: string) {
-  const withoutQuery = url.split("?")[0]   // strip ?token=...
-  const raw = withoutQuery.split("/").pop() ?? ""
-  return raw.replace(/^\d+_/, "")          // strip timestamp prefix
-}
+.select(`
+  id, name, status, plan, balance, created_at,
+  parents ( id, firstname, lastname, phone_number, address, pick_up, is_active, date_of_birth, personal_number ),
+  kids    ( id, firstname, lastname, date_of_birth, gender, personal_number, class_id )
+`)
+.eq("id", id).eq("tenant_id", tenantId).maybeSingle()
 ```
+Guards `Array.isArray()` on both `parents` and `kids` joins.
+
+### `FamilyTabs.tsx` Client Tabs
+| Card | Content |
+|------|---------|
+| `ChildrenCard` | Gender emoji, name, age, DOB, personal number |
+| `ParentsCard` | Primary badge, pickup/active status badges, address/DOB/personal number grid |
+| `BillingCard` | Plan, balance due (red if > 0), since date, status |
+| Documents | Placeholder — coming soon |
+
+---
+
+## Staff Directory (`/dashboard/staff`)
+
+- Server component using `FamiliesService` pattern: `UserService.getAllWithWorkTrackingAndDepartment(tenant_id)`
+- Shows avatar (deterministic color via `avatarColor(id)`), name+email, department, role, status badge
+- `findAllWithWorkTrackingAndDepartment` fixed: selects `end_date`, picks active work_tracking record JS-side, guards `Array.isArray()` for department join
+
+---
+
+## Families Directory (`/dashboard/families`)
+
+- Server component using `FamiliesService.getAllWithDetails(tenant_id)`
+- Shows family avatar + name (as `Link` to detail page), status badge, plan, kids count, balance (red if > 0), since date
+- `AddFamilyModal` triggers 4-step wizard
 
 ---
 
@@ -297,32 +390,26 @@ function fileName(url: string) {
 - Exports: `Modal`, `MField`, `MSection`, `MInput`, `MSelect`, `MToggle`, `MSegmented`, `MGrid`, `MBtn`
 
 ### `DepartmentSelect.tsx`
-- `useDepartments()` — fetches `/api/departments`, cached in state
+- `useDepartments()` — fetches `/api/departments` on mount, cached in state
 - `DepartmentSelect` — wraps `MSelect`, for use inside Modal forms
-- `DepartmentSelectPlain` — plain `<select>`, for use outside Modal (e.g., WorkHistoryModal)
+- `DepartmentSelectPlain` — plain `<select>` styled inline, for use outside Modal (WorkHistoryModal)
 
 ### `AddStaffModal.tsx`
 - 3 sections: Personal details, Role & placement, Access (send invite toggle)
-- Uses `DepartmentSelect` (Modal variant)
-- Removed local `departments` state — uses shared `useDepartments` hook via `DepartmentSelect`
-- POST `/api/users`
+- Uses `DepartmentSelect` (Modal variant) — removed local `departments` state/useEffect
 
 ### `AddFamilyModal.tsx`
 - 4-step wizard: Family → Guardians → Children → Review
 - Step rail on left with progress indicators
+- `Guardian` type uses `pick_up: boolean` (not `is_active`) for pickup authorization toggle
 - POST `/api/families` → POST `/api/parents` (×n) → POST `/api/kids` (×n)
-
-### `AddClassModal.tsx`
-- Day picker, time fields, staff/location selects
-- POST `/api/classes`
-
-### `ConfirmModal.tsx`
-- Reusable destructive confirm dialog
+- All POSTs inject `tenant_id` server-side from JWT
 
 ### `DataTable.tsx`
-- Generic `<T>` typed table
+- Generic `<T>` typed server component
 - Props: `columns`, `rows`, `getRowKey`, `getRowClassName`, `title`, `meta`
 - Column shape: `{ key, header, headerStyle, cell, cellStyle }`
+- **Note**: functions (cell renderers, `getRowHref`) cannot be passed from server → client across the RSC boundary; clickable rows are achieved by wrapping cell content in `<Link>` instead
 
 ---
 
@@ -333,7 +420,8 @@ function fileName(url: string) {
 | Overview | `/dashboard` | Mock | No |
 | Staff | `/dashboard/staff` | Live (UserService) | Yes |
 | Employee Detail | `/dashboard/staff/[id]` | Live (UserService + APIs) | Yes |
-| Families | `/dashboard/families` | Mock | No |
+| Families | `/dashboard/families` | Live (FamiliesService) | Yes |
+| Family Detail | `/dashboard/families/[id]` | Live (FamiliesService) | Yes |
 | Classes | `/dashboard/classes` | Mock | No |
 | Billing | `/dashboard/billing` | Mock | No |
 | Messages | `/dashboard/messages` | Mock | No |
@@ -348,8 +436,9 @@ function fileName(url: string) {
 1. **Hardcoded tenant ID** in `lib/db.ts` (`8c0785e5-83cc-4fa3-9957-75ae61b50d37`) — prototype bootstrap pattern, not production-ready
 2. **`responsible_user_name` always null** — `work_tracking.responsible_user_id` has no FK constraint to `users`, so PostgREST join is impossible without schema change
 3. **No mobile breakpoints** — UI is desktop-first, no responsive layout defined
-4. **Mock data on most pages** — only Staff + Employee Detail pages use live Supabase data
+4. **Mock data on most pages** — Staff, Employee Detail, Families, Family Detail use live Supabase data; all other pages still use mock data
 5. **Supabase PostgREST join filter limitation** — filtering on joined table rows in `.select()` acts as an inner join and can null the parent; workarounds use JS-side filtering post-fetch
+6. **RSC boundary constraint** — `DataTable` is a server component; functions (cell renderers, click handlers) cannot be serialized across the server→client boundary. Clickable rows use `<Link>` inside cell renderers instead of `onClick` props.
 
 ---
 

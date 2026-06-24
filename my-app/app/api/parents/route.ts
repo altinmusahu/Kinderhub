@@ -4,21 +4,24 @@ import { supabaseAdmin } from "@/lib/supabase-admin"
 
 export async function POST(req: NextRequest) {
   try {
-    await getTenant()
+    const { tenant_id } = await getTenant()
     const body = await req.json()
     const { data, error } = await supabaseAdmin
       .from("parents")
       .insert({
-        family_id: body.family_id,
-        firstname: body.firstname,
-        lastname: body.lastname,
-        phone_number: body.phone_number,
-        personal_number: body.personal_number,
-        date_of_birth: body.date_of_birth,
-        is_active: body.is_active ?? true,
-        address: body.address ?? "",
+        family_id:       body.family_id,
+        firstname:       body.firstname,
+        lastname:        body.lastname,
+        phone_number:    body.phone_number    ?? "",
+        personal_number: body.personal_number ?? "",
+        date_of_birth:   body.date_of_birth,
+        is_active:       body.is_active       ?? true,
+        address:         body.address         ?? "",
+        pick_up:         body.pick_up         ?? false,
+        tenant_id,
       })
-      .select().single()
+      .select()
+      .single()
     if (error) throw new Error(error.message)
     return NextResponse.json(data, { status: 201 })
   } catch (e) {

@@ -4,8 +4,12 @@ import { supabaseAdmin } from "@/lib/supabase-admin"
 
 export async function GET() {
   try {
-    await getTenant()
-    const { data, error } = await supabaseAdmin.from("families").select("*").order("created_at", { ascending: false })
+    const { tenant_id } = await getTenant()
+    const { data, error } = await supabaseAdmin
+      .from("families")
+      .select("*")
+      .eq("tenant_id", tenant_id)
+      .order("created_at", { ascending: false })
     if (error) throw new Error(error.message)
     return NextResponse.json(data ?? [])
   } catch (e) {
@@ -16,12 +20,19 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    await getTenant()
+    const { tenant_id } = await getTenant()
     const body = await req.json()
     const { data, error } = await supabaseAdmin
       .from("families")
-      .insert({ name: body.name, status: body.status ?? "Active", plan: body.plan ?? "Full-time", balance: body.balance ?? 0 })
-      .select().single()
+      .insert({
+        name:      body.name,
+        status:    body.status    ?? "Active",
+        plan:      body.plan      ?? "Full-time",
+        balance:   body.balance   ?? 0,
+        tenant_id,
+      })
+      .select()
+      .single()
     if (error) throw new Error(error.message)
     return NextResponse.json(data, { status: 201 })
   } catch (e) {
