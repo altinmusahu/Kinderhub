@@ -1,36 +1,135 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
 
-## Getting Started
+![Kinderhub Banner](public/06-banner-hero.png)
 
-First, run the development server:
+# kinder*hub*
+
+**The quiet, capable CRM behind every great childcare program.**  
+Families, attendance, billing and messages — all in one place.
+
+[![Next.js](https://img.shields.io/badge/Next.js-App_Router-black?style=flat-square&logo=next.js)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com)
+
+</div>
+
+---
+
+## What it is
+
+Kinderhub is a multi-tenant CRM dashboard built for childcare directors and staff. It handles the operational side of running a program — family records, staff management, class scheduling, billing, and document storage — wrapped in a warm, considered design system built from the ground up.
+
+---
+
+## Brand
+
+<table>
+<tr>
+<td width="50%">
+
+![Now Enrolling poster](public/07-poster-now-enrolling.png)
+
+</td>
+<td width="50%">
+
+![A home for growing poster](public/08-poster-a-home-for-growing.png)
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+![Spring Picnic poster](public/09-poster-spring-picnic.png)
+
+</td>
+<td width="50%">
+
+![Social posts](public/10-social-posts.png)
+
+</td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td width="50%">
+
+![Business cards](public/11-business-cards.png)
+
+</td>
+<td width="50%">
+
+![App icon sheet](public/12-app-icon-sheet.png)
+
+</td>
+</tr>
+</table>
+
+![Tote and signage](public/13-tote-and-signage.png)
+
+---
+
+## Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js (App Router, server components) |
+| Language | TypeScript |
+| Styling | Tailwind CSS v4 + custom `kh-*` design system |
+| Database | Supabase (PostgreSQL) |
+| Auth | Custom JWT via Web Crypto API (HMAC-SHA256) |
+| Storage | Supabase Storage — private bucket, signed URLs |
+| Validation | Zod |
+
+---
+
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+NEXT_PUBLIC_SUPABASE_URL=...
+SUPABASE_SERVICE_ROLE_KEY=...
+JWT_SECRET=...
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Project structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+app/
+├── dashboard/
+│   ├── staff/[id]        Employee detail — tabs, documents, work history
+│   ├── families/[id]     Family detail — children, parents, billing
+│   ├── classes/          Class scheduling
+│   ├── billing/          Invoices and revenue
+│   └── settings/         Departments, roles, team
+├── api/
+│   ├── modules/          Service / Repository / Validation / Types per entity
+│   └── ...               Route handlers (auth, users, families, parents, kids…)
+components/
+└── ui/                   Modal system, AddStaffModal, AddFamilyModal, DataTable…
+lib/
+└── auth.ts               JWT sign / verify / cookie helpers
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+See [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) for the full architecture reference.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+<div align="center">
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+*Four rooms. One big family. Each with its own light, its own pace,*  
+*and a caregiver who knows every name.*
+
+**kinderhub.co**
+
+</div>
