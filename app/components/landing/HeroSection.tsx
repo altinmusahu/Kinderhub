@@ -8,47 +8,93 @@ type HeroProps = {
 
 export default function HeroSection({ t, stats }: HeroProps) {
   return (
-    <section className="relative overflow-hidden max-w-4xl mx-auto px-4 sm:px-8 pt-8 sm:pt-24 pb-8 sm:pb-20 text-center">
+    <section className="relative overflow-hidden bg-[#D2592F] px-8 sm:px-16 pt-16 sm:pt-20 pb-14 sm:pb-20 min-h-[520px] flex flex-col justify-between">
 
-      {/* Decorative gradient orb */}
+      {/* Grain texture overlay */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-150 h-150 rounded-full bg-linear-to-br from-indigo-100 via-violet-100 to-transparent opacity-60 blur-3xl"
+        className="pointer-events-none absolute inset-0 z-0 opacity-[0.07]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`,
+          backgroundRepeat: "repeat",
+          backgroundSize: "200px 200px",
+        }}
       />
 
-      <span className="animate-in fade-in slide-in-from-bottom-3 duration-500 fill-mode-both inline-block bg-indigo-50 text-indigo-600 text-xs font-semibold px-3 py-1 rounded-full mb-6 tracking-wide uppercase">
-        {t.badge}
-      </span>
-
-      <h1 className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 fill-mode-both text-3xl sm:text-5xl font-extrabold leading-tight tracking-tight text-gray-900 mb-6">
-        {t.title}{" "}
-        <span className="text-indigo-600">{t.titleHighlight}</span>
-      </h1>
-
-      <p className="animate-in fade-in slide-in-from-bottom-3 duration-500 delay-200 fill-mode-both text-base sm:text-lg text-gray-500 max-w-2xl mx-auto mb-10">
-        {t.subtitle}
-      </p>
-
-      <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300 fill-mode-both flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-        <a
-          href="#pricing"
-          className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-xl shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all text-center"
-        >
-          {t.seePlans}
-        </a>
-        <a
-          href="#features"
-          className="w-full sm:w-auto text-gray-600 hover:text-indigo-600 font-semibold px-6 py-3 rounded-xl border border-gray-200 hover:border-indigo-200 hover:bg-indigo-50 transition-colors text-center"
-        >
-          {t.learnMore}
-        </a>
+      {/* Nested arch stack — right side, brand identity */}
+      <div aria-hidden="true" className="pointer-events-none absolute right-0 bottom-0 translate-x-[18%] translate-y-[12%]">
+        {/* Outer arch */}
+        <div
+          className="w-[480px] h-[480px] rounded-t-full"
+          style={{ background: "rgba(0,0,0,0.12)" }}
+        />
+        {/* Mid arch */}
+        <div
+          className="absolute left-[15%] right-[15%] bottom-0 top-[18%] rounded-t-full"
+          style={{ background: "rgba(0,0,0,0.14)" }}
+        />
+        {/* Inner arch */}
+        <div
+          className="absolute left-[31%] right-[31%] bottom-0 top-[38%] rounded-t-full"
+          style={{ background: "rgba(0,0,0,0.13)" }}
+        />
       </div>
 
-      {/* Stats */}
-      <div className="mt-16 sm:mt-20 grid grid-cols-3 gap-4 sm:gap-8 border-t border-gray-100 pt-10 sm:pt-12">
-        {stats.map(({ value, label }) => (
-          <AnimatedCounter key={label} value={value} label={label} />
-        ))}
+      {/* Content */}
+      <div className="relative z-10 max-w-3xl">
+        {/* Eyebrow */}
+        <p
+          className="animate-in fade-in slide-in-from-bottom-3 duration-500 fill-mode-both text-[#F3B43C] text-xs tracking-[0.2em] uppercase mb-5"
+          style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+        >
+          {t.badge}
+        </p>
+
+        {/* Headline */}
+        <h1
+          className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 fill-mode-both text-[#F3EADA] leading-[0.92] tracking-[-0.01em]"
+          style={{
+            fontFamily: "var(--font-instrument-serif)",
+            fontSize: "clamp(3rem, 7vw, 6rem)",
+          }}
+        >
+          {t.title}
+          <br />
+          <em style={{ color: "#F3B43C", fontStyle: "italic" }}>{t.titleHighlight}</em>
+        </h1>
+
+        {/* Body copy */}
+        <p
+          className="animate-in fade-in slide-in-from-bottom-3 duration-500 delay-200 fill-mode-both text-[rgba(243,234,218,0.85)] text-base sm:text-lg leading-relaxed mt-5 max-w-xl"
+        >
+          {t.subtitle}
+        </p>
+      </div>
+
+      {/* Bottom row: CTAs + stats */}
+      <div className="relative z-10 mt-10 sm:mt-14">
+        {/* Buttons */}
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300 fill-mode-both flex flex-col sm:flex-row items-start gap-3 sm:gap-4 mb-10 sm:mb-14">
+          <a
+            href="#pricing"
+            className="bg-[#F3EADA] text-[#2A2018] font-semibold px-7 py-3.5 rounded-full hover:bg-white hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm hover:shadow-md text-sm"
+          >
+            {t.seePlans} →
+          </a>
+          <a
+            href="#features"
+            className="border border-[rgba(243,234,218,0.45)] text-[#F3EADA] font-medium px-7 py-3.5 rounded-full hover:border-[rgba(243,234,218,0.7)] hover:bg-[rgba(243,234,218,0.08)] transition-colors text-sm"
+          >
+            {t.learnMore}
+          </a>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-4 sm:gap-10 border-t border-[rgba(243,234,218,0.2)] pt-8">
+          {stats.map(({ value, label }) => (
+            <AnimatedCounter key={label} value={value} label={label} />
+          ))}
+        </div>
       </div>
     </section>
   )

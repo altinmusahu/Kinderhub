@@ -10,7 +10,7 @@ export default async function LandingPage() {
   const [t, locale] = await Promise.all([getTranslations(), getLocale()])
 
   return (
-    <div className="min-h-screen bg-white text-gray-900">
+    <div className="min-h-screen bg-[#F3EADA] text-[#2A2018]">
       <Navbar t={t.nav} locale={locale} />
       <HeroSection t={t.hero} stats={Object.values(t.stats)} />
       <FeaturesSection t={t.featuresSection} />

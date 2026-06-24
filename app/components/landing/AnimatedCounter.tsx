@@ -46,10 +46,19 @@ export default function AnimatedCounter({ value, label }: Props) {
 
   return (
     <div>
-      <p className="text-xl sm:text-3xl font-extrabold text-indigo-600" aria-label={value}>
+      <p
+        className="text-2xl sm:text-4xl text-[#F3EADA]"
+        style={{ fontFamily: "var(--font-instrument-serif)" }}
+        aria-label={value}
+      >
         {display}
       </p>
-      <p className="text-xs sm:text-sm text-gray-500 mt-1">{label}</p>
+      <p
+        className="text-xs sm:text-sm text-[rgba(243,234,218,0.65)] mt-1 tracking-widest uppercase"
+        style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+      >
+        {label}
+      </p>
     </div>
   )
 }
