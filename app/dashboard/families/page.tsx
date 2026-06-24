@@ -84,6 +84,21 @@ const columns: Column<FamilyWithDetails>[] = [
     cellStyle: { fontSize: 12, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)" },
     cell: (f) => new Date(f.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short" }),
   },
+  {
+    key: "actions",
+    header: "",
+    cell: (s) => (
+      <Link
+        href={`/dashboard/families/${s.id}`}
+        style={{
+          display: "inline-flex", alignItems: "center", gap: 4,
+          fontSize: 12, color: "var(--kh-peach)", textDecoration: "none", fontWeight: 500,
+        }}
+      >
+        Open →
+      </Link>
+    ),
+  }
 ]
 
 export default async function FamiliesPage() {
@@ -131,7 +146,7 @@ export default async function FamiliesPage() {
             columns={columns}
             rows={families}
             getRowKey={(f) => f.id}
-title="All families"
+            title="All families"
             meta={`${families.length} families · ${balanceDue} with balance due`}
           />
         )}

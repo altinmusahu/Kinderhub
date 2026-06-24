@@ -1,6 +1,6 @@
 <div align="center">
 
-![Kinderhub Banner](public/06-banner-hero.png)
+![Kinderhub Banner](public/06-banner-hero.webp)
 
 # kinder*hub*
 
@@ -27,24 +27,24 @@ Kinderhub is a multi-tenant CRM dashboard built for childcare directors and staf
 <tr>
 <td width="50%">
 
-![Now Enrolling poster](public/07-poster-now-enrolling.png)
+![Now Enrolling poster](public/07-poster-now-enrolling.webp)
 
 </td>
 <td width="50%">
 
-![A home for growing poster](public/08-poster-a-home-for-growing.png)
+![A home for growing poster](public/08-poster-a-home-for-growing.webp)
 
 </td>
 </tr>
 <tr>
 <td width="50%">
 
-![Spring Picnic poster](public/09-poster-spring-picnic.png)
+![Spring Picnic poster](public/09-poster-spring-picnic.webp)
 
 </td>
 <td width="50%">
 
-![Social posts](public/10-social-posts.png)
+![Social posts](public/10-social-posts.webp)
 
 </td>
 </tr>
@@ -54,18 +54,18 @@ Kinderhub is a multi-tenant CRM dashboard built for childcare directors and staf
 <tr>
 <td width="50%">
 
-![Business cards](public/11-business-cards.png)
+![Business cards](public/11-business-cards.webp)
 
 </td>
 <td width="50%">
 
-![App icon sheet](public/12-app-icon-sheet.png)
+![App icon sheet](public/12-app-icon-sheet.webp)
 
 </td>
 </tr>
 </table>
 
-![Tote and signage](public/13-tote-and-signage.png)
+![Tote and signage](public/13-tote-and-signage.webp)
 
 ---
 
