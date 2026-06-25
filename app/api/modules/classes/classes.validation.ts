@@ -9,7 +9,7 @@ export const createClassSchema = z.object({
   capacity:           z.number().int().positive("Capacity must be a positive number"),
   lead_user_id:       z.string().uuid("Invalid lead user"),
   assistant_user_id:  z.string().uuid("Invalid assistant user").nullable().optional(),
-  schedule:           z.record(z.unknown()).nullable().optional(),
+  schedule:           z.record(z.string(), z.unknown()).nullable().optional(),
 })
 
 export const updateClassSchema = createClassSchema.partial()
