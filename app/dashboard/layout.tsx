@@ -1,15 +1,13 @@
 import type { ReactNode } from "react"
-import Sidebar from "@/app/components/dashboard/Sidebar"
-import ActivityFeed from "@/app/components/dashboard/ActivityFeed"
+import DashboardShell from "@/app/components/dashboard/DashboardShell"
+import { fetchActivityItems } from "@/app/components/dashboard/ActivityFeed"
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
+export default async function DashboardLayout({ children }: { children: ReactNode }) {
+  const { items, error } = await fetchActivityItems()
+
   return (
-    <div className="kh-app">
-      <Sidebar />
-      <div className="kh-main">
-        {children}
-      </div>
-      <ActivityFeed />
-    </div>
+    <DashboardShell activityItems={items} activityError={error}>
+      {children}
+    </DashboardShell>
   )
 }

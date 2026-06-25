@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getTenant } from "@/lib/get-tenant"
 import { logActivity } from "@/lib/log-activity"
-import { supabaseAdmin } from "@/lib/supabase-admin"
+import { ClassesService } from "@/app/api/modules/classes/classes.service"
+import { createClassSchema } from "@/app/api/modules/classes/classes.validation"
+import { ZodError } from "zod"
 
 export async function GET() {
   try {
     await getTenant()
-    const { data, error } = await supabaseAdmin
-      .from("classes")
-      .select("*, locations(name)")
-    if (error) throw new Error(error.message)
-    return NextResponse.json(data ?? [])
+    const classes = await ClassesService.getAll()
+    return NextResponse.json(classes)
   } catch (e) {
     const status = e instanceof Error && e.message === "Unauthorized" ? 401 : 500
     return NextResponse.json({ error: e instanceof Error ? e.message : "Error" }, { status })
@@ -21,24 +20,16 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getTenant()
     const body = await req.json()
-    const { data, error } = await supabaseAdmin
-      .from("classes")
-      .insert({
-        name:               body.name,
-        average_year:       body.average_year,
-        location_id:        body.location_id,
-        starts_at:          body.starts_at,
-        ends_at:            body.ends_at,
-        capacity:           body.capacity,
-        lead_user_id:       body.lead_user_id,
-        assistant_user_id:  body.assistant_user_id,
-      })
-      .select()
-      .single()
-    if (error) throw new Error(error.message)
-    logActivity(session, "added", "Class", body.name)
-    return NextResponse.json(data, { status: 201 })
+    const parsed = createClassSchema.parse({
+      ...body,
+      capacity: Number(body.capacity),
+      assistant_user_id: body.assistant_user_id || null,
+    })
+    const cls = await ClassesService.create(parsed)
+    logActivity(session, "added", "Class", cls.name)
+    return NextResponse.json(cls, { status: 201 })
   } catch (e) {
+    if (e instanceof ZodError) return NextResponse.json({ error: e.issues[0]?.message ?? "Validation error" }, { status: 400 })
     const status = e instanceof Error && e.message === "Unauthorized" ? 401 : 500
     return NextResponse.json({ error: e instanceof Error ? e.message : "Error" }, { status })
   }
