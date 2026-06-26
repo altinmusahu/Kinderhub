@@ -9,6 +9,12 @@ export type Kids = {
   class_id: string | null
 }
 
+export type KidWithClassIdNull = {
+  id: string
+  firstname: string
+  lastname: string
+}
+
 export type CreateKidsDto = {
   firstname: string
   family_id: string

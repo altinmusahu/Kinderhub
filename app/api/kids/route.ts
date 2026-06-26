@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getTenant } from "@/lib/get-tenant"
 import { logActivity } from "@/lib/log-activity"
 import { supabaseAdmin } from "@/lib/supabase-admin"
+import { KidsService } from "../modules/kids/kids.service"
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,5 +28,16 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     const status = e instanceof Error && e.message === "Unauthorized" ? 401 : 500
     return NextResponse.json({ error: e instanceof Error ? e.message : "Error" }, { status })
+  }
+}
+
+export async function GET() {
+  try {
+    const { tenant_id } = await getTenant()
+    const kidsWithClassIdNull = await KidsService.getKidsWithClassIdNull(tenant_id)
+    return NextResponse.json(kidsWithClassIdNull)
+  } catch (error) {
+    const status = error instanceof Error && error.message === "Unauthorized" ? 401 : 500
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed" }, { status })
   }
 }

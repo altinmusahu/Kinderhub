@@ -87,9 +87,6 @@ export default function Sidebar({ collapsed, onToggle }: Props) {
                 <Icon size={15} className="kh-nav-icon" />
                 {!collapsed && <span className="kh-nav-label">{label}</span>}
                 {!collapsed && badge !== null && <span className="kh-nav-badge">{badge}</span>}
-                {collapsed && badge !== null && (
-                  <span className="kh-nav-badge-dot" />
-                )}
               </Link>
             )
           })}
