@@ -92,7 +92,7 @@ export default async function PricingSection({ t }: PricingProps) {
                   </ul>
 
                   <Link
-                    href={`/subscribe?planId=${plan.id}`}
+                    href={`/subscribe?plan_id=${plan.id}`}
                     className={`block text-center font-semibold py-3.5 rounded-full transition-all hover:scale-[1.02] active:scale-[0.98] ${
                       highlight
                         ? "bg-[#F3EADA] text-[#D2592F] hover:bg-white"

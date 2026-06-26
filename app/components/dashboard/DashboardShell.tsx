@@ -45,21 +45,17 @@ export default function DashboardShell({ activityItems, activityError, children 
   const leftW  = sidebarCollapsed  ? "52px" : "200px"
   const rightW = activityCollapsed ? "52px" : "260px"
 
-  // Avoid layout flash before localStorage is read
-  if (!mounted) return (
-    <div className="kh-app">
-      <div style={{ width: 200, flexShrink: 0 }} />
-      <div className="kh-main" style={{ marginLeft: 200, marginRight: 260 }}>{children}</div>
-      <div style={{ width: 260, flexShrink: 0 }} />
-    </div>
-  )
-
   return (
-    <div className="kh-app">
+    <div className="kh-app" suppressHydrationWarning>
       <Sidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
       <div
         className="kh-main"
-        style={{ marginLeft: leftW, marginRight: rightW, transition: "margin 220ms ease" }}
+        style={{
+          marginLeft: leftW,
+          marginRight: rightW,
+          transition: "margin 220ms ease",
+          opacity: mounted ? 1 : 0,
+        }}
       >
         {children}
       </div>

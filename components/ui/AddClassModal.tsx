@@ -42,6 +42,7 @@ export default function AddClassModal({ triggerLabel = "+ New class" }: { trigge
   const [form, setForm] = useState({
     name: "", average_year: "", location_id: "",
     capacity: "", lead_user_id: "", assistant_user_id: "",
+    starts_at: "", ends_at: "",
   })
 
   useEffect(() => {
@@ -76,7 +77,7 @@ export default function AddClassModal({ triggerLabel = "+ New class" }: { trigge
   function close() {
     setOpen(false)
     setError("")
-    setForm({ name: "", average_year: "", location_id: "", capacity: "", lead_user_id: "", assistant_user_id: "" })
+    setForm({ name: "", average_year: "", location_id: "", capacity: "", lead_user_id: "", assistant_user_id: "", starts_at: "", ends_at: "" })
     setActiveDays(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"])
     setSchedule({ Monday: { ...DEFAULT_TIME }, Tuesday: { ...DEFAULT_TIME }, Wednesday: { ...DEFAULT_TIME }, Thursday: { ...DEFAULT_TIME }, Friday: { ...DEFAULT_TIME } })
     setGlobalOpens("08:00")
@@ -91,17 +92,6 @@ export default function AddClassModal({ triggerLabel = "+ New class" }: { trigge
     return result
   }
 
-  // Derive starts_at / ends_at from the earliest open and latest close across active days
-  function deriveStartsEnds() {
-    const times = activeDays.map(d => schedule[d] ?? DEFAULT_TIME)
-    const opens = times.map(t => t.opens).sort()
-    const closes = times.map(t => t.closes).sort()
-    return {
-      starts_at: opens[0] ?? DEFAULT_TIME.opens,
-      ends_at: closes[closes.length - 1] ?? DEFAULT_TIME.closes,
-    }
-  }
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError("")
@@ -110,9 +100,11 @@ export default function AddClassModal({ triggerLabel = "+ New class" }: { trigge
       setError("Select at least one day.")
       return
     }
+    if (!form.starts_at) { setError("Start date is required."); return }
+    if (!form.ends_at)   { setError("End date is required."); return }
+    if (form.ends_at < form.starts_at) { setError("End date must be after start date."); return }
 
     startSave(async () => {
-      const { starts_at, ends_at } = deriveStartsEnds()
       const res = await fetch("/api/classes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -120,8 +112,8 @@ export default function AddClassModal({ triggerLabel = "+ New class" }: { trigge
           name:               form.name,
           average_year:       form.average_year,
           location_id:        form.location_id,
-          starts_at,
-          ends_at,
+          starts_at:          form.starts_at,
+          ends_at:            form.ends_at,
           capacity:           parseInt(form.capacity),
           lead_user_id:       form.lead_user_id,
           assistant_user_id:  form.assistant_user_id || null,
@@ -182,6 +174,14 @@ export default function AddClassModal({ triggerLabel = "+ New class" }: { trigge
               </MField>
               <MField label="Capacity" required>
                 <MInput type="number" value={form.capacity} onChange={e => setField("capacity", e.target.value)} suf="children" placeholder="12" required />
+              </MField>
+              <MField label="Start date" required>
+                <MInput type="date" value={form.starts_at} onChange={e => setField("starts_at", e.target.value)} required />
+                <DateQuickPicks onPick={v => setField("starts_at", v)} />
+              </MField>
+              <MField label="End date" required>
+                <MInput type="date" value={form.ends_at} onChange={e => setField("ends_at", e.target.value)} required />
+                <DateQuickPicks base={form.starts_at || undefined} onPick={v => setField("ends_at", v)} />
               </MField>
             </MGrid>
           </MSection>
@@ -311,5 +311,55 @@ export default function AddClassModal({ triggerLabel = "+ New class" }: { trigge
         </form>
       </Modal>
     </>
+  )
+}
+
+function addMonths(base: Date, months: number): string {
+  const d = new Date(base)
+  d.setMonth(d.getMonth() + months)
+  return d.toISOString().slice(0, 10)
+}
+
+const PICKS = [
+  { label: "+3 mo", months: 3 },
+  { label: "+6 mo", months: 6 },
+  { label: "+1 yr", months: 12 },
+] as const
+
+function DateQuickPicks({ base, onPick }: { base?: string; onPick: (v: string) => void }) {
+  return (
+    <div style={{ display: "flex", gap: 5, marginTop: 6 }}>
+      {PICKS.map(({ label, months }) => (
+        <button
+          key={label}
+          type="button"
+          onClick={() => {
+            const from = base ? new Date(base) : new Date()
+            onPick(addMonths(from, months))
+          }}
+          style={{
+            padding: "3px 9px", borderRadius: 6, fontSize: 11.5, fontWeight: 600,
+            cursor: "pointer", transition: "all 100ms",
+            border: "1px solid var(--kh-border)",
+            background: "var(--kh-bg)",
+            color: "var(--kh-ink-500)",
+          }}
+          onMouseEnter={e => {
+            const el = e.currentTarget
+            el.style.borderColor = "#7FA06A"
+            el.style.color = "#2E5E3A"
+            el.style.background = "#EAF3EC"
+          }}
+          onMouseLeave={e => {
+            const el = e.currentTarget
+            el.style.borderColor = "var(--kh-border)"
+            el.style.color = "var(--kh-ink-500)"
+            el.style.background = "var(--kh-bg)"
+          }}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
   )
 }

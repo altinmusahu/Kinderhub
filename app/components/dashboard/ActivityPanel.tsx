@@ -67,10 +67,7 @@ export default function ActivityPanel({ items, debugError, collapsed, onToggle }
       {/* Collapsed — show dot indicator if there are activities */}
       {collapsed && items.length > 0 && (
         <div style={{ display: "flex", justifyContent: "center", paddingTop: 8 }}>
-          <div style={{
-            width: 7, height: 7, borderRadius: "50%",
-            background: "var(--kh-peach)",
-          }} />
+          <Activity size={13} style={{ color: "var(--kh-peach)", flexShrink: 0 }} />
         </div>
       )}
     </aside>

@@ -6,7 +6,14 @@ import type { Kids } from "@/app/api/modules/kids/kids.types"
 import type { WaitlistEntry } from "@/app/api/modules/waitlist/waitlist.types"
 import AddChildButton from "./AddChildButton"
 import WaitlistTable from "./WaitlistTable"
-import { Heart, MapPin, Clock, User } from "lucide-react"
+import { Heart, MapPin, Clock, User, Pencil, X, Check } from "lucide-react"
+
+// ── Types for schedule JSON ────────────────────────────────────
+type DaySchedule = { opens: string; closes: string }
+type Schedule = Partial<Record<string, DaySchedule>>
+
+const ALL_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+const DEFAULT_TIME = { opens: "08:00", closes: "17:30" }
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -109,21 +116,158 @@ function RosterTab({ cls, roster, classId }: { cls: ClassWithRelations; roster: 
   )
 }
 
-function ScheduleTab({ cls }: { cls: ClassWithRelations }) {
-  const schedule = cls.schedule as Record<string, unknown> | null
+function ScheduleEditModal({
+  classId,
+  initial,
+  onClose,
+  onSaved,
+}: {
+  classId: string
+  initial: Schedule
+  onClose: () => void
+  onSaved: (s: Schedule) => void
+}) {
+  const [activeDays, setActiveDays] = useState<string[]>(Object.keys(initial))
+  const [schedule, setSchedule] = useState<Schedule>(() => {
+    const s: Schedule = {}
+    for (const day of ALL_DAYS) {
+      s[day] = initial[day] ?? { ...DEFAULT_TIME }
+    }
+    return s
+  })
+  const [globalOpens, setGlobalOpens] = useState("08:00")
+  const [globalCloses, setGlobalCloses] = useState("17:30")
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState("")
+
+  function toggleDay(day: string) {
+    setActiveDays(prev =>
+      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+    )
+  }
+
+  function setDayTime(day: string, field: "opens" | "closes", value: string) {
+    setSchedule(s => ({ ...s, [day]: { ...s[day]!, [field]: value } }))
+  }
+
+  function applyToAll() {
+    const updated: Schedule = {}
+    for (const day of activeDays) {
+      updated[day] = { opens: globalOpens, closes: globalCloses }
+    }
+    setSchedule(s => ({ ...s, ...updated }))
+  }
+
+  async function save() {
+    if (activeDays.length === 0) { setError("Select at least one day."); return }
+    setSaving(true)
+    setError("")
+    const payload: Schedule = {}
+    for (const day of activeDays) {
+      payload[day] = schedule[day] ?? { ...DEFAULT_TIME }
+    }
+    try {
+      const res = await fetch(`/api/classes/${classId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ schedule: payload }),
+      })
+      if (!res.ok) { const j = await res.json().catch(() => ({})); setError(j.error ?? "Failed to save."); return }
+      onSaved(payload)
+      onClose()
+    } catch {
+      setError("Network error.")
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 640 }}>
+    <div
+      style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(42,32,24,0.45)", backdropFilter: "blur(2px)", display: "flex", alignItems: "center", justifyContent: "center" }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div style={{ background: "var(--kh-surface)", borderRadius: 18, width: "100%", maxWidth: 520, boxShadow: "0 24px 60px rgba(0,0,0,0.18)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        {/* header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px 14px", borderBottom: "1px solid var(--kh-ink-100)" }}>
+          <div style={{ fontFamily: "var(--kh-font-serif)", fontSize: 20, color: "var(--kh-ink-900)", fontWeight: 400 }}>Edit weekly schedule</div>
+          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 8, border: "1px solid var(--kh-ink-100)", background: "var(--kh-bg)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--kh-ink-500)" }}><X size={14} /></button>
+        </div>
 
-      {/* Daily hours */}
+        <div style={{ padding: "16px 20px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Day toggles */}
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {ALL_DAYS.map(day => {
+              const on = activeDays.includes(day)
+              return (
+                <button key={day} type="button" onClick={() => toggleDay(day)} style={{ padding: "5px 11px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 120ms", border: `1px solid ${on ? "#7FA06A" : "var(--kh-border)"}`, background: on ? "#EAF3EC" : "var(--kh-bg)", color: on ? "#2E5E3A" : "var(--kh-ink-400)" }}>
+                  {day.slice(0, 3)}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Apply-all row */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 12px", borderRadius: 10, background: "var(--kh-ink-50)", border: "1px solid var(--kh-border)" }}>
+            <span style={{ fontSize: 12, fontWeight: 500, color: "var(--kh-ink-600)", flexShrink: 0 }}>Apply to all:</span>
+            <input type="time" value={globalOpens} onChange={e => setGlobalOpens(e.target.value)} style={{ border: "1px solid var(--kh-border)", borderRadius: 7, padding: "4px 8px", fontSize: 12.5, background: "var(--kh-surface)", fontFamily: "var(--kh-font-mono)", outline: "none" }} />
+            <span style={{ fontSize: 12, color: "var(--kh-ink-400)" }}>–</span>
+            <input type="time" value={globalCloses} onChange={e => setGlobalCloses(e.target.value)} style={{ border: "1px solid var(--kh-border)", borderRadius: 7, padding: "4px 8px", fontSize: 12.5, background: "var(--kh-surface)", fontFamily: "var(--kh-font-mono)", outline: "none" }} />
+            <button type="button" onClick={applyToAll} style={{ padding: "5px 12px", borderRadius: 7, fontSize: 12, fontWeight: 600, background: "#D2592F", color: "#fff", border: "none", cursor: "pointer", flexShrink: 0 }}>Apply</button>
+          </div>
+
+          {/* Per-day rows — only active days */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {activeDays.length === 0 ? (
+              <p style={{ fontSize: 12.5, color: "var(--kh-ink-400)", textAlign: "center", padding: "8px 0" }}>Select at least one day above.</p>
+            ) : (
+              ALL_DAYS.filter(d => activeDays.includes(d)).map(day => {
+                const s = schedule[day] ?? DEFAULT_TIME
+                return (
+                  <div key={day} style={{ display: "grid", gridTemplateColumns: "110px 1fr 14px 1fr", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 9, background: "var(--kh-bg)", border: "1px solid var(--kh-border)" }}>
+                    <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--kh-ink-800)" }}>{day}</span>
+                    <input type="time" value={s.opens} onChange={e => setDayTime(day, "opens", e.target.value)} style={{ border: "1px solid var(--kh-border)", borderRadius: 7, padding: "5px 8px", fontSize: 12.5, background: "var(--kh-surface)", fontFamily: "var(--kh-font-mono)", outline: "none", width: "100%" }} />
+                    <span style={{ fontSize: 12, color: "var(--kh-ink-400)", textAlign: "center" }}>–</span>
+                    <input type="time" value={s.closes} onChange={e => setDayTime(day, "closes", e.target.value)} style={{ border: "1px solid var(--kh-border)", borderRadius: 7, padding: "5px 8px", fontSize: 12.5, background: "var(--kh-surface)", fontFamily: "var(--kh-font-mono)", outline: "none", width: "100%" }} />
+                  </div>
+                )
+              })
+            )}
+          </div>
+
+          {error && <p style={{ fontSize: 12.5, color: "#D2592F", margin: 0 }}>{error}</p>}
+        </div>
+
+        {/* footer */}
+        <div style={{ padding: "12px 20px", borderTop: "1px solid var(--kh-ink-100)", display: "flex", gap: 8, justifyContent: "flex-end" }}>
+          <button onClick={onClose} style={{ padding: "8px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, border: "1px solid var(--kh-ink-200)", background: "var(--kh-bg)", color: "var(--kh-ink-700)", cursor: "pointer" }}>Cancel</button>
+          <button onClick={save} disabled={saving} style={{ padding: "8px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600, border: "none", background: saving ? "var(--kh-ink-200)" : "var(--kh-peach)", color: saving ? "var(--kh-ink-400)" : "#fff", cursor: saving ? "not-allowed" : "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
+            {saving ? "Saving…" : <><Check size={13} /> Save schedule</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ScheduleTab({ cls }: { cls: ClassWithRelations }) {
+  const [schedule, setSchedule] = useState<Schedule>((cls.schedule as Schedule) ?? {})
+  const [editOpen, setEditOpen] = useState(false)
+
+  const activeDays = ALL_DAYS.filter(d => schedule[d])
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 680 }}>
+
+      {/* Info row: class dates + location + staff */}
       <div className="kh-card">
         <div style={{ padding: "14px 16px 10px", borderBottom: "1px solid var(--kh-ink-100)" }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--kh-ink-800)" }}>Daily hours</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--kh-ink-800)" }}>Class info</span>
         </div>
         <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
           {[
-            { label: "Start time", icon: <Clock size={13} />, value: cls.starts_at ? formatTime(cls.starts_at) : "—" },
-            { label: "End time",   icon: <Clock size={13} />, value: cls.ends_at   ? formatTime(cls.ends_at)   : "—" },
+            { label: "Start date", icon: <Clock size={13} />, value: cls.starts_at ?? "—" },
+            { label: "End date",   icon: <Clock size={13} />, value: cls.ends_at   ?? "—" },
             { label: "Location",   icon: <MapPin size={13} />, value: cls.location_name ?? "—" },
             { label: "Lead",       icon: <User size={13} />,   value: cls.lead_name ?? "—" },
             { label: "Assistant",  icon: <User size={13} />,   value: cls.assistant_name ?? "—" },
@@ -139,63 +283,57 @@ function ScheduleTab({ cls }: { cls: ClassWithRelations }) {
         </div>
       </div>
 
-      {/* Weekly schedule from DB */}
-      <div className="kh-card">
+      {/* Weekly schedule grid */}
+      <div className="kh-card" style={{ overflow: "hidden" }}>
         <div style={{ padding: "14px 16px 10px", borderBottom: "1px solid var(--kh-ink-100)", display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: "var(--kh-ink-800)" }}>Weekly schedule</span>
-          {!schedule && (
-            <span style={{ fontSize: 11, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)" }}>no schedule data yet</span>
-          )}
+          <button
+            onClick={() => setEditOpen(true)}
+            style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 7, fontSize: 12, fontWeight: 600, border: "1px solid var(--kh-border)", background: "var(--kh-bg)", color: "var(--kh-ink-600)", cursor: "pointer" }}
+          >
+            <Pencil size={11} /> Edit
+          </button>
         </div>
 
-        {!schedule || Object.keys(schedule).length === 0 ? (
-          <div style={{ padding: "24px 16px", textAlign: "center", fontSize: 13, color: "var(--kh-ink-400)" }}>
-            No weekly schedule has been set for this class.
+        {activeDays.length === 0 ? (
+          <div style={{ padding: "28px 16px", textAlign: "center", fontSize: 13, color: "var(--kh-ink-400)" }}>
+            No weekly schedule set. <button onClick={() => setEditOpen(true)} style={{ background: "none", border: "none", color: "var(--kh-peach-d)", cursor: "pointer", fontWeight: 600, fontSize: 13 }}>Add one →</button>
           </div>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
-            <thead>
-              <tr>
-                {["Day", "Details"].map((h) => (
-                  <th key={h} style={{
-                    textAlign: "left", fontWeight: 500, color: "var(--kh-ink-400)",
-                    fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em",
-                    padding: "10px 16px", borderBottom: "1px solid var(--kh-ink-100)",
-                    fontFamily: "var(--kh-font-mono)",
-                  }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(schedule).map(([day, value], i) => (
-                <tr key={day} style={{ borderTop: i === 0 ? "none" : "1px solid var(--kh-ink-50)" }}>
-                  <td style={{ padding: "11px 16px", verticalAlign: "middle", width: 140 }}>
-                    <span style={{ fontWeight: 600, color: "var(--kh-ink-800)" }}>{day}</span>
-                  </td>
-                  <td style={{ padding: "11px 16px", verticalAlign: "middle", color: "var(--kh-ink-600)" }}>
-                    {typeof value === "object" && value !== null ? (
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                        {Object.entries(value as Record<string, unknown>).map(([k, v]) => (
-                          <span key={k} style={{
-                            display: "inline-flex", alignItems: "center", gap: 4,
-                            padding: "2px 8px", borderRadius: 999,
-                            background: "var(--kh-peach-bg)", color: "var(--kh-peach-d)",
-                            fontSize: 11.5, fontWeight: 500,
-                          }}>
-                            <span style={{ color: "var(--kh-ink-400)" }}>{k}:</span> {String(v)}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <span>{String(value)}</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div style={{ display: "grid", gridTemplateColumns: `140px repeat(${activeDays.length}, 1fr)` }}>
+            {/* Header row */}
+            <div style={{ padding: "9px 14px", fontSize: 10.5, fontFamily: "var(--kh-font-mono)", color: "var(--kh-ink-400)", textTransform: "uppercase", letterSpacing: ".06em", borderBottom: "1px solid var(--kh-ink-100)" }}>Hours</div>
+            {activeDays.map(day => (
+              <div key={day} style={{ padding: "9px 14px", fontSize: 12, fontWeight: 600, color: "var(--kh-ink-700)", borderLeft: "1px solid var(--kh-ink-100)", borderBottom: "1px solid var(--kh-ink-100)" }}>{day.slice(0, 3)}</div>
+            ))}
+
+            {/* Single data row — hours per day */}
+            <div style={{ padding: "13px 14px", display: "flex", flexDirection: "column", gap: 2, borderBottom: "1px solid var(--kh-ink-50)", background: "var(--kh-bg)" }}>
+              <span style={{ fontSize: 10, fontFamily: "var(--kh-font-mono)", color: "var(--kh-ink-400)", textTransform: "uppercase", letterSpacing: ".06em" }}>Open – Close</span>
+            </div>
+            {activeDays.map(day => {
+              const s = schedule[day]!
+              return (
+                <div key={day} style={{ borderLeft: "1px solid var(--kh-ink-100)", borderBottom: "1px solid var(--kh-ink-50)", padding: "10px 14px" }}>
+                  <div style={{ background: "linear-gradient(180deg,#FEF0E8,#FDE8DA)", borderLeft: "3px solid #D2592F", borderRadius: 6, padding: "8px 10px" }}>
+                    <div style={{ fontFamily: "var(--kh-font-mono)", fontSize: 12, fontWeight: 700, color: "#7A2810" }}>{s.opens}</div>
+                    <div style={{ fontFamily: "var(--kh-font-mono)", fontSize: 11, color: "#B24420", marginTop: 2 }}>– {s.closes}</div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         )}
       </div>
+
+      {editOpen && (
+        <ScheduleEditModal
+          classId={cls.id}
+          initial={schedule}
+          onClose={() => setEditOpen(false)}
+          onSaved={setSchedule}
+        />
+      )}
     </div>
   )
 }

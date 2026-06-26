@@ -1,23 +1,22 @@
 import { notFound } from "next/navigation"
-import { SubscriptionPlanService } from "@/app/api/modules/subscription_plans/subscription_plans.service"
 import SubscribeForm from "./SubscribeForm"
 import Link from "next/link"
+import { SubscriptionPlanService } from '@/app/api/modules/subscription_plans/subscription_plans.service'
 
 type Props = {
-  searchParams: Promise<{ planId?: string }>
+  searchParams: Promise<{ plan_id?: string }>
 }
 
 export default async function SubscribePage({ searchParams }: Props) {
-  const { planId } = await searchParams
+  const { plan_id } = await searchParams
 
-  if (!planId) notFound()
+  if (!plan_id) notFound()
 
-  let plan
-  try {
-    plan = await SubscriptionPlanService.getById(planId)
-  } catch {
-    notFound()
-  }
+  const res = await SubscriptionPlanService.getById(plan_id)
+
+  if (!res) notFound()
+
+  const plan = res;
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-start justify-center px-4 py-16">

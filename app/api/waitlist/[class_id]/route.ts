@@ -21,14 +21,10 @@ export async function POST(req: NextRequest, { params }: Params) {
     const { tenant_id } = await getTenant()
     const { class_id } = await params
     const body = await req.json()
-    const entry = await WaitlistService.create({
-      class_id,
-      tenant_id,
-      firstname:     body.firstname,
-      lastname:      body.lastname,
-      date_of_birth: body.date_of_birth,
-      note:          body.note ?? null,
-    })
+    if (!body.kid_id) {
+      return NextResponse.json({ error: "kid_id is required" }, { status: 400 })
+    }
+    const entry = await WaitlistService.create({ kid_id: body.kid_id, class_id, tenant_id })
     return NextResponse.json(entry, { status: 201 })
   } catch (error) {
     const status = error instanceof Error && error.message === "Unauthorized" ? 401 : 500

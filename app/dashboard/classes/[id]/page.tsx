@@ -99,12 +99,12 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
   let roster: Kids[] = []
   let waitlist: WaitlistEntry[] = []
   try {
-    ;[roster, waitlist] = await Promise.all([
+    [roster, waitlist] = await Promise.all([
       KidsService.getKidsByClassId(tenant_id, id),
       WaitlistService.getByClassId(tenant_id, id),
     ])
-  } catch {
-    // show page with empty roster/waitlist rather than crashing
+  } catch (err) {
+    console.error("[ClassDetailPage] failed to fetch roster/waitlist:", err)
   }
 
   return (
@@ -158,15 +158,12 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
               <h1 style={{ margin: 0, fontFamily: "var(--kh-font-serif)", fontSize: 30, fontWeight: 400, color: "var(--kh-ink-900)", letterSpacing: "-0.015em" }}>
                 {cls.name}
               </h1>
-              {cls.average_year && (
-                <Pill text={cls.average_year} bg="var(--kh-peach-bg)" color="var(--kh-peach-d)" />
-              )}
               <Pill text="Active" bg="var(--kh-sage-bg)" color="var(--kh-sage-d)" dot="var(--kh-sage)" />
             </div>
             <div style={{ display: "flex", gap: 16, marginTop: 8, fontSize: 12.5, color: "var(--kh-ink-500)", flexWrap: "wrap" }}>
               {cls.location_name && <span>{cls.location_name}</span>}
               {cls.lead_name && <span>Lead: {cls.lead_name}</span>}
-              <span style={{ fontFamily: "var(--kh-font-mono)", fontSize: 11 }}>{cls.id}</span>
+              <span style={{ fontFamily: "var(--kh-font-mono)", fontSize: 11 }}>ID:{cls.id.slice(0, 8).toUpperCase()}</span>
             </div>
           </div>
 

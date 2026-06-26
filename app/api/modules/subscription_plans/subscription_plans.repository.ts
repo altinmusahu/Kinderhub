@@ -17,12 +17,12 @@ export const SubscriptionPlanRepository = {
     return data
   },
 
-  async findById(id: string): Promise<SubscriptionPlan | null> {
+  async findById(plan_id: string): Promise<SubscriptionPlan | null> {
     const supabase = await client()
     const { data, error } = await supabase
       .from("subscription_plans")
       .select("*")
-      .eq("Id", id)
+      .eq("id", plan_id)
       .maybeSingle()
     if (error) throw new Error(error.message)
     return data
