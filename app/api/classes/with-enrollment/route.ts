@@ -36,8 +36,8 @@ export async function GET() {
       average_year:  c.average_year,
       capacity:      c.capacity,
       enrolled:      enrolledByClass[c.id] ?? 0,
-      lead_name:     c.lead ? `${c.lead.name} ${c.lead.lastname}` : null,
-      location_name: c.locations?.name ?? null,
+      // lead_name:     c.lead ? `${c.lead.name} ${c.lead.lastname}` : null,
+      // location_name: c.locations?.name ?? null,
     }))
 
     return NextResponse.json(result)
