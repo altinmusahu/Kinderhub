@@ -1,0 +1,16 @@
+{
+  "name": "Kinderhub — Kindergarten Management",
+  "short_name": "Kinderhub",
+  "description": "The all-in-one platform for kindergarten management.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F3EADA",
+  "theme_color": "#D2592F",
+  "icons": [
+    {
+      "src": "/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
