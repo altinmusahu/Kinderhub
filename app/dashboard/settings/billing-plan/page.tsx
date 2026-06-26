@@ -1,0 +1,11 @@
+export default function BillingPlanSettingsPage() {
+  return (
+    <>
+      <h1 className="kh-h1">Billing plan</h1>
+      <p className="kh-sub">Manage your Kinderhub subscription, invoices, and payment method.</p>
+      <div className="kh-card" style={{ marginTop: 24, padding: 32, textAlign: "center", color: "var(--kh-ink-400)", fontSize: 13 }}>
+        Coming soon
+      </div>
+    </>
+  )
+}
