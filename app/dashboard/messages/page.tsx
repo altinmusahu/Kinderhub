@@ -1,5 +1,6 @@
 "use client"
 import React, { useState } from "react"
+import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
 
 const threads = [
   { id: "DC", name: "Diana Castellanos", family: "Castellanos",   color: "#D97F8C", time: "14m", preview: "Mateo will skip Thursday — we're visiting f...", unread: true  },
@@ -26,11 +27,14 @@ export default function MessagesPage() {
   return (
     <div className="kh-page" style={{ overflow: "hidden" }}>
       <header className="kh-topbar">
-        <nav className="kh-breadcrumb">
-          <span className="kh-breadcrumb-parent">Kinderhub</span>
-          <span className="kh-breadcrumb-sep">/</span>
-          <span className="kh-breadcrumb-current">Messages</span>
-        </nav>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <MobileMenuButton />
+          <nav className="kh-breadcrumb">
+            <span className="kh-breadcrumb-parent">Kinderhub</span>
+            <span className="kh-breadcrumb-sep">/</span>
+            <span className="kh-breadcrumb-current">Messages</span>
+          </nav>
+        </div>
         <div className="kh-topbar-right">
           <button className="kh-btn">≡ Unread</button>
           <button className="kh-btn">🌐 Broadcast</button>

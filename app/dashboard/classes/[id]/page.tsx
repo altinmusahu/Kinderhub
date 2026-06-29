@@ -8,6 +8,7 @@ import type { Kids } from "@/app/api/modules/kids/kids.types"
 import type { ClassWithRelations } from "@/app/api/modules/classes/classes.types"
 import type { WaitlistEntry } from "@/app/api/modules/waitlist/waitlist.types"
 import ClassTabs from "./ClassTabs"
+import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
 
 // ── KPI ring ─────────────────────────────────────────────────
 
@@ -112,19 +113,22 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
 
       {/* Topbar */}
       <header className="kh-topbar">
-        <nav className="kh-breadcrumb">
-          <span className="kh-breadcrumb-parent">Kinderhub</span>
-          <span className="kh-breadcrumb-sep">/</span>
-          <Link href="/dashboard/classes" className="kh-breadcrumb-parent" style={{ textDecoration: "none" }}>Classes</Link>
-          <span className="kh-breadcrumb-sep">/</span>
-          <span className="kh-breadcrumb-current">{cls.name}</span>
-        </nav>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <MobileMenuButton />
+          <nav className="kh-breadcrumb">
+            <span className="kh-breadcrumb-parent">Kinderhub</span>
+            <span className="kh-breadcrumb-sep">/</span>
+            <Link href="/dashboard/classes" className="kh-breadcrumb-parent" style={{ textDecoration: "none" }}>Classes</Link>
+            <span className="kh-breadcrumb-sep">/</span>
+            <span className="kh-breadcrumb-current">{cls.name}</span>
+          </nav>
+        </div>
         <div className="kh-topbar-right">
           <button className="kh-btn" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5 }}>
-            <Mail size={13} /> Message room
+            <Mail size={13} /> <span className="kh-btn-label">Message room</span>
           </button>
           <button className="kh-btn" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5 }}>
-            <ClipboardList size={13} /> Take attendance
+            <ClipboardList size={13} /> <span className="kh-btn-label">Take attendance</span>
           </button>
           <button className="kh-btn" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, padding: 0 }}>
             <MoreHorizontal size={14} />
@@ -134,11 +138,11 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
 
       {/* Class hero header */}
       <div style={{
-        padding: "22px 26px 16px",
+        padding: "16px 16px 14px",
         background: "linear-gradient(180deg, var(--kh-peach-bg) 0%, transparent 78%)",
         borderBottom: "1px solid var(--kh-ink-100)",
       }}>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 20 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
 
           {/* Class icon */}
           <div style={{

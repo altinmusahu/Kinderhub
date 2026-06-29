@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import type { ReactNode } from "react"
+import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
 
 const settingsNav = [
   {
@@ -40,20 +41,57 @@ const settingsNav = [
   },
 ]
 
+const allItems = settingsNav.flatMap(g => g.items)
+
 export default function SettingsLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname()
 
   return (
     <div className="kh-page" style={{ overflow: "hidden" }}>
       <header className="kh-topbar">
-        <nav className="kh-breadcrumb">
-          <span className="kh-breadcrumb-parent">Kinderhub</span>
-          <span className="kh-breadcrumb-sep">/</span>
-          <span className="kh-breadcrumb-current">Settings</span>
-        </nav>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <MobileMenuButton />
+          <nav className="kh-breadcrumb">
+            <span className="kh-breadcrumb-parent">Kinderhub</span>
+            <span className="kh-breadcrumb-sep">/</span>
+            <span className="kh-breadcrumb-current">Settings</span>
+          </nav>
+        </div>
       </header>
 
-      <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", flex: 1, minHeight: 0, overflow: "hidden" }}>
+      {/* Mobile: horizontal scrollable tab strip */}
+      <div className="kh-settings-tabs-wrap" style={{
+        borderBottom: "1px solid var(--kh-border)",
+        background: "var(--kh-ink-50)",
+        display: "none",
+      }}
+        // shown via CSS at ≤767px
+        id="kh-settings-mobile-nav"
+      >
+        <div style={{ display: "flex", gap: 2, padding: "8px 10px", minWidth: "max-content" }}>
+          {allItems.map(({ label, href }) => {
+            const active = pathname === href
+            return (
+              <Link key={href} href={href} style={{
+                padding: "6px 12px", borderRadius: 8, fontSize: 12.5,
+                fontWeight: active ? 600 : 400, whiteSpace: "nowrap",
+                textDecoration: "none",
+                background: active ? "var(--kh-paper)" : "transparent",
+                color: active ? "var(--kh-ink-900)" : "var(--kh-ink-600)",
+                border: active ? "1px solid var(--kh-border)" : "1px solid transparent",
+                transition: "all 120ms",
+              }}>
+                {label}
+              </Link>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Desktop: sidebar + content */}
+      <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", flex: 1, minHeight: 0, overflow: "hidden" }}
+        className="kh-settings-body"
+      >
         <aside style={{
           borderRight: "1px solid var(--kh-border)",
           background: "var(--kh-ink-50)",

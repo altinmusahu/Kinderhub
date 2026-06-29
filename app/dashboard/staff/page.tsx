@@ -7,6 +7,7 @@ import { verifyToken, cookieName } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { avatarColor, initials } from "@/components/ui/helper"
 import { UserWithWorkTrackingAndDepartment } from "@/app/api/modules/user/user.types"
+import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
 
 export default async function StaffPage() {
   const store = await cookies()
@@ -120,11 +121,14 @@ export default async function StaffPage() {
   return (
     <div className="kh-page">
       <header className="kh-topbar">
-        <nav className="kh-breadcrumb">
-          <span className="kh-breadcrumb-parent">Kinderhub</span>
-          <span className="kh-breadcrumb-sep">/</span>
-          <span className="kh-breadcrumb-current">Staff</span>
-        </nav>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <MobileMenuButton />
+          <nav className="kh-breadcrumb">
+            <span className="kh-breadcrumb-parent">Kinderhub</span>
+            <span className="kh-breadcrumb-sep">/</span>
+            <span className="kh-breadcrumb-current">Staff</span>
+          </nav>
+        </div>
         <div className="kh-topbar-right">
           <button className="kh-btn">≡ Filter</button>
           <AddStaffModal />

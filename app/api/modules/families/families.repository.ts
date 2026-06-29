@@ -43,7 +43,7 @@ export const FamiliesRepository = {
       .from("families")
       .select(`
         id, name, status, plan, balance, created_at,
-        parents ( id, firstname, lastname, phone_number, address, pick_up, is_active, date_of_birth, personal_number ),
+        parents ( id, firstname, lastname, phone_number, address, pick_up, is_active, date_of_birth, personal_number, created_at ),
         kids    ( id, firstname, lastname, date_of_birth, gender, personal_number, class_id )
       `)
       .eq("id", id)
@@ -58,7 +58,9 @@ export const FamiliesRepository = {
       plan:       data.plan,
       balance:    Number(data.balance ?? 0),
       created_at: data.created_at,
-      parents:    Array.isArray(data.parents) ? data.parents : [],
+      parents:    Array.isArray(data.parents)
+        ? [...data.parents].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        : [],
       kids:       Array.isArray(data.kids)    ? data.kids    : [],
     }
   },

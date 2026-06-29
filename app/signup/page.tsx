@@ -104,9 +104,10 @@ function SignupForm() {
         style={{
           background: "#fff",
           borderRadius: 14,
-          padding: "40px 44px",
-          width: 500,
-          maxHeight: "90vh",
+          padding: "clamp(24px, 5vw, 40px) clamp(18px, 6vw, 44px)",
+          width: "100%",
+          maxWidth: 500,
+          maxHeight: "90dvh",
           overflowY: "auto",
           boxShadow: "0 4px 32px rgba(0,0,0,0.10)",
           border: "1px solid var(--kh-border, #E8E4DF)",
@@ -173,8 +174,8 @@ function SignupForm() {
             gap: 14,
           }}
         >
-          <div style={{ display: "flex", gap: 12 }}>
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 5 }}>
+          <div className="kh-field-grid">
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
               <label style={labelStyle}>First Name</label>
               <input
                 type="text"
@@ -186,7 +187,7 @@ function SignupForm() {
                 style={inputStyle}
               />
             </div>
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 5 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
               <label style={labelStyle}>Last Name</label>
               <input
                 type="text"
@@ -214,8 +215,8 @@ function SignupForm() {
             />
           </div>
 
-          <div style={{ display: "flex", gap: 12 }}>
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 5 }}>
+          <div className="kh-field-grid">
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
               <label style={labelStyle}>Password</label>
               <input
                 type="password"
@@ -228,7 +229,7 @@ function SignupForm() {
                 style={inputStyle}
               />
             </div>
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 5 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
               <label style={labelStyle}>Confirm Password</label>
               <input
                 type="password"

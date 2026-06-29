@@ -5,6 +5,7 @@ import { verifyToken, cookieName } from "@/lib/auth"
 import { FamiliesService } from "@/app/api/modules/families/families.service"
 import { avatarColor } from "@/components/ui/helper"
 import FamilyTabs from "./FamilyTabs"
+import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
 
 function familyInitials(name: string) {
   return name.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase()
@@ -45,18 +46,21 @@ export default async function FamilyPage({ params }: { params: Promise<{ id: str
   return (
     <div className="kh-page">
       <header className="kh-topbar">
-        <nav className="kh-breadcrumb">
-          <span className="kh-breadcrumb-parent">Kinderhub</span>
-          <span className="kh-breadcrumb-sep">/</span>
-          <Link href="/dashboard/families" className="kh-breadcrumb-parent" style={{ textDecoration: "none" }}>
-            Families
-          </Link>
-          <span className="kh-breadcrumb-sep">/</span>
-          <span className="kh-breadcrumb-current">{family.name}</span>
-        </nav>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <MobileMenuButton />
+          <nav className="kh-breadcrumb">
+            <span className="kh-breadcrumb-parent">Kinderhub</span>
+            <span className="kh-breadcrumb-sep">/</span>
+            <Link href="/dashboard/families" className="kh-breadcrumb-parent" style={{ textDecoration: "none" }}>
+              Families
+            </Link>
+            <span className="kh-breadcrumb-sep">/</span>
+            <span className="kh-breadcrumb-current">{family.name}</span>
+          </nav>
+        </div>
         <div className="kh-topbar-right">
           <Link href="/dashboard/families">
-            <button className="kh-btn">← Back to Families</button>
+            <button className="kh-btn">← Back</button>
           </Link>
         </div>
       </header>
@@ -68,7 +72,7 @@ export default async function FamilyPage({ params }: { params: Promise<{ id: str
           background: `linear-gradient(180deg, ${color}18 0%, var(--kh-bg) 80%)`,
           borderBottom: "1px solid var(--kh-border)",
         }}>
-          <div style={{ display: "flex", gap: 20, alignItems: "flex-start", paddingBottom: 20 }}>
+          <div style={{ display: "flex", gap: 16, alignItems: "flex-start", paddingBottom: 20, flexWrap: "wrap" }}>
             {/* Avatar */}
             <div style={{
               width: 80, height: 80, borderRadius: 18,
@@ -118,9 +122,10 @@ export default async function FamilyPage({ params }: { params: Promise<{ id: str
 
             {/* Quick stats */}
             <div style={{
-              display: "flex", gap: 24, padding: "14px 20px",
+              display: "flex", gap: 20, padding: "12px 16px",
               background: "var(--kh-surface)", border: "1px solid var(--kh-border)",
-              borderRadius: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.06)", flexShrink: 0,
+              borderRadius: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+              flexShrink: 0, flexWrap: "wrap",
             }}>
               <div>
                 <div style={{ fontSize: 10, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)", textTransform: "uppercase", letterSpacing: ".06em" }}>Children</div>

@@ -6,6 +6,7 @@ import { FamiliesService } from "@/app/api/modules/families/families.service"
 import type { FamilyWithDetails } from "@/app/api/modules/families/families.types"
 import { DataTable, Column } from "@/app/components/dashboard/DataTable"
 import AddFamilyModal from "@/components/ui/AddFamilyModal"
+import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
 
 const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
   Active:   { bg: "#E8F5EC", color: "#3A8C50" },
@@ -119,11 +120,14 @@ export default async function FamiliesPage() {
   return (
     <div className="kh-page">
       <header className="kh-topbar">
-        <nav className="kh-breadcrumb">
-          <span className="kh-breadcrumb-parent">Kinderhub</span>
-          <span className="kh-breadcrumb-sep">/</span>
-          <span className="kh-breadcrumb-current">Families</span>
-        </nav>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <MobileMenuButton />
+          <nav className="kh-breadcrumb">
+            <span className="kh-breadcrumb-parent">Kinderhub</span>
+            <span className="kh-breadcrumb-sep">/</span>
+            <span className="kh-breadcrumb-current">Families</span>
+          </nav>
+        </div>
         <div className="kh-topbar-right">
           <AddFamilyModal />
         </div>

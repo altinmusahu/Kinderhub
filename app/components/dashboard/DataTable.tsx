@@ -33,6 +33,8 @@ export function DataTable<T>({
           {meta && <span className="kh-card-meta">{meta}</span>}
         </div>
       )}
+      {/* kh-table-scroll enables horizontal scroll on small screens */}
+      <div className="kh-table-scroll">
       <table className="kh-table">
         <thead>
           <tr>
@@ -61,6 +63,7 @@ export function DataTable<T>({
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   )
 }

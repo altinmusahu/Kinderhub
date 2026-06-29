@@ -39,6 +39,7 @@ export type FamilyParent = {
   is_active: boolean
   date_of_birth: string
   personal_number: string
+  created_at: string
 }
 
 export type FamilyKid = {

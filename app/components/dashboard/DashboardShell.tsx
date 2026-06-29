@@ -4,6 +4,7 @@ import { useState, useEffect, type ReactNode } from "react"
 import Sidebar from "./Sidebar"
 import ActivityPanel from "./ActivityPanel"
 import type { ActivityItem } from "./ActivityFeed"
+import { MobileNavContext } from "./MobileNavContext"
 
 type Props = {
   activityItems: ActivityItem[]
@@ -14,6 +15,7 @@ type Props = {
 export default function DashboardShell({ activityItems, activityError, children }: Props) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activityCollapsed, setActivityCollapsed] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -25,6 +27,19 @@ export default function DashboardShell({ activityItems, activityError, children 
     } catch {}
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    function onResize() {
+      if (window.innerWidth >= 768) setMobileOpen(false)
+    }
+    window.addEventListener("resize", onResize)
+    return () => window.removeEventListener("resize", onResize)
+  }, [])
+
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : ""
+    return () => { document.body.style.overflow = "" }
+  }, [mobileOpen])
 
   function toggleSidebar() {
     setSidebarCollapsed(v => {
@@ -46,25 +61,43 @@ export default function DashboardShell({ activityItems, activityError, children 
   const rightW = activityCollapsed ? "52px" : "260px"
 
   return (
-    <div className="kh-app" suppressHydrationWarning>
-      <Sidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
-      <div
-        className="kh-main"
-        style={{
-          marginLeft: leftW,
-          marginRight: rightW,
-          transition: "margin 220ms ease",
-          opacity: mounted ? 1 : 0,
-        }}
-      >
-        {children}
+    <MobileNavContext.Provider value={{ openMobileNav: () => setMobileOpen(true) }}>
+      <div className="kh-app" suppressHydrationWarning>
+        {/* Mobile overlay */}
+        {mobileOpen && (
+          <div
+            className="kh-sidebar-overlay"
+            onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+
+        <Sidebar
+          collapsed={sidebarCollapsed}
+          onToggle={toggleSidebar}
+          mobileOpen={mobileOpen}
+          onMobileClose={() => setMobileOpen(false)}
+        />
+
+        <div
+          className="kh-main"
+          style={{
+            marginLeft: leftW,
+            marginRight: rightW,
+            transition: "margin 220ms ease",
+            opacity: mounted ? 1 : 0,
+          }}
+        >
+          {children}
+        </div>
+
+        <ActivityPanel
+          items={activityItems}
+          debugError={activityError}
+          collapsed={activityCollapsed}
+          onToggle={toggleActivity}
+        />
       </div>
-      <ActivityPanel
-        items={activityItems}
-        debugError={activityError}
-        collapsed={activityCollapsed}
-        onToggle={toggleActivity}
-      />
-    </div>
+    </MobileNavContext.Provider>
   )
 }

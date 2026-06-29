@@ -1,5 +1,6 @@
 import React from "react"
 import { DataTable, Column } from "@/app/components/dashboard/DataTable"
+import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
 
 const invoices = [
   { id: "INV-2051", family: "Okafor-Lind",   fid: "OL", color: "#E8866A", amount: "$2,840.00", status: "Paid",    due: "Apr 10", method: "Visa · 4242" },
@@ -81,11 +82,14 @@ export default function BillingPage() {
   return (
     <div className="kh-page">
       <header className="kh-topbar">
-        <nav className="kh-breadcrumb">
-          <span className="kh-breadcrumb-parent">Kinderhub</span>
-          <span className="kh-breadcrumb-sep">/</span>
-          <span className="kh-breadcrumb-current">Billing</span>
-        </nav>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <MobileMenuButton />
+          <nav className="kh-breadcrumb">
+            <span className="kh-breadcrumb-parent">Kinderhub</span>
+            <span className="kh-breadcrumb-sep">/</span>
+            <span className="kh-breadcrumb-current">Billing</span>
+          </nav>
+        </div>
         <div className="kh-topbar-right">
           <button className="kh-btn">↑ Export</button>
           <button className="kh-btn">✉ Send reminders</button>

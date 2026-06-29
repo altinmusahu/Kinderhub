@@ -1,6 +1,7 @@
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { verifyToken, cookieName } from "@/lib/auth"
+import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
 
 export default async function CalendarPage() {
   const store = await cookies()
@@ -55,11 +56,14 @@ export default async function CalendarPage() {
   return (
     <div className="kh-page">
       <header className="kh-topbar">
-        <nav className="kh-breadcrumb">
-          <span className="kh-breadcrumb-parent">Kinderhub</span>
-          <span className="kh-breadcrumb-sep">/</span>
-          <span className="kh-breadcrumb-current">Calendar</span>
-        </nav>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <MobileMenuButton />
+          <nav className="kh-breadcrumb">
+            <span className="kh-breadcrumb-parent">Kinderhub</span>
+            <span className="kh-breadcrumb-sep">/</span>
+            <span className="kh-breadcrumb-current">Calendar</span>
+          </nav>
+        </div>
         <div className="kh-topbar-right">
           <button className="kh-btn">≡ Rooms</button>
           <button className="kh-btn">👤 Staff</button>

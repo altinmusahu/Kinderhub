@@ -2,8 +2,10 @@
 
 import { useState } from "react"
 import type { FamilyDetail, FamilyParent, FamilyKid } from "@/app/api/modules/families/families.types"
+import AddParentButton from "./AddParentButton"
+import EditParentButton from "./EditParentButton"
 
-const TABS = ["Overview", "Documents"] as const
+const TABS = ["Overview", "Parents", "Billing", "Documents", "Activity"] as const
 type Tab = typeof TABS[number]
 
 function age(dob: string) {
@@ -57,12 +59,14 @@ function ChildrenCard({ kids }: { kids: FamilyKid[] }) {
   )
 }
 
-function ParentsCard({ parents }: { parents: FamilyParent[] }) {
+function ParentsCard({ parents, familyId, showButton }: { parents: FamilyParent[]; familyId: string, showButton: boolean }) {
   return (
     <div className="kh-card" style={{ padding: "18px 20px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
         <span className="kh-card-title">Parents & Guardians</span>
-        <span style={{ fontSize: 11.5, color: "var(--kh-ink-400)" }}>{parents.length} guardians</span>
+        {showButton ? (
+          <AddParentButton familyId={familyId} />
+        ) : null}
       </div>
       {parents.length === 0 ? (
         <p style={{ fontSize: 13, color: "var(--kh-ink-400)", margin: 0 }}>No parents added yet.</p>
@@ -72,7 +76,7 @@ function ParentsCard({ parents }: { parents: FamilyParent[] }) {
             <div key={p.id} style={{
               padding: "13px 16px", borderRadius: 12,
               border: `1px solid ${i === 0 ? "#F0C4A8" : "var(--kh-border)"}`,
-              background: i === 0 ? "linear-gradient(180deg,#FEF0E8,var(--kh-surface) 60%)" : "var(--kh-surface)",
+              background: "linear-gradient(180deg,#FEF0E8,var(--kh-surface) 60%)",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                 <div style={{
@@ -86,15 +90,10 @@ function ParentsCard({ parents }: { parents: FamilyParent[] }) {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, fontSize: 13, color: "var(--kh-ink-900)" }}>
                     {p.firstname} {p.lastname}
-                    {i === 0 && (
-                      <span className="kh-status-badge" style={{ marginLeft: 8, background: "#FEF0E8", color: "#B24420" }}>
-                        Primary
-                      </span>
-                    )}
                   </div>
                   <div style={{ fontSize: 11.5, color: "var(--kh-ink-500)", marginTop: 1 }}>{p.phone_number}</div>
                 </div>
-                <div style={{ display: "flex", gap: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   {p.pick_up && (
                     <span className="kh-status-badge" style={{ background: "#E8F5EC", color: "#3A8C50" }}>
                       <span className="kh-pill-dot" style={{ background: "#3A8C50" }} />
@@ -108,6 +107,9 @@ function ParentsCard({ parents }: { parents: FamilyParent[] }) {
                     <span className="kh-pill-dot" style={{ background: p.is_active ? "#3A8C50" : "#9E968A" }} />
                     {p.is_active ? "Active" : "Inactive"}
                   </span>
+                  {showButton ? (
+                    <EditParentButton parent={p} />
+                  ) : null}
                 </div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 16px" }}>
@@ -160,7 +162,7 @@ function OverviewTab({ family }: { family: FamilyDetail }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
       <ChildrenCard kids={family.kids} />
-      <ParentsCard parents={family.parents} />
+      <ParentsCard parents={family.parents} familyId={family.id} showButton={false} />
       <BillingCard family={family} />
       <div className="kh-card" style={{ padding: "18px 20px" }}>
         <div style={{ marginBottom: 14 }}>
@@ -210,6 +212,7 @@ export default function FamilyTabs({ family }: { family: FamilyDetail }) {
             Documents coming soon.
           </div>
         )}
+        {tab === "Parents" && <ParentsCard parents={family.parents} familyId={family.id} showButton={true} />}
       </div>
     </>
   )

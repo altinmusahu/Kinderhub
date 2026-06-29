@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import {
   LayoutDashboard, Users, UserSquare2, BookOpen,
   Receipt, MessageSquare, FileText, Calendar, Settings,
-  PanelLeftClose, PanelLeftOpen,
+  PanelLeftClose, PanelLeftOpen, X,
 } from "lucide-react"
 
 function ArchMarkSVG({ size = 32 }: { size?: number }) {
@@ -46,47 +46,82 @@ const TOOLS_ITEMS = [
   { href: "/dashboard/settings", icon: Settings, label: "Settings" },
 ]
 
-type Props = { collapsed: boolean; onToggle: () => void }
+type Props = {
+  collapsed: boolean
+  onToggle: () => void
+  mobileOpen?: boolean
+  onMobileClose?: () => void
+}
 
-export default function Sidebar({ collapsed, onToggle }: Props) {
+export default function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose }: Props) {
   const pathname = usePathname()
 
-  return (
-    <aside className={`kh-sidebar${collapsed ? " kh-sidebar--collapsed" : ""}`}>
+  // On mobile the sidebar is never "collapsed" — it's full width when open
+  const isMobileExpanded = mobileOpen
 
+  // Determine if labels should show: desktop expanded OR mobile open
+  const showLabels = isMobileExpanded || !collapsed
+
+  function handleNavClick() {
+    onMobileClose?.()
+  }
+
+  return (
+    <aside
+      className={[
+        "kh-sidebar",
+        collapsed && !mobileOpen ? "kh-sidebar--collapsed" : "",
+        mobileOpen ? "kh-sidebar--mobile-open" : "",
+      ].filter(Boolean).join(" ")}
+    >
       {/* Logo row */}
-      <div className="kh-sidebar-logo" style={{ justifyContent: collapsed ? "center" : undefined }}>
-        {!collapsed && <ArchMarkSVG size={28} />}
-        {!collapsed && <span className="kh-logo-wordmark">kinder<em>hub</em></span>}
-        <button
-          onClick={onToggle}
-          className="kh-sidebar-toggle"
-          style={{ margin: collapsed ? 0 : undefined }}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {collapsed
-            ? <PanelLeftOpen size={15} />
-            : <PanelLeftClose size={15} />
-          }
-        </button>
+      <div className="kh-sidebar-logo" style={{ justifyContent: !showLabels ? "center" : undefined }}>
+        {showLabels && <ArchMarkSVG size={28} />}
+        {showLabels && <span className="kh-logo-wordmark">kinder<em>hub</em></span>}
+
+        {/* Mobile: close X button */}
+        {mobileOpen ? (
+          <button
+            onClick={onMobileClose}
+            className="kh-sidebar-toggle"
+            style={{ margin: 0 }}
+            title="Close menu"
+          >
+            <X size={15} />
+          </button>
+        ) : (
+          /* Desktop: collapse toggle */
+          <button
+            onClick={onToggle}
+            className="kh-sidebar-toggle"
+            style={{ margin: !showLabels ? 0 : undefined }}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed
+              ? <PanelLeftOpen size={15} />
+              : <PanelLeftClose size={15} />
+            }
+          </button>
+        )}
       </div>
 
       {/* Workspace */}
       <div className="kh-sidebar-section" style={{ flex: 1, overflowY: "auto" }}>
-        {!collapsed && <div className="kh-sidebar-section-label">Workspace</div>}
+        {showLabels && <div className="kh-sidebar-section-label">Workspace</div>}
         <nav className="kh-sidebar-nav">
           {WORKSPACE_ITEMS.map(({ href, icon: Icon, label, badge }) => {
-            const active = pathname === href
+            const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href))
             return (
               <Link
                 key={href}
                 href={href}
-                title={collapsed ? label : undefined}
-                className={`kh-nav-item${active ? " kh-nav-item--active" : ""}${collapsed ? " kh-nav-item--icon-only" : ""}`}
+                onClick={handleNavClick}
+                title={!showLabels ? label : undefined}
+                className={`kh-nav-item${active ? " kh-nav-item--active" : ""}${!showLabels ? " kh-nav-item--icon-only" : ""}`}
               >
                 <Icon size={15} className="kh-nav-icon" />
-                {!collapsed && <span className="kh-nav-label">{label}</span>}
-                {!collapsed && badge !== null && <span className="kh-nav-badge">{badge}</span>}
+                {showLabels && <span className="kh-nav-label">{label}</span>}
+                {showLabels && badge !== null && <span className="kh-nav-badge">{badge}</span>}
               </Link>
             )
           })}
@@ -95,19 +130,20 @@ export default function Sidebar({ collapsed, onToggle }: Props) {
 
       {/* Tools */}
       <div className="kh-sidebar-section">
-        {!collapsed && <div className="kh-sidebar-section-label">Tools</div>}
+        {showLabels && <div className="kh-sidebar-section-label">Tools</div>}
         <nav className="kh-sidebar-nav">
           {TOOLS_ITEMS.map(({ href, icon: Icon, label }) => {
-            const active = pathname === href
+            const active = pathname === href || pathname.startsWith(href)
             return (
               <Link
                 key={href}
                 href={href}
-                title={collapsed ? label : undefined}
-                className={`kh-nav-item${active ? " kh-nav-item--active" : ""}${collapsed ? " kh-nav-item--icon-only" : ""}`}
+                onClick={handleNavClick}
+                title={!showLabels ? label : undefined}
+                className={`kh-nav-item${active ? " kh-nav-item--active" : ""}${!showLabels ? " kh-nav-item--icon-only" : ""}`}
               >
                 <Icon size={15} className="kh-nav-icon" />
-                {!collapsed && <span className="kh-nav-label">{label}</span>}
+                {showLabels && <span className="kh-nav-label">{label}</span>}
               </Link>
             )
           })}
@@ -115,7 +151,7 @@ export default function Sidebar({ collapsed, onToggle }: Props) {
       </div>
 
       {/* User */}
-      {!collapsed ? (
+      {showLabels ? (
         <div className="kh-sidebar-user">
           <div className="kh-avatar kh-avatar--sage">NK</div>
           <div className="kh-sidebar-user-info">

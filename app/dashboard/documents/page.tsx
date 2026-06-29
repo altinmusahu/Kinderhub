@@ -1,5 +1,6 @@
 import React from "react"
 import { DataTable, Column } from "@/app/components/dashboard/DataTable"
+import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
 
 const documents = [
   { id: 1,  name: "Immunization record · Ines",     family: "Okafor-Lind",   fid: "OL",  color: "#E8866A", type: "Health",     status: "Signed",       date: "Mar 15, 2024", size: "1.2 MB" },
@@ -111,11 +112,14 @@ export default function DocumentsPage() {
   return (
     <div className="kh-page">
       <header className="kh-topbar">
-        <nav className="kh-breadcrumb">
-          <span className="kh-breadcrumb-parent">Kinderhub</span>
-          <span className="kh-breadcrumb-sep">/</span>
-          <span className="kh-breadcrumb-current">Documents</span>
-        </nav>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <MobileMenuButton />
+          <nav className="kh-breadcrumb">
+            <span className="kh-breadcrumb-parent">Kinderhub</span>
+            <span className="kh-breadcrumb-sep">/</span>
+            <span className="kh-breadcrumb-current">Documents</span>
+          </nav>
+        </div>
         <div className="kh-topbar-right">
           <button className="kh-btn">↑ Export</button>
           <button className="kh-btn kh-btn--primary">+ Upload document</button>

@@ -5,6 +5,7 @@ import { verifyToken, cookieName } from "@/lib/auth"
 import { UserService } from "@/app/api/modules/user/user.service"
 import { avatarColor, initials } from "@/components/ui/helper"
 import EmployeeTabs from "./EmployeeTabs"
+import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
 
 export default async function EmployeePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -37,18 +38,21 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
   return (
     <div className="kh-page">
       <header className="kh-topbar">
-        <nav className="kh-breadcrumb">
-          <span className="kh-breadcrumb-parent">Kinderhub</span>
-          <span className="kh-breadcrumb-sep">/</span>
-          <Link href="/dashboard/staff" className="kh-breadcrumb-parent" style={{ textDecoration: "none" }}>
-            Staff
-          </Link>
-          <span className="kh-breadcrumb-sep">/</span>
-          <span className="kh-breadcrumb-current">{fullName}</span>
-        </nav>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <MobileMenuButton />
+          <nav className="kh-breadcrumb">
+            <span className="kh-breadcrumb-parent">Kinderhub</span>
+            <span className="kh-breadcrumb-sep">/</span>
+            <Link href="/dashboard/staff" className="kh-breadcrumb-parent" style={{ textDecoration: "none" }}>
+              Staff
+            </Link>
+            <span className="kh-breadcrumb-sep">/</span>
+            <span className="kh-breadcrumb-current">{fullName}</span>
+          </nav>
+        </div>
         <div className="kh-topbar-right">
           <Link href="/dashboard/staff">
-            <button className="kh-btn">← Back to Staff</button>
+            <button className="kh-btn">← Back</button>
           </Link>
         </div>
       </header>

@@ -1,4 +1,5 @@
 import React from "react"
+import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
 
 // ─── Data ──────────────────────────────────────────────────────────────────
 
@@ -61,11 +62,14 @@ export default function DashboardPage() {
     <div className="kh-page">
       {/* Topbar */}
       <header className="kh-topbar">
-        <nav className="kh-breadcrumb">
-          <span className="kh-breadcrumb-parent">Kinderhub</span>
-          <span className="kh-breadcrumb-sep">/</span>
-          <span className="kh-breadcrumb-current">Overview</span>
-        </nav>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <MobileMenuButton />
+          <nav className="kh-breadcrumb">
+            <span className="kh-breadcrumb-parent">Kinderhub</span>
+            <span className="kh-breadcrumb-sep">/</span>
+            <span className="kh-breadcrumb-current">Overview</span>
+          </nav>
+        </div>
         <div className="kh-topbar-right">
           <span className="kh-topbar-date">Today · Thu, Apr 24</span>
           <button className="kh-btn">+ New</button>
@@ -87,7 +91,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Stat cards */}
+        {/* Stat cards — responsive grid via CSS class */}
         <div className="kh-stats-grid">
           {stats.map((s, i) => (
             <div key={i} className="kh-card kh-stat-card">
@@ -105,8 +109,8 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* Rooms + Attention */}
-        <div className="kh-two-col" style={{ gridTemplateColumns: "1.45fr 1fr" }}>
+        {/* Rooms + Attention — responsive two-col */}
+        <div className="kh-two-col" style={{ gridTemplateColumns: "var(--kh-two-col-rooms, 1.45fr 1fr)" }}>
           {/* Rooms */}
           <div className="kh-card">
             <div className="kh-card-header">
@@ -162,7 +166,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Activity + Chart */}
+        {/* Activity + Chart — responsive two-col */}
         <div className="kh-two-col">
           {/* Live activity */}
           <div className="kh-card">

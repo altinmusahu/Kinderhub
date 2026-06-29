@@ -57,12 +57,14 @@ function LoginForm() {
         alignItems: "center",
         justifyContent: "center",
         background: "var(--kh-bg, #F7F5F2)",
+        padding: "16px",
       }}>
         <div style={{
           background: "#fff",
           borderRadius: 14,
-          padding: "40px 44px",
-          width: 400,
+          padding: "clamp(24px, 5vw, 40px) clamp(20px, 6vw, 44px)",
+          width: "100%",
+          maxWidth: 400,
           boxShadow: "0 4px 32px rgba(0,0,0,0.10)",
           border: "1px solid var(--kh-border, #E8E4DF)",
         }}>

@@ -1160,3 +1160,320 @@
 }
 
 } /* end @layer components */
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE — KINDERHUB
+   Breakpoints: sm=640  md=768  lg=1024  xl=1280
+═══════════════════════════════════════════════════ */
+
+/* ── Mobile-first overrides (≤ 767px) ── */
+@media (max-width: 767px) {
+
+  /* Sidebar: hidden off-canvas by default */
+  .kh-sidebar {
+    transform: translateX(-100%);
+    width: 240px !important;
+    transition: transform 240ms ease, width 220ms ease;
+    box-shadow: 4px 0 24px rgba(40,28,18,0.12);
+  }
+  .kh-sidebar--mobile-open {
+    transform: translateX(0);
+  }
+
+  /* Mobile overlay behind sidebar */
+  .kh-sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(42,32,24,0.4);
+    z-index: 49;
+    backdrop-filter: blur(1px);
+  }
+
+  /* Activity panel: hidden on mobile */
+  .kh-activity-panel {
+    display: none !important;
+  }
+
+  /* Main content: full width on mobile */
+  .kh-main {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* Topbar: tighter padding */
+  .kh-topbar {
+    padding: 0 14px;
+    gap: 8px;
+  }
+
+  /* Mobile hamburger button */
+  .kh-hamburger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid var(--kh-border);
+    background: transparent;
+    color: var(--kh-ink-600);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 120ms;
+  }
+  .kh-hamburger:hover { background: var(--kh-ink-50); }
+
+  .kh-topbar-date { display: none; }
+
+  /* Content: less padding */
+  .kh-content {
+    padding: 16px 14px 24px;
+  }
+
+  /* Stats: 2-col on mobile */
+  .kh-stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  /* Two-col → single col */
+  .kh-two-col {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  /* H1 smaller */
+  .kh-h1 { font-size: 22px; }
+
+  /* Heading row: stack on very small */
+  .kh-heading-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  /* Room row: simplified layout */
+  .kh-room-row {
+    grid-template-columns: 1fr 60px;
+    gap: 8px;
+  }
+  .kh-room-bar-wrap { display: none; }
+  .kh-room-lead { display: none; }
+
+  /* Table: horizontal scroll */
+  .kh-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .kh-table {
+    min-width: 560px;
+  }
+
+  /* Modal: full-width bottom sheet on mobile */
+  .kh-modal-dialog {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92dvh;
+    margin: auto 0 0;
+    border-radius: 18px 18px 0 0 !important;
+  }
+
+  /* Field grid: single col on mobile */
+  .kh-field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Stat card: slightly smaller value */
+  .kh-stat-value { font-size: 26px; }
+
+  /* Chart: hide on very small screens */
+  .kh-chart-bars { height: 80px; }
+
+  /* Breadcrumb: shorter */
+  .kh-breadcrumb-parent { display: none; }
+  .kh-breadcrumb-sep:first-of-type { display: none; }
+
+  /* Pills row: wrap */
+  .kh-pills-row { flex-wrap: wrap; }
+
+  /* Rooms list: remove extra padding */
+  .kh-rooms-list { padding: 4px 2px 10px; }
+}
+
+/* ── Tablet (768–1023px) ── */
+@media (min-width: 768px) and (max-width: 1023px) {
+
+  /* Sidebar stays visible but narrower */
+  .kh-sidebar {
+    width: 52px !important;
+  }
+
+  /* Activity panel: hidden to give content space */
+  .kh-activity-panel {
+    display: none !important;
+  }
+
+  .kh-main {
+    margin-right: 0 !important;
+  }
+
+  /* Stats: 2-col */
+  .kh-stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  /* Two-col: single col */
+  .kh-two-col {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .kh-content { padding: 20px 20px 28px; }
+  .kh-topbar  { padding: 0 20px; }
+
+  .kh-h1 { font-size: 26px; }
+
+  /* Room row: hide lead on tablet */
+  .kh-room-row {
+    grid-template-columns: 140px 1fr 80px;
+  }
+  .kh-room-lead { display: none; }
+}
+
+/* ── Desktop: hide hamburger and mobile overlay ── */
+@media (min-width: 768px) {
+  .kh-hamburger { display: none !important; }
+  .kh-sidebar-overlay { display: none !important; }
+  .kh-mobile-topbar-ham { display: none !important; }
+}
+
+/* ── Mobile: show the floating hamburger topbar ── */
+@media (max-width: 767px) {
+  .kh-mobile-topbar-ham {
+    display: flex !important;
+  }
+}
+
+/* ── Large desktop (≥1280px): restore full layout ── */
+@media (min-width: 1280px) {
+  .kh-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .kh-two-col {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ── Classes grid: responsive ── */
+.kh-classes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+@media (max-width: 640px) {
+  .kh-classes-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── ClassTabs KPI strip ── */
+.kh-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+@media (max-width: 767px) {
+  .kh-kpi-strip {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+}
+
+/* ── ClassTabs roster + waitlist row ── */
+.kh-roster-row {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+@media (max-width: 1023px) {
+  .kh-roster-row {
+    flex-direction: column;
+    gap: 14px;
+  }
+}
+
+/* ── Table scrollable wrapper ── */
+.kh-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Tab strip scroll on small screens ── */
+.kh-tabs-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.kh-tabs-scroll::-webkit-scrollbar { display: none; }
+.kh-tabs-scroll .kh-tabs {
+  flex-wrap: nowrap;
+  min-width: max-content;
+}
+
+/* ── Topbar button group: collapse on very small screens ── */
+@media (max-width: 480px) {
+  .kh-topbar-right {
+    gap: 6px;
+  }
+  /* Hide text labels in topbar buttons on very small screens */
+  .kh-btn-label {
+    display: none;
+  }
+}
+
+/* ── Landing hero ── */
+@media (max-width: 640px) {
+  .kh-hero-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  .kh-hero-buttons a {
+    text-align: center;
+    width: 100%;
+  }
+}
+
+/* ── Settings tabs: horizontal scroll ── */
+.kh-settings-tabs-wrap {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.kh-settings-tabs-wrap::-webkit-scrollbar { display: none; }
+
+/* Settings: mobile — show tab strip, hide sidebar */
+@media (max-width: 767px) {
+  #kh-settings-mobile-nav { display: block !important; }
+  .kh-settings-body {
+    grid-template-columns: 1fr !important;
+  }
+  .kh-settings-body > aside {
+    display: none !important;
+  }
+  .kh-settings-body > main {
+    padding: 16px 14px 32px !important;
+  }
+}
+
+/* Settings: tablet — collapse sidebar */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .kh-settings-body {
+    grid-template-columns: 160px 1fr !important;
+  }
+  .kh-settings-body > main {
+    padding: 18px 18px 32px !important;
+  }
+}

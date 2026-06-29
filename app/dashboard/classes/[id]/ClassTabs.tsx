@@ -368,35 +368,36 @@ export default function ClassTabs({
 
   return (
     <>
-      {/* Tab strip */}
-      <div style={{
-        display: "flex", gap: 18,
-        borderBottom: "1px solid var(--kh-ink-100)",
-        padding: "0 26px",
-        background: "var(--kh-surface)",
-      }}>
-        {TABS.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActive(tab)}
-            style={{
-              padding: "12px 2px", fontSize: 13, border: "none", background: "transparent",
-              color: active === tab ? "var(--kh-ink-900)" : "var(--kh-ink-500)",
-              fontWeight: active === tab ? 600 : 500,
-              borderBottom: active === tab ? "2px solid var(--kh-peach)" : "2px solid transparent",
-              cursor: "pointer", marginBottom: -1,
-            }}
-          >
-            {tab}
-          </button>
-        ))}
+      {/* Tab strip — scrollable on mobile */}
+      <div className="kh-tabs-scroll" style={{ background: "var(--kh-surface)", borderBottom: "1px solid var(--kh-ink-100)" }}>
+        <div style={{
+          display: "flex", gap: 18,
+          padding: "0 16px",
+          minWidth: "max-content",
+        }}>
+          {TABS.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActive(tab)}
+              style={{
+                padding: "12px 2px", fontSize: 13, border: "none", background: "transparent",
+                color: active === tab ? "var(--kh-ink-900)" : "var(--kh-ink-500)",
+                fontWeight: active === tab ? 600 : 500,
+                borderBottom: active === tab ? "2px solid var(--kh-peach)" : "2px solid transparent",
+                cursor: "pointer", marginBottom: -1,
+              }}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Tab body */}
-      <div style={{ padding: "18px 26px 40px", overflowY: "auto" }}>
+      <div style={{ padding: "18px 16px 40px", overflowY: "auto" }}>
 
-        {/* KPI strip — always visible */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 18 }}>
+        {/* KPI strip — always visible, responsive */}
+        <div className="kh-kpi-strip">
           {[
             { label: "Enrolled",    value: roster.length,                            sub: `of ${cls.capacity} capacity` },
             { label: "Spots open",  value: Math.max(0, cls.capacity - roster.length), sub: "available now" },
@@ -413,9 +414,22 @@ export default function ClassTabs({
 
         {/* Active tab content */}
         {active === "Roster" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div className="kh-roster-row">
             <RosterTab cls={cls} roster={roster} classId={classId} />
             <WaitlistTable classId={classId} initial={waitlist} />
+            
+            {/* Allergy card — shown on Roster tab only */}
+            {active === "Roster" && (
+              <div className="kh-card" style={{ borderColor: "var(--kh-pink-l)" }}>
+                <div style={{ padding: "14px 16px 10px", borderBottom: "1px solid var(--kh-ink-100)", display: "flex", alignItems: "center", gap: 8 }}>
+                  <Heart size={14} style={{ color: "var(--kh-pink)" }} />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--kh-ink-800)" }}>Allergy &amp; medical</span>
+                </div>
+                <div style={{ padding: "12px 16px 14px", fontSize: 12.5, color: "var(--kh-ink-400)" }}>
+                  Medical &amp; allergy records coming soon.
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -424,19 +438,6 @@ export default function ClassTabs({
         {active === "Attendance"  && <ComingSoonTab label="Attendance" />}
         {active === "Curriculum"  && <ComingSoonTab label="Curriculum" />}
         {active === "Documents"   && <ComingSoonTab label="Documents" />}
-
-        {/* Allergy card — shown on Roster tab only */}
-        {active === "Roster" && (
-          <div className="kh-card" style={{ borderColor: "var(--kh-pink-l)", marginTop: 14 }}>
-            <div style={{ padding: "14px 16px 10px", borderBottom: "1px solid var(--kh-ink-100)", display: "flex", alignItems: "center", gap: 8 }}>
-              <Heart size={14} style={{ color: "var(--kh-pink)" }} />
-              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--kh-ink-800)" }}>Allergy &amp; medical</span>
-            </div>
-            <div style={{ padding: "12px 16px 14px", fontSize: 12.5, color: "var(--kh-ink-400)" }}>
-              Medical &amp; allergy records coming soon.
-            </div>
-          </div>
-        )}
       </div>
     </>
   )

@@ -2,6 +2,7 @@ import Link from "next/link"
 import AddClassModal from "@/components/ui/AddClassModal"
 import { ClassesService } from "@/app/api/modules/classes/classes.service"
 import type { ClassWithRelations } from "@/app/api/modules/classes/classes.types"
+import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
 
 function initials(name: string | null): string {
   if (!name) return "?"
@@ -122,11 +123,14 @@ export default async function ClassesPage() {
   return (
     <div className="kh-page">
       <header className="kh-topbar">
-        <nav className="kh-breadcrumb">
-          <span className="kh-breadcrumb-parent">Kinderhub</span>
-          <span className="kh-breadcrumb-sep">/</span>
-          <span className="kh-breadcrumb-current">Classes</span>
-        </nav>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <MobileMenuButton />
+          <nav className="kh-breadcrumb">
+            <span className="kh-breadcrumb-parent">Kinderhub</span>
+            <span className="kh-breadcrumb-sep">/</span>
+            <span className="kh-breadcrumb-current">Classes</span>
+          </nav>
+        </div>
         <div className="kh-topbar-right">
           <AddClassModal />
         </div>
@@ -143,7 +147,7 @@ export default async function ClassesPage() {
             No classes yet. Create your first one with the button above.
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div className="kh-classes-grid">
             {classes.map((cls, i) => (
               <ClassCard key={cls.id} cls={cls} color={colorFor(i)} />
             ))}
