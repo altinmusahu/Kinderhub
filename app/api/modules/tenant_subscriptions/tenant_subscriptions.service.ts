@@ -1,22 +1,12 @@
-import type { TenantSubscriptions } from "./tenant_subscriptions.types"
+import type { TenantSubscription } from "./tenant_subscriptions.types"
 import { TenantSubscriptionRepository } from "./tenant_subscriptions.repository"
-import { CreateTenantSubscriptionInput } from "./tenant_subscriptions.validation"
 
-export const TenantService = {
-  async getAll(): Promise<TenantSubscriptions[]> {
-    return TenantSubscriptionRepository.findAll()
+export const TenantSubscriptionService = {
+  async getByTenantId(tenantId: string): Promise<TenantSubscription | null> {
+    return TenantSubscriptionRepository.findByTenantId(tenantId)
   },
 
-  async getById(id: string): Promise<TenantSubscriptions> {
-    const tenant = await TenantSubscriptionRepository.findById(id)
-    if (!tenant) throw new Error("Tenant subscription not found")
-    return tenant
-  },
-
-  async create(input: CreateTenantSubscriptionInput): Promise<TenantSubscriptions> {
-    return TenantSubscriptionRepository.create({
-      ...input,
-      CreatedAt: new Date().toISOString().split("T")[0],
-    })
+  async create(payload: Omit<TenantSubscription, "id">): Promise<TenantSubscription> {
+    return TenantSubscriptionRepository.create(payload)
   },
 }

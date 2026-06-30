@@ -1,30 +1,24 @@
-import { createClient } from "@/utils/supabase/server"
-import { cookies } from "next/headers"
+import { supabaseAdmin } from "@/lib/supabase-admin"
 import type { SubscriptionPlan } from "./subscription_plans.types"
-
-async function client() {
-  return createClient(await cookies())
-}
 
 export const SubscriptionPlanRepository = {
   async findAll(): Promise<SubscriptionPlan[]> {
-    const supabase = await client()
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("subscription_plans")
-      .select("*")
-      
+      .select("id, code, Name, yearly_price, is_active")
+      .eq("is_active", true)
+      .order("yearly_price", { ascending: true })
     if (error) throw new Error(error.message)
     return data
   },
 
-  async findById(plan_id: string): Promise<SubscriptionPlan | null> {
-    const supabase = await client()
-    const { data, error } = await supabase
+  async findById(id: string): Promise<SubscriptionPlan | null> {
+    const { data, error } = await supabaseAdmin
       .from("subscription_plans")
-      .select("*")
-      .eq("id", plan_id)
+      .select("id, code, Name, yearly_price, is_active")
+      .eq("id", id)
       .maybeSingle()
     if (error) throw new Error(error.message)
     return data
-  }
+  },
 }

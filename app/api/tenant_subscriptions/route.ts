@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { supabaseAdmin } from "@/utils/supabase/admin"
+import { getTenant } from "@/lib/get-tenant"
 
 const bodySchema = z.object({
   TenantId: z.uuid(),
@@ -8,7 +9,28 @@ const bodySchema = z.object({
   AutoRenew: z.boolean(),
 })
 
-export async function POST(req: Request) {
+export async function GET() {
+  try {
+    const { tenant_id } = await getTenant()
+    const { data, error } = await supabaseAdmin
+      .from("tenant_subscriptions")
+      .select(`
+        id, status, starts_at, ends_at, price_at_purchase, auto_renew, created_at,
+        subscription_plans ( id, Name, yearly_price, is_active )
+      `)
+      .eq("tenant_id", tenant_id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (error) throw new Error(error.message)
+    return NextResponse.json(data ?? null)
+  } catch (e) {
+    const status = e instanceof Error && e.message === "Unauthorized" ? 401 : 500
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Failed" }, { status })
+  }
+}
+
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const parsed = bodySchema.parse(body)

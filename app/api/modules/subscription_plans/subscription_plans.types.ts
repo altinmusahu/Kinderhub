@@ -3,14 +3,8 @@ export type SubscriptionPlan = {
   code: string
   Name: string
   yearly_price: number
-  isActive: boolean
+  is_active: boolean
 }
 
-export type CreateSubscriptionPlanDto = {
-  code: string
-  Name: string
-  yearly_price: number
-  isActive: boolean
-}
-
+export type CreateSubscriptionPlanDto = Omit<SubscriptionPlan, "id">
 export type UpdateSubscriptionPlanDto = Partial<CreateSubscriptionPlanDto>

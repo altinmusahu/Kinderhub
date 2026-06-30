@@ -10,7 +10,6 @@ const settingsNav = [
     section: "Organization",
     items: [
       { label: "General",   href: "/dashboard/settings/general"   },
-      { label: "Branding",  href: "/dashboard/settings/branding"  },
       { label: "Locations", href: "/dashboard/settings/locations" },
     ],
   },
@@ -18,7 +17,6 @@ const settingsNav = [
     section: "People",
     items: [
       { label: "Team & access",      href: "/dashboard/settings/team"        },
-      { label: "Departments",        href: "/dashboard/settings/departments" },
       { label: "Roles & permissions",href: "/dashboard/settings/roles"       },
       { label: "Invitations",        href: "/dashboard/settings/invitations" },
     ],

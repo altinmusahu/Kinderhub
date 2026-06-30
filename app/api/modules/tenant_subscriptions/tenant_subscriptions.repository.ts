@@ -1,41 +1,26 @@
-import { createClient } from "@/utils/supabase/server"
-import { cookies } from "next/headers"
-import type { CreateTenantSubscriptionDto, TenantSubscriptions } from "./tenant_subscriptions.types"
-
-async function client() {
-  return createClient(await cookies())
-}
+import { supabaseAdmin } from "@/lib/supabase-admin"
+import type { TenantSubscription } from "./tenant_subscriptions.types"
 
 export const TenantSubscriptionRepository = {
-  async findAll(): Promise<TenantSubscriptions[]> {
-    const supabase = await client()
-    const { data, error } = await supabase
+  async findByTenantId(tenantId: string): Promise<TenantSubscription | null> {
+    const { data, error } = await supabaseAdmin
       .from("tenant_subscriptions")
       .select("*")
-      
+      .eq("tenant_id", tenantId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
     if (error) throw new Error(error.message)
     return data
   },
 
-  async create(payload: CreateTenantSubscriptionDto): Promise<TenantSubscriptions> {
-    const supabase = await client()
-    const { data, error } = await supabase
+  async create(payload: Omit<TenantSubscription, "id">): Promise<TenantSubscription> {
+    const { data, error } = await supabaseAdmin
       .from("tenant_subscriptions")
-      .insert([payload])
+      .insert([{ id: crypto.randomUUID(), ...payload }])
       .select()
       .single()
     if (error) throw new Error(error.message)
     return data
   },
-
-  async findById(id: string): Promise<TenantSubscriptions | null> {
-    const supabase = await client()
-    const { data, error } = await supabase
-      .from("tenant_subscriptions")
-      .select("*")
-      .eq("Id", id)
-      .maybeSingle()
-    if (error) throw new Error(error.message)
-    return data
-  }
 }

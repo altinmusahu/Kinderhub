@@ -34,7 +34,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "How many children can I manage on each plan?",
-    a: "The Starter plan supports up to 30 children. The Growth plan supports up to 150. The Enterprise plan has no limit and also supports multiple locations. You can upgrade at any time as your school grows.",
+    a: "The Starter plan supports up to 35 children. The Growth plan supports up to 100. The Enterprise plan has no limit and also supports multiple locations. You can upgrade at any time as your school grows.",
   },
   {
     q: "Do I need to install anything?",
@@ -62,7 +62,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Is there a limit on staff accounts?",
-    a: "The Starter plan includes 1 staff account. Growth includes 10. Enterprise is unlimited. You can add, remove, and manage staff roles from the settings panel.",
+    a: "The Starter plan includes 10 staff accounts. Growth includes 25. Enterprise is unlimited. You can add, remove, and manage staff roles from the settings panel.",
   },
   {
     q: "What payment methods do you accept?",

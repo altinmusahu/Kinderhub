@@ -94,12 +94,12 @@ export default function WaitlistTable({
         <span style={{ marginLeft: 8, fontSize: 11, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)" }}>
           {entries.length} waiting
         </span>
-        <button
+        {/* <button
           onClick={openAdd}
           style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", fontSize: 11.5, borderRadius: 8, cursor: "pointer", background: "var(--kh-peach)", color: "#fff", border: "1px solid var(--kh-peach-d)" }}
         >
           <Plus size={12} /> Add to waitlist
-        </button>
+        </button> */}
       </div>
 
       {/* Add form — kid search picker */}
