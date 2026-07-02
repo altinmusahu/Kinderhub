@@ -15,6 +15,8 @@ export type ClassWithRelations = Class & {
   location_name: string | null
   lead_name: string | null
   assistant_name: string | null
+  enrolled_count: number
+  waitlist_count: number
 }
 
 export type CreateClassDto = Omit<Class, "id">

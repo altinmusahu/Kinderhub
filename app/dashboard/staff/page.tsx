@@ -2,6 +2,7 @@ import { cookies } from "next/headers"
 import Link from "next/link"
 import { DataTable, Column } from "@/app/components/dashboard/DataTable"
 import AddStaffModal from "@/components/ui/AddStaffModal"
+import ExportStaffButton from "@/app/components/dashboard/ExportStaffButton"
 import { UserService } from "@/app/api/modules/user/user.service"
 import { verifyToken, cookieName } from "@/lib/auth"
 import { redirect } from "next/navigation"
@@ -131,6 +132,7 @@ export default async function StaffPage() {
         </div>
         <div className="kh-topbar-right">
           <button className="kh-btn">≡ Filter</button>
+          <ExportStaffButton />
           <AddStaffModal />
         </div>
       </header>

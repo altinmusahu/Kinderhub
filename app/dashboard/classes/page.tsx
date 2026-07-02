@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { CalendarDays } from "lucide-react"
 import AddClassModal from "@/components/ui/AddClassModal"
 import { ClassesService } from "@/app/api/modules/classes/classes.service"
 import type { ClassWithRelations } from "@/app/api/modules/classes/classes.types"
@@ -15,20 +16,34 @@ function formatTime(t: string): string {
 
 type DaySchedule = { opens: string; closes: string }
 
+const WEEK_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+function groupByTimes(schedule: Record<string, unknown>): { days: string[]; time: DaySchedule }[] {
+  const groups: { days: string[]; time: DaySchedule }[] = []
+  for (const day of WEEK_ORDER) {
+    const entry = schedule[day] as DaySchedule | undefined
+    if (!entry) continue
+    const last = groups[groups.length - 1]
+    if (last && last.time.opens === entry.opens && last.time.closes === entry.closes) {
+      last.days.push(day)
+    } else {
+      groups.push({ days: [day], time: entry })
+    }
+  }
+  return groups
+}
+
 function formatScheduleSummary(schedule: Record<string, unknown> | null): string {
   if (!schedule) return ""
-  const days = Object.keys(schedule)
-  if (days.length === 0) return ""
-  // Check if all days have identical times
-  const entries = Object.values(schedule) as DaySchedule[]
-  const allSame = entries.every(e => e.opens === entries[0].opens && e.closes === entries[0].closes)
-  if (allSame) {
-    const abbr = days.map(d => d.slice(0, 3)).join(", ")
-    return `${abbr} · ${entries[0].opens}–${entries[0].closes}`
-  }
-  return days.map(d => {
-    const e = schedule[d] as DaySchedule
-    return `${d.slice(0, 3)} ${e.opens}–${e.closes}`
+  if (Object.keys(schedule).length === 0) return ""
+
+  const groups = groupByTimes(schedule)
+
+  return groups.map(({ days, time }) => {
+    const label = days.length > 2
+      ? `${days[0].slice(0, 3)}–${days[days.length - 1].slice(0, 3)}`
+      : days.map(d => d.slice(0, 3)).join(", ")
+    return `${label} · ${time.opens}–${time.closes}`
   }).join(" · ")
 }
 
@@ -42,24 +57,26 @@ function colorFor(index: number): string {
 }
 
 function ClassCard({ cls, color }: { cls: ClassWithRelations; color: string }) {
-  const pct = Math.min(100, Math.round((0 / Number(cls.capacity)) * 100))
-  const isFull = false
+  const capacity = Number(cls.capacity) || 0
+  const pct = capacity > 0 ? Math.min(100, Math.round((cls.enrolled_count / capacity) * 100)) : 0
+  const isFull = capacity > 0 && cls.enrolled_count >= capacity
 
   return (
     <Link href={`/dashboard/classes/${cls.id}`} style={{ textDecoration: "none" }}>
-    <div className="kh-card kh-class-card" style={{ padding: "18px 20px" }}>
+    <div className="kh-card kh-class-card" style={{ padding: "18px 20px", background: `linear-gradient(180deg, ${color}26, var(--kh-surface) 65%)`, borderColor: `${color}40` }}>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 4 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4, flexWrap: "wrap", gap: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ width: 10, height: 10, borderRadius: "50%", background: color, display: "inline-block", flexShrink: 0 }} />
           <span style={{ fontSize: 17, fontWeight: 700, color: "var(--kh-ink-900)" }}>{cls.name}</span>
           <span style={{ fontSize: 12, color: "var(--kh-ink-400)" }}>{cls.average_year}</span>
-          {isFull && (
-            <span style={{ fontSize: 11, fontWeight: 500, color: "#B07A1A", background: "#FEF3E2", borderRadius: 99, padding: "2px 8px" }}>
-              ● At capacity
-            </span>
-          )}
         </div>
+        {isFull && (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 500, color: "#B07A1A", background: "#FEF3E2", borderRadius: 99, padding: "2px 8px" }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#B07A1A", flexShrink: 0 }} />
+            At capacity
+          </span>
+        )}
       </div>
 
       {/* Meta */}
@@ -75,15 +92,15 @@ function ClassCard({ cls, color }: { cls: ClassWithRelations; color: string }) {
       <div style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--kh-ink-500)", marginBottom: 5 }}>
           <span>Enrolled</span>
-          <span style={{ fontFamily: "var(--kh-font-mono)" }}>— / {cls.capacity}</span>
+          <span style={{ fontFamily: "var(--kh-font-mono)" }}>{cls.enrolled_count} / {cls.capacity}</span>
         </div>
         <div className="kh-room-bar">
           <div className="kh-room-bar-fill" style={{ width: pct + "%", background: color }} />
         </div>
       </div>
 
-      {/* Staff */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+      {/* Staff + waitlist */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
         <div>
           <div style={{ fontSize: 10, fontFamily: "var(--kh-font-mono)", textTransform: "uppercase", letterSpacing: ".06em", color: "var(--kh-ink-400)", marginBottom: 5 }}>Lead</div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--kh-ink-700)" }}>
@@ -106,6 +123,12 @@ function ClassCard({ cls, color }: { cls: ClassWithRelations; color: string }) {
             <span style={{ fontSize: 12, color: "var(--kh-ink-400)" }}>Unstaffed</span>
           )}
         </div>
+        <div>
+          <div style={{ fontSize: 10, fontFamily: "var(--kh-font-mono)", textTransform: "uppercase", letterSpacing: ".06em", color: "var(--kh-ink-400)", marginBottom: 5 }}>Waitlist</div>
+          <div style={{ fontSize: 12, color: "var(--kh-ink-700)" }}>
+            <span style={{ fontFamily: "var(--kh-font-mono)", fontWeight: 600 }}>{cls.waitlist_count}</span> famil{cls.waitlist_count === 1 ? "y" : "ies"}
+          </div>
+        </div>
       </div>
     </div>
     </Link>
@@ -120,6 +143,9 @@ export default async function ClassesPage() {
     // renders empty state below
   }
 
+  const totalEnrolled = classes.reduce((sum, c) => sum + c.enrolled_count, 0)
+  const totalWaitlist = classes.reduce((sum, c) => sum + c.waitlist_count, 0)
+
   return (
     <div className="kh-page">
       <header className="kh-topbar">
@@ -131,15 +157,20 @@ export default async function ClassesPage() {
             <span className="kh-breadcrumb-current">Classes</span>
           </nav>
         </div>
-        <div className="kh-topbar-right">
-          <AddClassModal />
-        </div>
+        {/* <div className="kh-topbar-right">
+          <button className="kh-btn" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5 }}>
+            <CalendarDays size={13} /> <span className="kh-btn-label">Week view</span>
+          </button>
+        </div> */}
+        <AddClassModal />
       </header>
 
       <div className="kh-content">
         <div style={{ marginBottom: 16 }}>
           <h1 className="kh-h1">Classes</h1>
-          <p className="kh-sub">{classes.length} classroom{classes.length !== 1 ? "s" : ""}</p>
+          <p className="kh-sub">
+            {classes.length} classroom{classes.length !== 1 ? "s" : ""} · {totalEnrolled} enrolled · {totalWaitlist} on waitlist
+          </p>
         </div>
 
         {classes.length === 0 ? (

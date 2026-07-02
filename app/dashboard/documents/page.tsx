@@ -1,86 +1,70 @@
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
 import React from "react"
+import { verifyToken, cookieName } from "@/lib/auth"
+import { DocumentsService } from "@/app/api/modules/documents/documents.service"
+import type { DocumentWithSubject } from "@/app/api/modules/documents/documents.types"
 import { DataTable, Column } from "@/app/components/dashboard/DataTable"
 import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
+import UploadDocumentModal from "@/components/ui/UploadDocumentModal"
 
-const documents = [
-  { id: 1,  name: "Immunization record · Ines",     family: "Okafor-Lind",   fid: "OL",  color: "#E8866A", type: "Health",     status: "Signed",       date: "Mar 15, 2024", size: "1.2 MB" },
-  { id: 2,  name: "EpiPen action plan · Ines",      family: "Okafor-Lind",   fid: "OL",  color: "#E8866A", type: "Health",     status: "Signed",       date: "Mar 15, 2024", size: "420 KB" },
-  { id: 3,  name: "Photo release · both",           family: "Okafor-Lind",   fid: "OL",  color: "#E8866A", type: "Consent",    status: "Signed",       date: "Sep 5, 2023",  size: "180 KB" },
-  { id: 4,  name: "Pickup authorization",           family: "Okafor-Lind",   fid: "OL",  color: "#E8866A", type: "Consent",    status: "Needs update", date: "Sep 5, 2023",  size: "95 KB"  },
-  { id: 5,  name: "Enrollment agreement",           family: "Castellanos",   fid: "DC",  color: "#D97F8C", type: "Enrollment", status: "Signed",       date: "Jan 8, 2024",  size: "340 KB" },
-  { id: 6,  name: "Immunization record · Mateo",   family: "Castellanos",   fid: "DC",  color: "#D97F8C", type: "Health",     status: "Signed",       date: "Jan 8, 2024",  size: "980 KB" },
-  { id: 7,  name: "Photo release",                 family: "Castellanos",   fid: "DC",  color: "#D97F8C", type: "Consent",    status: "Needs update", date: "Jan 8, 2024",  size: "180 KB" },
-  { id: 8,  name: "Enrollment agreement",          family: "Benitez-Ahmed", fid: "LA",  color: "#6BA07C", type: "Enrollment", status: "Signed",       date: "Aug 12, 2022", size: "340 KB" },
-  { id: 9,  name: "CPR certification · Hana Sato", family: "Staff",         fid: "HS",  color: "#C9AE4E", type: "Staff",      status: "Expiring",     date: "May 8, 2024",  size: "660 KB" },
-  { id: 10, name: "Employment contract · Devon",   family: "Staff",         fid: "DM",  color: "#6A9EC8", type: "Staff",      status: "Signed",       date: "Jan 12, 2023", size: "210 KB" },
-  { id: 11, name: "Field trip waiver · Meadow",    family: "All families",  fid: "ALL", color: "#6BA07C", type: "Consent",    status: "Pending",      date: "Apr 28, 2024", size: "140 KB" },
-  { id: 12, name: "Spring picnic permission",      family: "All families",  fid: "ALL", color: "#6BA07C", type: "Consent",    status: "Pending",      date: "Apr 20, 2024", size: "95 KB"  },
-]
-
-type Doc = typeof documents[0]
-
-const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
-  Signed:          { bg: "#E8F5EC", color: "#3A8C50" },
-  "Needs update":  { bg: "#FEF3E2", color: "#B07A1A" },
-  Expiring:        { bg: "#FDEAEA", color: "#C0392B" },
-  Pending:         { bg: "#F0EDE8", color: "#7A7368" },
+function fileName(url: string) {
+  const withoutQuery = url.split("?")[0]
+  const raw = withoutQuery.split("/").pop() ?? ""
+  return raw.replace(/^\d+_/, "")
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  Health:     "#D97F8C",
-  Consent:    "#E8866A",
-  Enrollment: "#6BA07C",
-  Staff:      "#C9AE4E",
+  Family: "#6BA07C",
+  Staff:  "#C9AE4E",
+  Child:  "#D97F8C",
 }
 
-const stats = [
-  { label: "Total documents", value: "89" },
-  { label: "Signed",          value: "74", color: "#3A8C50" },
-  { label: "Needs attention", value: "8",  color: "#C0392B" },
-  { label: "Pending",         value: "7",  color: "#B07A1A" },
-]
+const AVATAR_COLORS = ["#E8866A", "#6BA07C", "#C9AE4E", "#D97F8C", "#6A9EC8", "#A07CB4", "#7CA0B4"]
+function avatarColor(id: string) {
+  let n = 0
+  for (const c of id) n += c.charCodeAt(0)
+  return AVATAR_COLORS[n % AVATAR_COLORS.length]
+}
+function initials(name: string) {
+  return name.split(/\s+/).filter(Boolean).map(w => w[0]).join("").slice(0, 2).toUpperCase()
+}
 
-const columns: Column<Doc>[] = [
+const columns: Column<DocumentWithSubject>[] = [
   {
     key: "name",
     header: "Document",
     cell: (d) => (
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <span style={{ fontSize: 16 }}>📄</span>
-        <span style={{ fontSize: 13, fontWeight: 500, color: "var(--kh-ink-800)" }}>{d.name}</span>
+        <span style={{ fontSize: 13, fontWeight: 500, color: "var(--kh-ink-800)" }}>{fileName(d.storage_path)}</span>
       </div>
     ),
   },
   {
     key: "type",
-    header: "Type",
+    header: "Attached to",
     cell: (d) => {
-      const tc = TYPE_COLORS[d.type] ?? "var(--kh-ink-400)"
-      return (
-        <span style={{ fontSize: 11, fontWeight: 500, color: tc, background: tc + "18", borderRadius: 99, padding: "2px 8px" }}>{d.type}</span>
+      const tc = TYPE_COLORS[d.subject_type ?? ""] ?? "var(--kh-ink-400)"
+      return d.subject_type ? (
+        <span style={{ fontSize: 11, fontWeight: 500, color: tc, background: tc + "18", borderRadius: 99, padding: "2px 8px" }}>{d.subject_type}</span>
+      ) : (
+        <span style={{ fontSize: 11, color: "var(--kh-ink-400)" }}>—</span>
       )
     },
   },
   {
-    key: "family",
-    header: "Family / Staff",
-    cell: (d) => (
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span className="kh-avatar" style={{ background: d.color + "22", color: d.color, width: 22, height: 22, fontSize: 9 }}>{d.fid}</span>
-        <span style={{ fontSize: 12, color: "var(--kh-ink-600)" }}>{d.family}</span>
-      </div>
-    ),
-  },
-  {
-    key: "status",
-    header: "Status",
+    key: "subject",
+    header: "Family / Staff / Child",
     cell: (d) => {
-      const ss = STATUS_STYLE[d.status] ?? STATUS_STYLE.Pending
+      const id = d.family_id ?? d.user_id ?? d.kid_id ?? d.id
+      const ac = avatarColor(id)
+      const name = d.subject_name ?? "Unknown"
       return (
-        <span className="kh-status-badge" style={{ background: ss.bg, color: ss.color }}>
-          <span className="kh-pill-dot" style={{ background: ss.color }} />
-          {d.status}
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span className="kh-avatar" style={{ background: ac + "22", color: ac, width: 22, height: 22, fontSize: 9 }}>{initials(name)}</span>
+          <span style={{ fontSize: 12, color: "var(--kh-ink-600)" }}>{name}</span>
+        </div>
       )
     },
   },
@@ -88,27 +72,44 @@ const columns: Column<Doc>[] = [
     key: "date",
     header: "Date",
     cellStyle: { fontSize: 12, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)" },
-    cell: (d) => d.date,
-  },
-  {
-    key: "size",
-    header: "Size",
-    cellStyle: { fontSize: 12, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)" },
-    cell: (d) => d.size,
+    cell: (d) => new Date(d.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
   },
   {
     key: "actions",
     header: "",
-    cell: () => (
+    cell: (d) => (
       <div style={{ display: "flex", gap: 6 }}>
-        <button className="kh-btn" style={{ padding: "3px 8px", fontSize: 11 }}>View</button>
-        <button className="kh-btn" style={{ padding: "3px 8px", fontSize: 11 }}>↓</button>
+        <a href={d.file_url} target="_blank" rel="noopener noreferrer" className="kh-btn" style={{ padding: "3px 8px", fontSize: 11, textDecoration: "none" }}>View</a>
       </div>
     ),
   },
 ]
 
-export default function DocumentsPage() {
+export default async function DocumentsPage() {
+  const store = await cookies()
+  const token = store.get(cookieName())?.value ?? null
+  if (!token) redirect("/login")
+  const session = await verifyToken(token)
+  if (!session) redirect("/login")
+
+  let documents: DocumentWithSubject[] = []
+  try {
+    documents = await DocumentsService.getAllForTenant(session.tenant_id)
+  } catch {
+    // renders empty state below
+  }
+
+  const familyCount = documents.filter(d => d.subject_type === "Family").length
+  const staffCount = documents.filter(d => d.subject_type === "Staff").length
+  const childCount = documents.filter(d => d.subject_type === "Child").length
+
+  const stats = [
+    { label: "Total documents", value: String(documents.length) },
+    { label: "Family",          value: String(familyCount), color: "#6BA07C" },
+    { label: "Staff",           value: String(staffCount),  color: "#B07A1A" },
+    { label: "Child",           value: String(childCount),  color: "#C0392B" },
+  ]
+
   return (
     <div className="kh-page">
       <header className="kh-topbar">
@@ -121,15 +122,14 @@ export default function DocumentsPage() {
           </nav>
         </div>
         <div className="kh-topbar-right">
-          <button className="kh-btn">↑ Export</button>
-          <button className="kh-btn kh-btn--primary">+ Upload document</button>
+          <UploadDocumentModal />
         </div>
       </header>
 
       <div className="kh-content">
         <div style={{ marginBottom: 14 }}>
           <h1 className="kh-h1">Documents</h1>
-          <p className="kh-sub">89 documents · 74 signed · 8 need attention</p>
+          <p className="kh-sub">{documents.length} document{documents.length !== 1 ? "s" : ""}</p>
         </div>
 
         <div className="kh-stats-grid" style={{ marginBottom: 4 }}>
@@ -143,22 +143,17 @@ export default function DocumentsPage() {
           ))}
         </div>
 
-        <div className="kh-tabs">
-          {["All", "Health", "Consent", "Enrollment", "Staff"].map((t, i) => (
-            <button key={t} className={`kh-tab ${i === 0 ? "kh-tab--active" : ""}`}>{t}</button>
-          ))}
-          <div style={{ flex: 1 }} />
-          <div className="kh-search-inline">
-            <span style={{ fontSize: 12, opacity: .5 }}>🔍</span>
-            <span style={{ fontSize: 12, color: "var(--kh-ink-400)" }}>Search documents...</span>
+        {documents.length === 0 ? (
+          <div className="kh-card" style={{ padding: "40px 24px", textAlign: "center", color: "var(--kh-ink-400)", fontSize: 13 }}>
+            No documents yet. Upload the first one using the button above.
           </div>
-        </div>
-
-        <DataTable
-          columns={columns}
-          rows={documents}
-          getRowKey={(d) => d.id}
-        />
+        ) : (
+          <DataTable
+            columns={columns}
+            rows={documents}
+            getRowKey={(d) => d.id}
+          />
+        )}
       </div>
     </div>
   )

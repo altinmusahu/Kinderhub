@@ -7,6 +7,7 @@ export type ActivityAction =
   | "updated"
   | "deleted"
   | "generated"
+  | "exported"
 
 export type ActivityEntity =
   | "Staff"
@@ -20,6 +21,7 @@ export type ActivityEntity =
   | "Contract"
   | "ContractTemplate"
   | "Legal info"
+  | "Document"
 
 function formatDate(date: Date): string {
   const d = date.getDate().toString().padStart(2, "0")

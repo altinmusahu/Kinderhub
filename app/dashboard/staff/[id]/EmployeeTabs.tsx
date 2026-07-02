@@ -54,7 +54,7 @@ export default function EmployeeTabs({ user, userId }: { user: UserById; userId:
 
       {active === "Overview"  && <OverviewTab  user={user} userId={userId} />}
       {active === "Schedule"  && <ScheduleTab  userId={userId} />}
-      {active === "Documents" && <DocumentsTab userId={userId} />}
+      {active === "Documents" && <DocumentsTab userId={userId} title="Employees files" />}
     </>
   )
 }

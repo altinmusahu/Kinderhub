@@ -7,7 +7,7 @@ import type { FamilyWithDetails } from "@/app/api/modules/families/families.type
 import { DataTable, Column } from "@/app/components/dashboard/DataTable"
 import AddFamilyModal from "@/components/ui/AddFamilyModal"
 import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
-import { KhTooltip } from "@/components/ui/KhTooltip"
+import ExportFamiliesButton from "@/app/components/dashboard/ExportFamiliesButton"
 
 const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
   Active:   { bg: "#E8F5EC", color: "#3A8C50" },
@@ -47,9 +47,6 @@ const columns: Column<FamilyWithDetails>[] = [
     header: (
       <span style={{ display: "inline-flex", alignItems: "center" }}>
         Status
-        <KhTooltip label="What do family statuses mean?">
-          Active families are currently enrolled, Waitlist families are waiting for a spot, and Paused families have temporarily stopped attending.
-        </KhTooltip>
       </span>
     ),
     cell: (f) => {
@@ -67,9 +64,6 @@ const columns: Column<FamilyWithDetails>[] = [
     header: (
       <span style={{ display: "inline-flex", alignItems: "center" }}>
         Plan
-        <KhTooltip label="What is Plan?">
-          The child's attendance schedule, e.g. Full-time or Part-time on specific days — not a billing tier.
-        </KhTooltip>
       </span>
     ),
     cellStyle: { fontSize: 13, color: "var(--kh-ink-600)" },
@@ -86,9 +80,6 @@ const columns: Column<FamilyWithDetails>[] = [
     header: (
       <span style={{ display: "inline-flex", alignItems: "center" }}>
         Balance
-        <KhTooltip label="What is Balance?">
-          The amount this family currently owes. Shown in red when there's an outstanding balance.
-        </KhTooltip>
       </span>
     ),
     headerStyle: { textAlign: "right" },
@@ -151,13 +142,17 @@ export default async function FamiliesPage() {
           </nav>
         </div>
         <div className="kh-topbar-right">
+          <ExportFamiliesButton />
           <AddFamilyModal />
         </div>
       </header>
 
       <div className="kh-content">
         <div style={{ marginBottom: 6 }}>
-          <h1 className="kh-h1">Families</h1>
+          <h1 className="kh-h1">
+            Families
+          </h1>
+
           <p className="kh-sub">
             {families.length} total · {activeCount} active · {waitlistCount} waitlist · {pausedCount} paused
           </p>

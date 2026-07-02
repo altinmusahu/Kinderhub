@@ -5,6 +5,7 @@ import type { FamilyDetail, FamilyParent, FamilyKid } from "@/app/api/modules/fa
 import AddParentButton from "./AddParentButton"
 import EditParentButton from "./EditParentButton"
 import { KhTooltip } from "@/components/ui/KhTooltip"
+import { DocumentsTab } from "../../staff/[id]/components/DocumentsTab"
 
 const BILLING_FIELD_TOOLTIPS: Record<string, string> = {
   "Plan": "The child's attendance schedule, e.g. Full-time or Part-time on specific days — not a billing tier.",
@@ -219,11 +220,7 @@ export default function FamilyTabs({ family }: { family: FamilyDetail }) {
       {/* Tab body */}
       <div style={{ padding: "20px 28px" }}>
         {tab === "Overview" && <OverviewTab family={family} />}
-        {tab === "Documents" && (
-          <div className="kh-card" style={{ padding: "40px 24px", textAlign: "center", color: "var(--kh-ink-400)", fontSize: 13 }}>
-            Documents coming soon.
-          </div>
-        )}
+        {tab === "Documents" && <DocumentsTab familyId={family.id} title="Family documents" />}
         {tab === "Parents" && <ParentsCard parents={family.parents} familyId={family.id} showButton={true} />}
       </div>
     </>
