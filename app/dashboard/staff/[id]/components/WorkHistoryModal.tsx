@@ -3,6 +3,7 @@
 import { useState, useEffect, useTransition } from "react"
 import type { WorkTrackingRow } from "./types"
 import { DepartmentSelectPlain } from "@/components/ui/DepartmentSelect"
+import { KhTooltip } from "@/components/ui/KhTooltip"
 
 function fmtDate(d: string | null) {
   if (!d) return "Present"
@@ -83,7 +84,12 @@ function AddRecordForm({
 
   return (
     <div style={{ background: "var(--kh-ink-50)", border: "1px solid var(--kh-border)", borderRadius: 10, padding: "16px 18px" }}>
-      <div style={{ fontWeight: 600, fontSize: 13, color: "var(--kh-ink-900)", marginBottom: 14 }}>New position record</div>
+      <div style={{ fontWeight: 600, fontSize: 13, color: "var(--kh-ink-900)", marginBottom: 14, display: "flex", alignItems: "center" }}>
+        New position record
+        <KhTooltip label="What happens when I add a new position?">
+          Adding a new position automatically closes their current one — its end date is set to today. Use this when someone changes role or department.
+        </KhTooltip>
+      </div>
       <form onSubmit={handleSubmit}>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <div>

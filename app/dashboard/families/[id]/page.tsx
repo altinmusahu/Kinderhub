@@ -6,6 +6,7 @@ import { FamiliesService } from "@/app/api/modules/families/families.service"
 import { avatarColor } from "@/components/ui/helper"
 import FamilyTabs from "./FamilyTabs"
 import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
+import { KhTooltip } from "@/components/ui/KhTooltip"
 
 function familyInitials(name: string) {
   return name.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase()
@@ -93,6 +94,9 @@ export default async function FamilyPage({ params }: { params: Promise<{ id: str
                   <span className="kh-pill-dot" style={{ background: sc.color }} />
                   {family.status}
                 </span>
+                <KhTooltip label="What do family statuses mean?">
+                  Active families are currently enrolled, Waitlist families are waiting for a spot, and Paused families have temporarily stopped attending.
+                </KhTooltip>
               </div>
               <div style={{ fontSize: 13.5, color: "var(--kh-ink-600)", marginTop: 3 }}>
                 {family.plan}
@@ -144,7 +148,12 @@ export default async function FamilyPage({ params }: { params: Promise<{ id: str
               </div>
               <div style={{ width: 1, background: "var(--kh-border)" }} />
               <div>
-                <div style={{ fontSize: 10, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)", textTransform: "uppercase", letterSpacing: ".06em" }}>Balance</div>
+                <div style={{ fontSize: 10, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)", textTransform: "uppercase", letterSpacing: ".06em", display: "flex", alignItems: "center" }}>
+                  Balance
+                  <KhTooltip label="What is Balance?">
+                    The amount this family currently owes. Shown in red when there's an outstanding balance.
+                  </KhTooltip>
+                </div>
                 <div style={{
                   fontFamily: "var(--kh-font-serif)", fontSize: 22, marginTop: 4, lineHeight: 1,
                   color: family.balance > 0 ? "#C0392B" : "var(--kh-sage)",

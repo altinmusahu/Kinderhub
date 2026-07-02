@@ -7,6 +7,7 @@ import type { WaitlistEntry } from "@/app/api/modules/waitlist/waitlist.types"
 import AddChildButton from "./AddChildButton"
 import WaitlistTable from "./WaitlistTable"
 import { Heart, MapPin, Clock, User, Pencil, X, Check } from "lucide-react"
+import { KhTooltip } from "@/components/ui/KhTooltip"
 
 // ── Types for schedule JSON ────────────────────────────────────
 type DaySchedule = { opens: string; closes: string }
@@ -399,13 +400,16 @@ export default function ClassTabs({
         {/* KPI strip — always visible, responsive */}
         <div className="kh-kpi-strip">
           {[
-            { label: "Enrolled",    value: roster.length,                            sub: `of ${cls.capacity} capacity` },
-            { label: "Spots open",  value: Math.max(0, cls.capacity - roster.length), sub: "available now" },
-            { label: "Waitlist",    value: waitlist.length,                           sub: "waiting" },
-            { label: "Age group",   value: cls.average_year ?? "—",                  sub: "average year" },
+            { label: "Enrolled",    value: roster.length,                            sub: `of ${cls.capacity} capacity`, tip: undefined },
+            { label: "Spots open",  value: Math.max(0, cls.capacity - roster.length), sub: "available now", tip: undefined },
+            { label: "Waitlist",    value: waitlist.length,                           sub: "waiting", tip: undefined },
+            { label: "Age group",   value: cls.average_year ?? "—",                  sub: "target age range", tip: "The age range this class is intended for, e.g. \"2–3 yr\" — set manually, not calculated from enrolled children." },
           ].map((k, i) => (
             <div key={i} className="kh-card" style={{ padding: "13px 16px" }}>
-              <div style={{ fontSize: 10.5, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)", textTransform: "uppercase", letterSpacing: ".06em" }}>{k.label}</div>
+              <div style={{ fontSize: 10.5, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)", textTransform: "uppercase", letterSpacing: ".06em", display: "flex", alignItems: "center" }}>
+                {k.label}
+                {k.tip && <KhTooltip label={`What is ${k.label}?`}>{k.tip}</KhTooltip>}
+              </div>
               <div style={{ fontFamily: "var(--kh-font-serif)", fontSize: 26, color: "var(--kh-ink-900)", marginTop: 5, lineHeight: 1.1 }}>{k.value}</div>
               <div style={{ fontSize: 11, color: "var(--kh-ink-400)", marginTop: 2 }}>{k.sub}</div>
             </div>

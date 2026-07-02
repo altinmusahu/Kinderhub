@@ -7,6 +7,7 @@ import type { FamilyWithDetails } from "@/app/api/modules/families/families.type
 import { DataTable, Column } from "@/app/components/dashboard/DataTable"
 import AddFamilyModal from "@/components/ui/AddFamilyModal"
 import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
+import { KhTooltip } from "@/components/ui/KhTooltip"
 
 const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
   Active:   { bg: "#E8F5EC", color: "#3A8C50" },
@@ -43,7 +44,14 @@ const columns: Column<FamilyWithDetails>[] = [
   },
   {
     key: "status",
-    header: "Status",
+    header: (
+      <span style={{ display: "inline-flex", alignItems: "center" }}>
+        Status
+        <KhTooltip label="What do family statuses mean?">
+          Active families are currently enrolled, Waitlist families are waiting for a spot, and Paused families have temporarily stopped attending.
+        </KhTooltip>
+      </span>
+    ),
     cell: (f) => {
       const sc = STATUS_COLORS[f.status] ?? STATUS_COLORS.Active
       return (
@@ -56,7 +64,14 @@ const columns: Column<FamilyWithDetails>[] = [
   },
   {
     key: "plan",
-    header: "Plan",
+    header: (
+      <span style={{ display: "inline-flex", alignItems: "center" }}>
+        Plan
+        <KhTooltip label="What is Plan?">
+          The child's attendance schedule, e.g. Full-time or Part-time on specific days — not a billing tier.
+        </KhTooltip>
+      </span>
+    ),
     cellStyle: { fontSize: 13, color: "var(--kh-ink-600)" },
     cell: (f) => f.plan || "—",
   },
@@ -68,7 +83,14 @@ const columns: Column<FamilyWithDetails>[] = [
   },
   {
     key: "balance",
-    header: "Balance",
+    header: (
+      <span style={{ display: "inline-flex", alignItems: "center" }}>
+        Balance
+        <KhTooltip label="What is Balance?">
+          The amount this family currently owes. Shown in red when there's an outstanding balance.
+        </KhTooltip>
+      </span>
+    ),
     headerStyle: { textAlign: "right" },
     cellStyle: (f) => ({
       textAlign: "right",

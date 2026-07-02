@@ -1,6 +1,7 @@
 import React from "react"
 import { DataTable, Column } from "@/app/components/dashboard/DataTable"
 import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
+import { KhTooltip } from "@/components/ui/KhTooltip"
 
 const invoices = [
   { id: "INV-2051", family: "Okafor-Lind",   fid: "OL", color: "#E8866A", amount: "$2,840.00", status: "Paid",    due: "Apr 10", method: "Visa · 4242" },
@@ -53,7 +54,14 @@ const columns: Column<Invoice>[] = [
   },
   {
     key: "status",
-    header: "Status",
+    header: (
+      <span style={{ display: "inline-flex", alignItems: "center" }}>
+        Status
+        <KhTooltip label="What do invoice statuses mean?">
+          Paid means the family has paid in full, Due means payment hasn't come in yet but isn't late, and Overdue means the due date has passed.
+        </KhTooltip>
+      </span>
+    ),
     cell: (inv) => {
       const ss = STATUS_STYLE[inv.status] ?? STATUS_STYLE.Paid
       return (

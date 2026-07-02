@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Loader2, Plus, Pencil, Trash2, X, MapPin, Check } from "lucide-react"
+import { KhTooltip } from "@/components/ui/KhTooltip"
 
 type Location = {
   id: string
@@ -247,7 +248,12 @@ export default function LocationsSettingsPage() {
     <>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24 }}>
         <div>
-          <h1 className="kh-h1">Locations</h1>
+          <h1 className="kh-h1" style={{ display: "flex", alignItems: "center" }}>
+            Locations
+            <KhTooltip label="Location vs. Department">
+              A location is a physical childcare center address. Departments (set up under Team &amp; access) are teams of staff within a location, like "Classroom &amp; Care."
+            </KhTooltip>
+          </h1>
           <p className="kh-sub">Manage your childcare center locations.</p>
         </div>
         <button

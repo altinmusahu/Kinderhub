@@ -4,6 +4,13 @@ import { useState } from "react"
 import type { FamilyDetail, FamilyParent, FamilyKid } from "@/app/api/modules/families/families.types"
 import AddParentButton from "./AddParentButton"
 import EditParentButton from "./EditParentButton"
+import { KhTooltip } from "@/components/ui/KhTooltip"
+
+const BILLING_FIELD_TOOLTIPS: Record<string, string> = {
+  "Plan": "The child's attendance schedule, e.g. Full-time or Part-time on specific days — not a billing tier.",
+  "Balance due": "The amount this family currently owes.",
+  "Status": "Active families are currently enrolled, Waitlist families are waiting for a spot, and Paused families have temporarily stopped attending.",
+}
 
 const TABS = ["Overview", "Parents", "Billing", "Documents", "Activity"] as const
 type Tab = typeof TABS[number]
@@ -146,7 +153,12 @@ function BillingCard({ family }: { family: FamilyDetail }) {
           ["Status", family.status],
         ].map(([label, value]) => (
           <div key={label} style={{ padding: "10px 14px", borderRadius: 10, background: "var(--kh-ink-50)", border: "1px solid var(--kh-border)" }}>
-            <div style={{ fontSize: 10.5, color: "var(--kh-ink-400)", textTransform: "uppercase", letterSpacing: ".05em" }}>{label}</div>
+            <div style={{ fontSize: 10.5, color: "var(--kh-ink-400)", textTransform: "uppercase", letterSpacing: ".05em", display: "flex", alignItems: "center" }}>
+              {label}
+              {BILLING_FIELD_TOOLTIPS[label] && (
+                <KhTooltip label={`What is ${label}?`}>{BILLING_FIELD_TOOLTIPS[label]}</KhTooltip>
+              )}
+            </div>
             <div style={{
               fontSize: 14, fontWeight: 600, marginTop: 4,
               color: label === "Balance due" && family.balance > 0 ? "#C0392B" : "var(--kh-ink-900)",

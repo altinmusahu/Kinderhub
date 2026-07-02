@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Plus, X, Loader2, Building2, Users, ShieldCheck } from "lucide-react"
+import { KhTooltip } from "@/components/ui/KhTooltip"
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -251,8 +252,11 @@ export default function TeamPage() {
       </div>
 
       {/* ── Departments ── */}
-      <div style={{ fontSize: 11, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10 }}>
+      <div style={{ fontSize: 11, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, display: "flex", alignItems: "center" }}>
         Departments · {departments.length}
+        <KhTooltip label="Department vs. Location">
+          A department groups staff by team, like "Classroom &amp; Care" or "Kitchen." Each department belongs to one of your locations — set up under Settings → Locations.
+        </KhTooltip>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: 10, marginBottom: 24 }}>
         {departments.map((d, i) => {

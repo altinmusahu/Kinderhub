@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import type { UserById } from "./types"
 import { Field, SaveBar } from "./Field"
 import { WorkHistoryModal } from "./WorkHistoryModal"
+import { KhTooltip } from "@/components/ui/KhTooltip"
 
 export function EmploymentCard({ user, userId }: { user: UserById; userId: string }) {
   const [editing, setEditing] = useState(false)
@@ -65,11 +66,21 @@ export function EmploymentCard({ user, userId }: { user: UserById; userId: strin
             {!editing ? (
               <>
                 <div style={rowStyle}>
-                  <span style={{ color: "var(--kh-ink-400)" }}>Role</span>
+                  <span style={{ color: "var(--kh-ink-400)" }}>
+                    Role
+                    <KhTooltip label="What is Role?">
+                      The staff member's job title at this location, e.g. Admin, Director, Lead teacher, Assistant, or Staff.
+                    </KhTooltip>
+                  </span>
                   <span style={{ color: "var(--kh-ink-800)" }}>{user.user.role || "—"}</span>
                 </div>
                 <div style={rowStyle}>
-                  <span style={{ color: "var(--kh-ink-400)" }}>Status</span>
+                  <span style={{ color: "var(--kh-ink-400)" }}>
+                    Status
+                    <KhTooltip label="What does Inactive mean?">
+                      Inactive is just a label for record-keeping — it doesn't block their login or remove them from any list. To fully remove someone, delete their profile instead.
+                    </KhTooltip>
+                  </span>
                   <span style={{ color: user.user.is_active ? "#3A8C50" : "var(--kh-ink-500)" }}>
                     {user.user.is_active ? "Active" : "Inactive"}
                   </span>
@@ -78,7 +89,12 @@ export function EmploymentCard({ user, userId }: { user: UserById; userId: strin
             ) : (
               <>
                 <div style={rowStyle}>
-                  <label htmlFor="role" style={{ color: "var(--kh-ink-400)", alignSelf: "center" }}>Role</label>
+                  <label htmlFor="role" style={{ color: "var(--kh-ink-400)", alignSelf: "center" }}>
+                    Role
+                    <KhTooltip label="What is Role?">
+                      The staff member's job title at this location, e.g. Admin, Director, Lead teacher, Assistant, or Staff.
+                    </KhTooltip>
+                  </label>
                   <input id="role" name="role" defaultValue={user.user.role || ""} style={inputStyle} />
                 </div>
                 <div style={rowStyle}>

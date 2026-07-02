@@ -9,6 +9,7 @@ import type { ClassWithRelations } from "@/app/api/modules/classes/classes.types
 import type { WaitlistEntry } from "@/app/api/modules/waitlist/waitlist.types"
 import ClassTabs from "./ClassTabs"
 import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
+import { KhTooltip } from "@/components/ui/KhTooltip"
 
 // ── KPI ring ─────────────────────────────────────────────────
 
@@ -30,7 +31,12 @@ function CapacityRing({ enrolled, capacity }: { enrolled: number; capacity: numb
         </div>
       </div>
       <div>
-        <div style={{ fontSize: 10.5, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)", textTransform: "uppercase", letterSpacing: ".06em" }}>Enrolled</div>
+        <div style={{ fontSize: 10.5, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)", textTransform: "uppercase", letterSpacing: ".06em", display: "flex", alignItems: "center" }}>
+          Enrolled
+          <KhTooltip label="What does this show?">
+            How many children are currently enrolled compared to this class's total capacity.
+          </KhTooltip>
+        </div>
         <div style={{ fontFamily: "var(--kh-font-serif)", fontSize: 22, color: "var(--kh-ink-900)", lineHeight: 1 }}>{enrolled} / {capacity}</div>
         <div style={{ fontSize: 11, color: "var(--kh-ink-400)" }}>{Math.max(0, capacity - enrolled)} spot{Math.max(0, capacity - enrolled) !== 1 ? "s" : ""} open</div>
       </div>
