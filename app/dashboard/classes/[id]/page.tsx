@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Mail, ClipboardList, MoreHorizontal } from "lucide-react"
+import { Mail, MoreHorizontal } from "lucide-react"
 import { ClassesService } from "@/app/api/modules/classes/classes.service"
 import { KidsService } from "@/app/api/modules/kids/kids.service"
 import { WaitlistService } from "@/app/api/modules/waitlist/waitlist.service"
@@ -8,6 +8,7 @@ import type { Kids } from "@/app/api/modules/kids/kids.types"
 import type { ClassWithRelations } from "@/app/api/modules/classes/classes.types"
 import type { WaitlistEntry } from "@/app/api/modules/waitlist/waitlist.types"
 import ClassTabs from "./ClassTabs"
+import TakeAttendanceButton from "./TakeAttendanceButton"
 import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
 import { KhTooltip } from "@/components/ui/KhTooltip"
 
@@ -133,9 +134,7 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
           <button className="kh-btn" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5 }}>
             <Mail size={13} /> <span className="kh-btn-label">Message room</span>
           </button>
-          <button className="kh-btn" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5 }}>
-            <ClipboardList size={13} /> <span className="kh-btn-label">Take attendance</span>
-          </button>
+          <TakeAttendanceButton classId={id} className={cls.name} />
           <button className="kh-btn" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, padding: 0 }}>
             <MoreHorizontal size={14} />
           </button>

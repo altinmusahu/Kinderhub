@@ -20,6 +20,10 @@ export const KidsService = {
     return dept
   },
 
+  async getFamilyParents(id: string, tenantId: string): Promise<{ id: string; firstname: string; lastname: string }[]> {
+    return KidsRepository.findFamilyParentsByKidId(id, tenantId)
+  },
+
   async create(input: CreateKidsDto): Promise<Kids> {
     return KidsRepository.create(input)
   },

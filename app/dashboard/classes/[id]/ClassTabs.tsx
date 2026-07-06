@@ -10,6 +10,7 @@ import ChecklistTab from "./ChecklistTab"
 import ProgressTab from "./ProgressTab"
 import HubTab from "./HubTab"
 import IncidentsTab from "./IncidentsTab"
+import AttendanceTab from "./AttendanceTab"
 import { Heart, MapPin, Clock, User, Pencil, X, Check, ChevronLeft, ChevronRight } from "lucide-react"
 import { KhTooltip } from "@/components/ui/KhTooltip"
 
@@ -495,7 +496,7 @@ export default function ClassTabs({
 
         {active === "Schedule" && <ScheduleTab cls={cls} />}
 
-        {active === "Attendance"  && <ComingSoonTab label="Attendance" />}
+        {active === "Attendance"  && <AttendanceTab classId={classId} />}
         {active === "Incidents"   && <IncidentsTab classId={classId} roster={roster} />}
         {active === "Curriculum"  && <ComingSoonTab label="Curriculum" />}
         {active === "Checklist"   && <ChecklistTab classId={classId} />}

@@ -48,6 +48,24 @@ export const KidsRepository = {
     return data
   },
 
+  async findFamilyParentsByKidId(id: string, tenantId: string): Promise<{ id: string; firstname: string; lastname: string }[]> {
+    const { data: kid, error: kidError } = await supabaseAdmin
+      .from("kids")
+      .select("family_id")
+      .eq("id", id)
+      .eq("tenant_id", tenantId)
+      .maybeSingle()
+    if (kidError) throw new Error(kidError.message)
+    if (!kid?.family_id) return []
+
+    const { data, error } = await supabaseAdmin
+      .from("parents")
+      .select("id, firstname, lastname")
+      .eq("family_id", kid.family_id)
+    if (error) throw new Error(error.message)
+    return data ?? []
+  },
+
   async create(payload: CreateKidsDto): Promise<Kids> {
     const { data, error } = await supabaseAdmin
       .from("kids")
