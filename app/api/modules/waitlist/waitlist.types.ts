@@ -15,3 +15,16 @@ export type CreateWaitlistDto = {
   class_id: string
   tenant_id: string
 }
+
+// A waitlist row whose kid has since been enrolled in a different class
+// than the one they're still waitlisted for — surfaced as family activity.
+export type ClassTransferEvent = {
+  waitlist_id: string
+  kid_id: string
+  kid_name: string
+  waitlisted_class_id: string
+  waitlisted_class_name: string
+  current_class_id: string
+  current_class_name: string
+  waitlisted_at: string
+}

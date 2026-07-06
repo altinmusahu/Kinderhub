@@ -1405,13 +1405,37 @@
   }
 }
 
+/* ── ClassTabs split layout (Checklist / Hub main + sidebar) ── */
+.kh-tab-split-grid {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr;
+  gap: 14px;
+  align-items: start;
+}
+@media (max-width: 1023px) {
+  .kh-tab-split-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── ProgressTab per-kid card grid ── */
+.kh-progress-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+}
+@media (max-width: 480px) {
+  .kh-progress-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ── Table scrollable wrapper ── */
 .kh-table-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
 
-/* ── Tab strip scroll on small screens ── */
 .kh-tabs-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -1421,6 +1445,34 @@
 .kh-tabs-scroll .kh-tabs {
   flex-wrap: nowrap;
   min-width: max-content;
+}
+
+/* ── Tab strip nav arrows (ClassTabs) ── */
+.kh-tabs-nav-arrow {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  border: 1px solid var(--kh-border);
+  background: var(--kh-surface);
+  color: var(--kh-ink-500);
+  cursor: pointer;
+}
+.kh-tabs-nav-arrow:hover {
+  background: var(--kh-ink-50);
+  color: var(--kh-ink-800);
+}
+.kh-tabs-nav-arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+@media (max-width: 1023px) {
+  .kh-tabs-nav-arrow--visible {
+    display: inline-flex;
+  }
 }
 
 /* ── Topbar button group: collapse on very small screens ── */

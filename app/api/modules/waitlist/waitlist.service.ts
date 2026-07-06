@@ -1,9 +1,13 @@
 import { WaitlistRepository } from "./waitlist.repository"
-import type { CreateWaitlistDto, WaitlistEntry } from "./waitlist.types"
+import type { ClassTransferEvent, CreateWaitlistDto, WaitlistEntry } from "./waitlist.types"
 
 export const WaitlistService = {
   async getByClassId(tenantId: string, classId: string): Promise<WaitlistEntry[]> {
     return WaitlistRepository.findByClassId(tenantId, classId)
+  },
+
+  async getClassTransfersForFamily(tenantId: string, familyId: string): Promise<ClassTransferEvent[]> {
+    return WaitlistRepository.findClassTransfersForFamily(tenantId, familyId)
   },
 
   async create(input: CreateWaitlistDto): Promise<WaitlistEntry> {

@@ -39,7 +39,7 @@ export default function WaitlistTable({
   // Load all kids (unassigned ones) when the add form opens
   useEffect(() => {
     if (!showAdd) return
-    fetch("/api/kids")
+    fetch(`/api/waitlist/${classId}`)
       .then(r => r.json())
       .then((d: KidOption[]) => setKids(Array.isArray(d) ? d : []))
       .catch(() => setKids([]))

@@ -1,12 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { ClassWithRelations } from "@/app/api/modules/classes/classes.types"
 import type { Kids } from "@/app/api/modules/kids/kids.types"
 import type { WaitlistEntry } from "@/app/api/modules/waitlist/waitlist.types"
 import AddChildButton from "./AddChildButton"
 import WaitlistTable from "./WaitlistTable"
-import { Heart, MapPin, Clock, User, Pencil, X, Check } from "lucide-react"
+import ChecklistTab from "./ChecklistTab"
+import ProgressTab from "./ProgressTab"
+import HubTab from "./HubTab"
+import IncidentsTab from "./IncidentsTab"
+import { Heart, MapPin, Clock, User, Pencil, X, Check, ChevronLeft, ChevronRight } from "lucide-react"
 import { KhTooltip } from "@/components/ui/KhTooltip"
 
 // ── Types for schedule JSON ────────────────────────────────────
@@ -53,7 +57,7 @@ function formatTime(iso: string): string {
   }
 }
 
-const TABS = ["Roster", "Schedule", "Attendance", "Curriculum", "Documents"] as const
+const TABS = ["Roster", "Schedule", "Attendance", "Incidents", "Curriculum", "Checklist", "Progress", "Hub", "Documents"] as const
 type Tab = typeof TABS[number]
 
 // ── Tab content components ─────────────────────────────────────
@@ -282,10 +286,7 @@ function ScheduleTab({ cls }: { cls: ClassWithRelations }) {
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Weekly schedule grid */}
-      <div className="kh-card" style={{ overflow: "hidden" }}>
+        
         <div style={{ padding: "14px 16px 10px", borderBottom: "1px solid var(--kh-ink-100)", display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: "var(--kh-ink-800)" }}>Weekly schedule</span>
           <button
@@ -352,6 +353,83 @@ function ComingSoonTab({ label }: { label: string }) {
   )
 }
 
+function TabStrip({ active, onChange }: { active: Tab; onChange: (tab: Tab) => void }) {
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+
+  function updateArrows() {
+    const el = scrollerRef.current
+    if (!el) return
+    setCanScrollLeft(el.scrollLeft > 2)
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2)
+  }
+
+  useEffect(() => {
+    updateArrows()
+    const el = scrollerRef.current
+    if (!el) return
+    el.addEventListener("scroll", updateArrows)
+    window.addEventListener("resize", updateArrows)
+    return () => {
+      el.removeEventListener("scroll", updateArrows)
+      window.removeEventListener("resize", updateArrows)
+    }
+  }, [])
+
+  function scrollBy(amount: number) {
+    scrollerRef.current?.scrollBy({ left: amount, behavior: "smooth" })
+  }
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", background: "var(--kh-surface)", borderBottom: "1px solid var(--kh-ink-100)" }}>
+      <button
+        className={`kh-tabs-nav-arrow${canScrollLeft ? " kh-tabs-nav-arrow--visible" : ""}`}
+        onClick={() => scrollBy(-120)}
+        disabled={!canScrollLeft}
+        aria-label="Scroll tabs left"
+        style={{ marginLeft: 6 }}
+      >
+        <ChevronLeft size={15} />
+      </button>
+
+      <div ref={scrollerRef} className="kh-tabs-scroll" style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          display: "flex", gap: 18,
+          padding: "0 16px",
+          minWidth: "max-content",
+        }}>
+          {TABS.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => onChange(tab)}
+              style={{
+                padding: "12px 2px", fontSize: 13, border: "none", background: "transparent",
+                color: active === tab ? "var(--kh-ink-900)" : "var(--kh-ink-500)",
+                fontWeight: active === tab ? 600 : 500,
+                borderBottom: active === tab ? "2px solid var(--kh-peach)" : "2px solid transparent",
+                cursor: "pointer", marginBottom: -1,
+              }}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <button
+        className={`kh-tabs-nav-arrow${canScrollRight ? " kh-tabs-nav-arrow--visible" : ""}`}
+        onClick={() => scrollBy(120)}
+        disabled={!canScrollRight}
+        aria-label="Scroll tabs right"
+        style={{ marginRight: 6 }}
+      >
+        <ChevronRight size={15} />
+      </button>
+    </div>
+  )
+}
+
 // ── Main exported component ────────────────────────────────────
 
 export default function ClassTabs({
@@ -369,30 +447,8 @@ export default function ClassTabs({
 
   return (
     <>
-      {/* Tab strip — scrollable on mobile */}
-      <div className="kh-tabs-scroll" style={{ background: "var(--kh-surface)", borderBottom: "1px solid var(--kh-ink-100)" }}>
-        <div style={{
-          display: "flex", gap: 18,
-          padding: "0 16px",
-          minWidth: "max-content",
-        }}>
-          {TABS.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActive(tab)}
-              style={{
-                padding: "12px 2px", fontSize: 13, border: "none", background: "transparent",
-                color: active === tab ? "var(--kh-ink-900)" : "var(--kh-ink-500)",
-                fontWeight: active === tab ? 600 : 500,
-                borderBottom: active === tab ? "2px solid var(--kh-peach)" : "2px solid transparent",
-                cursor: "pointer", marginBottom: -1,
-              }}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Tab strip — scrollable on mobile with nav arrows, pinned so it never scrolls out of view */}
+      <TabStrip active={active} onChange={setActive} />
 
       {/* Tab body */}
       <div style={{ padding: "18px 16px 40px", overflowY: "auto" }}>
@@ -440,7 +496,11 @@ export default function ClassTabs({
         {active === "Schedule" && <ScheduleTab cls={cls} />}
 
         {active === "Attendance"  && <ComingSoonTab label="Attendance" />}
+        {active === "Incidents"   && <IncidentsTab classId={classId} roster={roster} />}
         {active === "Curriculum"  && <ComingSoonTab label="Curriculum" />}
+        {active === "Checklist"   && <ChecklistTab classId={classId} />}
+        {active === "Progress"    && <ProgressTab classId={classId} />}
+        {active === "Hub"         && <HubTab classId={classId} />}
         {active === "Documents"   && <ComingSoonTab label="Documents" />}
       </div>
     </>

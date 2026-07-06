@@ -1,11 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import type { FamilyDetail, FamilyParent, FamilyKid } from "@/app/api/modules/families/families.types"
+import type { ClassTransferEvent } from "@/app/api/modules/waitlist/waitlist.types"
 import AddParentButton from "./AddParentButton"
 import EditParentButton from "./EditParentButton"
 import { KhTooltip } from "@/components/ui/KhTooltip"
 import { DocumentsTab } from "../../staff/[id]/components/DocumentsTab"
+import AddKidButton from "./AddKidButton"
 
 const BILLING_FIELD_TOOLTIPS: Record<string, string> = {
   "Plan": "The child's attendance schedule, e.g. Full-time or Part-time on specific days — not a billing tier.",
@@ -21,12 +23,13 @@ function age(dob: string) {
   return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25))
 }
 
-function ChildrenCard({ kids }: { kids: FamilyKid[] }) {
+function ChildrenCard({ kids, familyId }: { kids: FamilyKid[]; familyId: string }) {
   return (
     <div className="kh-card" style={{ padding: "18px 20px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
         <span className="kh-card-title">Children</span>
         <span style={{ fontSize: 11.5, color: "var(--kh-ink-400)" }}>{kids.length} enrolled</span>
+        <AddKidButton familyId={familyId} class_id={null} />
       </div>
       {kids.length === 0 ? (
         <p style={{ fontSize: 13, color: "var(--kh-ink-400)", margin: 0 }}>No children added yet.</p>
@@ -174,7 +177,7 @@ function BillingCard({ family }: { family: FamilyDetail }) {
 function OverviewTab({ family }: { family: FamilyDetail }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-      <ChildrenCard kids={family.kids} />
+      <ChildrenCard kids={family.kids} familyId={family.id} />
       <ParentsCard parents={family.parents} familyId={family.id} showButton={false} />
       <BillingCard family={family} />
       <div className="kh-card" style={{ padding: "18px 20px" }}>
@@ -183,6 +186,68 @@ function OverviewTab({ family }: { family: FamilyDetail }) {
         </div>
         <p style={{ fontSize: 13, color: "var(--kh-ink-400)", margin: 0 }}>No documents uploaded yet.</p>
       </div>
+    </div>
+  )
+}
+
+function ActivityTab({ familyId }: { familyId: string }) {
+  const [transfers, setTransfers] = useState<ClassTransferEvent[] | null>(null)
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch(`/api/families/${familyId}/waitlist-transfers`)
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed")
+        return r.json()
+      })
+      .then((data: ClassTransferEvent[]) => { if (!cancelled) setTransfers(data) })
+      .catch(() => { if (!cancelled) setError(true) })
+    return () => { cancelled = true }
+  }, [familyId])
+
+  return (
+    <div className="kh-card" style={{ padding: "18px 20px" }}>
+      <div style={{ marginBottom: 14 }}>
+        <span className="kh-card-title">Activity</span>
+        <p style={{ fontSize: 12, color: "var(--kh-ink-400)", margin: "4px 0 0" }}>
+          Waitlist changes that happened for this family's children
+        </p>
+      </div>
+
+      {error ? (
+        <p style={{ fontSize: 13, color: "var(--kh-ink-400)", margin: 0 }}>Couldn&apos;t load activity.</p>
+      ) : transfers === null ? (
+        <p style={{ fontSize: 13, color: "var(--kh-ink-400)", margin: 0 }}>Loading…</p>
+      ) : transfers.length === 0 ? (
+        <p style={{ fontSize: 13, color: "var(--kh-ink-400)", margin: 0 }}>No activity yet.</p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {transfers.map((t) => (
+            <div key={t.waitlist_id} style={{
+              display: "flex", alignItems: "flex-start", gap: 12,
+              padding: "12px 14px", borderRadius: 12,
+              border: "1px solid var(--kh-border)", background: "var(--kh-ink-50)",
+            }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+                background: "var(--kh-peach-bg)", color: "var(--kh-peach-d)",
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15,
+              }}>
+                ↪
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, color: "var(--kh-ink-900)" }}>
+                  <strong>{t.kid_name}</strong> was on the waitlist for <strong>{t.waitlisted_class_name}</strong>, but is now enrolled in <strong>{t.current_class_name}</strong>.
+                </div>
+                <div style={{ fontSize: 11, color: "var(--kh-ink-400)", marginTop: 4, fontFamily: "var(--kh-font-mono)" }}>
+                  Waitlisted {new Date(t.waitlisted_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -222,6 +287,7 @@ export default function FamilyTabs({ family }: { family: FamilyDetail }) {
         {tab === "Overview" && <OverviewTab family={family} />}
         {tab === "Documents" && <DocumentsTab familyId={family.id} title="Family documents" />}
         {tab === "Parents" && <ParentsCard parents={family.parents} familyId={family.id} showButton={true} />}
+        {tab === "Activity" && <ActivityTab familyId={family.id} />}
       </div>
     </>
   )
