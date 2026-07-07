@@ -322,6 +322,40 @@ CREATE TABLE public.class_rules (
   CONSTRAINT class_rules_pkey PRIMARY KEY (id),
   CONSTRAINT class_rules_class_id_fkey FOREIGN KEY (class_id) REFERENCES public.classes(id)
 );
+CREATE TABLE public.class_curriculum (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  class_id uuid NOT NULL,
+  tenant_id uuid NOT NULL,
+  period_type text NOT NULL,
+  period_start date NOT NULL,
+  period_end date NOT NULL,
+  title text,
+  theme text,
+  status text NOT NULL DEFAULT 'draft'::text,
+  created_by uuid NOT NULL,
+  updated_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone,
+  CONSTRAINT class_curriculum_pkey PRIMARY KEY (id),
+  CONSTRAINT class_curriculum_class_id_fkey FOREIGN KEY (class_id) REFERENCES public.classes(id),
+  CONSTRAINT class_curriculum_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
+  CONSTRAINT class_curriculum_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.class_curriculum_items (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  curriculum_id uuid NOT NULL,
+  tenant_id uuid NOT NULL,
+  specific_date date,
+  day_of_week text,
+  activity_name text NOT NULL,
+  description text,
+  learning_domain text,
+  materials_needed text,
+  sort_order numeric NOT NULL DEFAULT 0,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT class_curriculum_items_pkey PRIMARY KEY (id),
+  CONSTRAINT class_curriculum_items_curriculum_id_fkey FOREIGN KEY (curriculum_id) REFERENCES public.class_curriculum(id)
+);
 CREATE TABLE public.class_events (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   class_id uuid NOT NULL,

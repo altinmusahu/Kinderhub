@@ -4,6 +4,7 @@ export type Documents = {
   kid_id: string | null
   user_id: string | null
   family_id: string | null
+  class_id: string | null
   created_at: string
 }
 
@@ -17,6 +18,7 @@ export type DocumentWithSubject = {
   kid_id: string | null
   user_id: string | null
   family_id: string | null
+  class_id: string | null
   subject_name: string | null
   subject_type: "Family" | "Staff" | "Child" | null
   created_at: string
@@ -27,4 +29,5 @@ export type UploadDocumentInput = {
   kid_id: string | null
   user_id: string | null
   family_id: string | null
+  class_id: string | null
 }

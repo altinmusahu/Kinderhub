@@ -3,6 +3,7 @@
 import { useState, useEffect, type ReactNode } from "react"
 import Sidebar from "./Sidebar"
 import ActivityPanel from "./ActivityPanel"
+import GlobalSearch from "./GlobalSearch"
 import type { ActivityItem } from "./ActivityFeed"
 import { MobileNavContext } from "./MobileNavContext"
 
@@ -88,6 +89,9 @@ export default function DashboardShell({ activityItems, activityError, children 
             opacity: mounted ? 1 : 0,
           }}
         >
+          <div className="kh-global-search-bar">
+            <GlobalSearch />
+          </div>
           {children}
         </div>
 
