@@ -1,3 +1,5 @@
+import { SalaryTracking } from "../salary_tracking/salary_tracking.types"
+
 export type User = {
   id: string
   name: string
@@ -22,6 +24,7 @@ export type UserById = {
   responsible_user_id: string | null
   responsible_user_name: string | null
   start_date: string | null
+  salary: SalaryTracking | null
 }
 
 export type UserWithWorkTrackingAndDepartment = {
