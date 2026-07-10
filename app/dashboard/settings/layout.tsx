@@ -10,6 +10,7 @@ const settingsNav = [
     section: "Organization",
     items: [
       { label: "General",   href: "/dashboard/settings/general"   },
+      { label: "Currency", href: "/dashboard/settings/currency" },
       { label: "Locations", href: "/dashboard/settings/locations" },
     ],
   },

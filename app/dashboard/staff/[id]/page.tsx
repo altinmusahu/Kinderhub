@@ -4,9 +4,12 @@ import Link from "next/link"
 import { verifyToken, cookieName } from "@/lib/auth"
 import { UserService } from "@/app/api/modules/user/user.service"
 import { SalaryTrackingService } from "@/app/api/modules/salary_tracking/salary_tracking.service"
+import { UserProfilesService } from "@/app/api/modules/user_profiles/user_profiles.service"
+import { UserProfilesRepository } from "@/app/api/modules/user_profiles/user_profiles.repository"
 import { avatarColor, initials } from "@/components/ui/helper"
 import EmployeeTabs from "./EmployeeTabs"
 import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
+import { ProfileAvatar } from "./components/ProfileAvatar"
 
 export default async function EmployeePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -30,6 +33,8 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
   if (!user) return notFound()
 
   const activeSalary = await SalaryTrackingService.getActiveByUser(id)
+  const profilePicture = await UserProfilesService.getByUser(id)
+  const profilePictureUrl = profilePicture ? UserProfilesRepository.getPublicUrl(profilePicture.file_url) : null
 
   const color = avatarColor(user.user.id)
   const userInitials = initials(user.user.name, user.user.lastname)
@@ -69,24 +74,13 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
         }}>
           <div style={{ display: "flex", gap: 20, alignItems: "flex-start", paddingBottom: 20 }}>
             {/* Avatar */}
-            <div style={{ position: "relative" }}>
-              <div style={{
-                width: 80, height: 80, borderRadius: 18,
-                background: color + "33",
-                border: "3px solid var(--kh-surface)",
-                boxShadow: "0 2px 12px rgba(0,0,0,0.10)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 28, fontWeight: 700, color,
-              }}>
-                {userInitials}
-              </div>
-              <span style={{
-                position: "absolute", bottom: 2, right: 2,
-                width: 16, height: 16, borderRadius: "50%",
-                background: user.user.is_active ? "var(--kh-sage)" : "var(--kh-ink-300)",
-                border: "2.5px solid var(--kh-surface)",
-              }} />
-            </div>
+            <ProfileAvatar
+              userId={id}
+              color={color}
+              initials={userInitials}
+              isActive={user.user.is_active}
+              initialUrl={profilePictureUrl}
+            />
 
             {/* Name + meta */}
             <div style={{ flex: 1, paddingTop: 4 }}>
@@ -164,7 +158,7 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
               <div>
                 <div style={{ fontSize: 10, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)", textTransform: "uppercase", letterSpacing: ".06em" }}>Salary</div>
                 <div style={{ fontFamily: "var(--kh-font-serif)", fontSize: 18, color: "var(--kh-ink-900)", marginTop: 4 }}>
-                  {activeSalary ? `$${Number(activeSalary.salary).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                  {activeSalary ? `${activeSalary.symbol ?? ""}${Number(activeSalary.salary).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
                 </div>
                 <div style={{ fontSize: 11, color: "var(--kh-ink-400)" }}>
                   {activeSalary ? `since ${new Date(activeSalary.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : "not set"}

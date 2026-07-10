@@ -4,6 +4,7 @@ import { UserRepository } from "./user.repository"
 import { WorkTrackingService } from "../work_tracking/work_tracking.service"
 import type { CreateUserInput, UpdateUserInput } from "./user.validation"
 import type { User, UserById, UserWithWorkTrackingAndDepartment } from "./user.types"
+import { AddressService } from "../address/address.service"
 
 const TENANT_ID = "8c0785e5-83cc-4fa3-9957-75ae61b50d37"
 
@@ -42,7 +43,7 @@ export const UserService = {
     })
     if (authError) throw new Error(authError.message)
 
-    const { department_id, position_name, ...userInput } = input
+    const { street, house_number, city, postal_code, country ,department_id, position_name, ...userInput } = input
 
     const user = await UserRepository.createWithId({
       id: authData.user.id,
@@ -62,6 +63,14 @@ export const UserService = {
         start_date: new Date().toISOString().split("T")[0],
         end_date: null,
         responsible_user_id: null,
+      })
+      await AddressService.create({
+        street: street ?? null,
+        house_number: house_number ?? null,
+        city: city ?? null,
+        postal_code: postal_code ?? null,
+        country: country ?? null,
+        user_id: authData.user.id,
       })
     } catch (error) {
       await UserRepository.delete(authData.user.id, TENANT_ID)

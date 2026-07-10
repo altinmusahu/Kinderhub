@@ -13,7 +13,7 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table"
-import type { User } from "@/app/api/modules/user/user.types"
+import type { User, UserById } from "@/app/api/modules/user/user.types"
 
 type DisplayUser = Omit<User, "password_hash">
 
@@ -26,6 +26,11 @@ type NewUserForm = {
   role: string
   is_active: boolean
   date_of_birth: string
+  street: string
+  house_number: string
+  city: string
+  postal_code: string
+  country: string
 }
 
 const emptyForm: NewUserForm = {
@@ -37,6 +42,11 @@ const emptyForm: NewUserForm = {
   role: "User",
   is_active: true,
   date_of_birth: "",
+  street: "",
+  house_number: "",
+  city: "",
+  postal_code: "",
+  country: "",
 }
 
 const fieldLabels: Record<string, string> = {
@@ -51,6 +61,11 @@ const fieldLabels: Record<string, string> = {
   date_of_birth: "Date of Birth",
   tenant_id: "Tenant",
   is_first_login_executed: "First Login Done",
+  street: "Street",
+  house_number: "House No.",
+  city: "City",
+  postal_code: "Postal Code",
+  country: "Country",
 }
 
 const HIDDEN_COLS = new Set(["id", "tenant_id"])
@@ -61,7 +76,7 @@ export default function UsersTable({ users }: { users: DisplayUser[] }) {
   const [form, setForm] = useState<NewUserForm>(emptyForm)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [selectedUser, setSelectedUser] = useState<DisplayUser | null>(null)
+  const [selectedUser, setSelectedUser] = useState<UserById | null>(null)
   const [viewLoading, setViewLoading] = useState(false)
 
   useEffect(() => { setLocalUsers(users) }, [users])
@@ -75,7 +90,7 @@ export default function UsersTable({ users }: { users: DisplayUser[] }) {
     const res = await fetch(`/api/users/${id}`)
     const data = await res.json()
     setViewLoading(false)
-    if (res.ok) setSelectedUser(data as DisplayUser)
+    if (res.ok) setSelectedUser(data as UserById)
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -186,6 +201,26 @@ export default function UsersTable({ users }: { users: DisplayUser[] }) {
                 </SelectContent>
               </Select>
             </div>
+            <div className="border-t pt-4">
+              <p className="mb-2 text-sm font-medium text-muted-foreground">Address (optional)</p>
+              <div className="grid grid-cols-2 gap-4">
+                {([
+                  { label: "Street",       name: "street" },
+                  { label: "House Number", name: "house_number" },
+                  { label: "City",         name: "city" },
+                  { label: "Postal Code",  name: "postal_code" },
+                ] as const).map(({ label, name }) => (
+                  <div key={name}>
+                    <label className="mb-1 block text-sm font-medium">{label}</label>
+                    <Input type="text" name={name} value={form[name]} onChange={handleChange} />
+                  </div>
+                ))}
+                <div className="col-span-2">
+                  <label className="mb-1 block text-sm font-medium">Country</label>
+                  <Input type="text" name="country" value={form.country} onChange={handleChange} />
+                </div>
+              </div>
+            </div>
             {error && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeModal}>Cancel</Button>
@@ -203,7 +238,7 @@ export default function UsersTable({ users }: { users: DisplayUser[] }) {
             <div className="py-10 text-center text-sm text-muted-foreground">Loading...</div>
           ) : selectedUser ? (
             <div className="space-y-3">
-              {(Object.entries(selectedUser) as [string, unknown][])
+              {(Object.entries(selectedUser.user) as [string, unknown][])
                 .filter(([key]) => key !== "id" && key !== "tenant_id")
                 .map(([key, value]) => (
                   <div key={key} className="flex items-center justify-between border-b pb-2 last:border-0">
@@ -217,6 +252,14 @@ export default function UsersTable({ users }: { users: DisplayUser[] }) {
                     )}
                   </div>
                 ))}
+
+              <p className="pt-2 text-sm font-medium text-muted-foreground">Address</p>
+              {(["street", "house_number", "city", "postal_code", "country"] as const).map((key) => (
+                <div key={key} className="flex items-center justify-between border-b pb-2 last:border-0">
+                  <span className="text-sm font-medium text-muted-foreground">{fieldLabels[key]}</span>
+                  <span className="text-sm">{selectedUser.address?.[key] ?? "—"}</span>
+                </div>
+              ))}
             </div>
           ) : null}
           <DialogFooter>

@@ -1,14 +1,16 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import type { SalaryRow } from "./types"
+import type { Currency } from "@/app/api/modules/currency/currency.types"
 
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
 }
 
-function fmtMoney(n: number) {
-  return `$${Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+function fmtMoney(n: number, symbol?: string) {
+  const amount = Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return symbol ? `${symbol}${amount}` : amount
 }
 
 const fieldStyle: React.CSSProperties = {
@@ -25,11 +27,20 @@ function AddSalaryForm({ userId, onAdded }: { userId: string; onAdded: (row: Sal
   const [open, setOpen] = useState(false)
   const [saving, startSave] = useTransition()
   const [error, setError] = useState("")
+  const [currencies, setCurrencies] = useState<Currency[]>([])
+
+  useEffect(() => {
+    if (!open) return
+    fetch("/api/currency")
+      .then(r => r.json())
+      .then(data => setCurrencies(Array.isArray(data) ? data : []))
+      .catch(() => {})
+  }, [open])
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
-    const body = { date: fd.get("date"), salary: fd.get("salary") }
+    const body = { date: fd.get("date"), salary: fd.get("salary"), currency_id: fd.get("currency_id") }
     startSave(async () => {
       const res = await fetch(`/api/users/${userId}/salary`, {
         method: "POST",
@@ -71,6 +82,15 @@ function AddSalaryForm({ userId, onAdded }: { userId: string; onAdded: (row: Sal
           <div>
             <label style={labelStyle}>Salary amount *</label>
             <input name="salary" type="number" step="0.01" min="0.01" required placeholder="e.g. 3500" style={fieldStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Currency *</label>
+            <select name="currency_id" required defaultValue="" style={fieldStyle}>
+              <option value="" disabled>Select currency…</option>
+              {currencies.map(c => (
+                <option key={c.id} value={c.id}>{c.currency} ({c.symbol})</option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -152,7 +172,7 @@ export function SalaryTab({ userId }: { userId: string }) {
         }}>
           <div>
             <div style={{ fontSize: 10.5, color: "#B24420", textTransform: "uppercase", letterSpacing: ".05em" }}>Current salary</div>
-            <div style={{ fontFamily: "var(--kh-font-serif)", fontSize: 26, color: "#7A2810", marginTop: 4 }}>{fmtMoney(current.salary)}</div>
+            <div style={{ fontFamily: "var(--kh-font-serif)", fontSize: 26, color: "#7A2810", marginTop: 4 }}>{fmtMoney(current.salary, current.symbol)}</div>
           </div>
           <div style={{ fontSize: 12, color: "#B24420" }}>Effective {fmtDate(current.date)}</div>
         </div>
@@ -170,7 +190,7 @@ export function SalaryTab({ userId }: { userId: string }) {
           {rows.map(row => (
             <div key={row.id} className="kh-card" style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: 14 }}>
               <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--kh-ink-900)" }}>{fmtMoney(row.salary)}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--kh-ink-900)" }}>{fmtMoney(row.salary, row.symbol)}</div>
                 {row.is_active && (
                   <span style={{ fontSize: 10, fontWeight: 600, background: "#E8F5EC", color: "#3A8C50", borderRadius: 99, padding: "2px 8px" }}>
                     Current

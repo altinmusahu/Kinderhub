@@ -35,4 +35,6 @@ export type SalaryRow = {
   date: string
   salary: number
   is_active: boolean
+  currency_id: string
+  symbol: string
 }

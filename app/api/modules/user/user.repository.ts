@@ -36,7 +36,21 @@ export const UserRepository = {
           user_id,
           date,
           salary,
-          is_active
+          is_active,
+          currency_id,
+          currency (
+            symbol
+          )
+        ),
+        address (
+          id,
+          street,
+          house_number,
+          city,
+          postal_code,
+          country,
+          created_at,
+          user_id
         )
       `)
       .eq("id", id)
@@ -49,7 +63,11 @@ export const UserRepository = {
 
     // Pick the active work_tracking record (end_date is null), fall back to most recent
     const activeWt = data.work_tracking?.find((wt: any) => wt.end_date === null) ?? data.work_tracking?.[0] ?? null
-    const activeSalary = data.salary_tracking?.find((st: { is_active: boolean }) => st.is_active) ?? data.salary_tracking?.[0] ?? null
+    const activeSalaryRaw = data.salary_tracking?.find((st: { is_active: boolean }) => st.is_active) ?? data.salary_tracking?.[0] ?? null
+    const activeSalary = activeSalaryRaw
+      ? { ...activeSalaryRaw, symbol: activeSalaryRaw.currency?.symbol }
+      : null
+    const address = Array.isArray(data.address) ? data.address[0] ?? null : data.address ?? null
 
     return {
       user: {
@@ -73,6 +91,7 @@ export const UserRepository = {
       responsible_user_name: null,
       start_date: activeWt?.start_date ?? null,
       salary: activeSalary,
+      address,
     }
   },
 
@@ -105,6 +124,10 @@ export const UserRepository = {
             name
           ),
           position_name
+        ),
+        user_profiles (
+          file_url,
+          created_at
         )
       `)
       .eq("tenant_id", tenantId)
@@ -119,6 +142,15 @@ export const UserRepository = {
       // PostgREST returns the joined department as object or array depending on cardinality
       const dept = Array.isArray(wt?.department) ? wt.department[0] : wt?.department
 
+      // A user should have at most one profile picture; fall back to most recent if duplicates slipped in
+      const profiles = u.user_profiles ?? []
+      const latestProfile = profiles.length > 1
+        ? [...profiles].sort((a: any, b: any) => b.created_at.localeCompare(a.created_at))[0]
+        : profiles[0] ?? null
+      const profile_picture_url = latestProfile
+        ? supabaseAdmin.storage.from("profiles").getPublicUrl(latestProfile.file_url).data.publicUrl
+        : null
+
       return {
         id: u.id,
         name: u.name,
@@ -126,6 +158,7 @@ export const UserRepository = {
         phone_number: u.phone_number,
         created_at: u.created_at,
         is_active: u.is_active,
+        profile_picture_url,
         date_of_birth: u.date_of_birth,
         email: u.email,
         department_id: wt?.department_id ?? null,

@@ -39,12 +39,22 @@ export default async function StaffPage() {
         const ini = initials(s.name, s.lastname)
         return (
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span
-              className="kh-avatar"
-              style={{ background: ac + "22", color: ac, fontSize: 10, flexShrink: 0 }}
-            >
-              {ini}
-            </span>
+            {s.profile_picture_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={s.profile_picture_url}
+                alt=""
+                className="kh-avatar"
+                style={{ objectFit: "cover", overflow: "hidden", flexShrink: 0 }}
+              />
+            ) : (
+              <span
+                className="kh-avatar"
+                style={{ background: ac + "22", color: ac, fontSize: 10, flexShrink: 0 }}
+              >
+                {ini}
+              </span>
+            )}
             <div>
               <div style={{ fontWeight: 600, fontSize: 13, color: "var(--kh-ink-900)" }}>
                 {s.name} {s.lastname}
@@ -115,7 +125,8 @@ export default async function StaffPage() {
       email: u.email,
       department_id: u.department_id,
       department_name: u.department_name,
-      position_name: u.position_name
+      position_name: u.position_name,
+      profile_picture_url: u.profile_picture_url,
     }
   })
 

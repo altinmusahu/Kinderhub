@@ -5,22 +5,41 @@ export const SalaryTrackingRepository = {
   async findByUser(userId: string): Promise<SalaryTracking[]> {
     const { data, error } = await supabaseAdmin
       .from("salary_tracking")
-      .select("*")
+      .select(`
+        *,
+        currency (
+          symbol
+        )
+      `)
       .eq("user_id", userId)
       .order("date", { ascending: false })
     if (error) throw new Error(error.message)
-    return data ?? []
+    return (
+      data?.map(item => ({
+        ...item,
+        symbol: item.currency?.symbol
+      })) ?? []
+    )
   },
 
   async findActiveByUser(userId: string): Promise<SalaryTracking | null> {
     const { data, error } = await supabaseAdmin
       .from("salary_tracking")
-      .select("*")
+      .select(`
+        *,
+        currency (
+          symbol
+        )
+      `)
       .eq("user_id", userId)
       .eq("is_active", true)
       .maybeSingle()
     if (error) throw new Error(error.message)
-    return data
+    if (!data) return null
+    return {
+      ...data,
+      symbol: data.currency?.symbol,
+    }
   },
 
   async closeActive(userId: string): Promise<void> {
@@ -36,10 +55,18 @@ export const SalaryTrackingRepository = {
     const { data, error } = await supabaseAdmin
       .from("salary_tracking")
       .insert([payload])
-      .select()
+      .select(`
+        *,
+        currency (
+          symbol
+        )
+      `)
       .single()
     if (error) throw new Error(error.message)
-    return data
+    return {
+      ...data,
+      symbol: data.currency?.symbol,
+    }
   },
 
   async delete(id: string, userId: string): Promise<void> {

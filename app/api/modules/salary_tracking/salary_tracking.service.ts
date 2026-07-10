@@ -18,6 +18,7 @@ export const SalaryTrackingService = {
       user_id: userId,
       date: input.date,
       salary: input.salary,
+      currency_id: input.currency_id,
       is_active: true,
     })
   },

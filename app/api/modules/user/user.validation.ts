@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { createAddressSchema } from "../address/address.validation"
 
 export const createUserSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -11,6 +12,11 @@ export const createUserSchema = z.object({
   date_of_birth: z.string().min(1, "Date of birth is required"),
   department_id: z.string().uuid("Invalid department ID").nullable().optional().default(null),
   position_name: z.string().nullable().optional().default(null),
+  street: z.string().optional().nullable().default(null),
+  house_number: z.string().optional().nullable().default(null),
+  city: z.string().optional().nullable().default(null),
+  postal_code: z.string().optional().nullable().default(null),
+  country: z.string().optional().nullable().default(null),
 })
 
 export const updateUserSchema = z.object({

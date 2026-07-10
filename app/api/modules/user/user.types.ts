@@ -1,4 +1,5 @@
 import { SalaryTracking } from "../salary_tracking/salary_tracking.types"
+import { Address } from "../address/address.types"
 
 export type User = {
   id: string
@@ -25,6 +26,7 @@ export type UserById = {
   responsible_user_name: string | null
   start_date: string | null
   salary: SalaryTracking | null
+  address: Address | null
 }
 
 export type UserWithWorkTrackingAndDepartment = {
@@ -39,6 +41,7 @@ export type UserWithWorkTrackingAndDepartment = {
   department_id: string | null
   department_name: string | null
   position_name: string | null
+  profile_picture_url: string | null
 }
 
 export type CreateUserDto = Omit<User, "id">
