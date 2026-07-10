@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
       kid_id: (formData.get("kid_id") as string | null) || null,
       user_id: (formData.get("user_id") as string | null) || null,
       family_id: (formData.get("family_id") as string | null) || null,
+      class_id: (formData.get("class_id") as string | null) || null,
     })
 
     logActivity(session, "added", "Document", file.name)

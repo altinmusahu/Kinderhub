@@ -28,3 +28,11 @@ export type WorkTrackingRow = {
   responsible_user_id: string | null
   department: { name: string } | null
 }
+
+export type SalaryRow = {
+  id: string
+  user_id: string
+  date: string
+  salary: number
+  is_active: boolean
+}

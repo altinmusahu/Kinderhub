@@ -7,8 +7,10 @@ import { AccountCard }    from "./components/AccountCard"
 import { EmploymentCard } from "./components/EmploymentCard"
 import { ScheduleTab }    from "./components/ScheduleTab"
 import { DocumentsTab }   from "./components/DocumentsTab"
+import { SalaryTab }      from "./components/SalaryTab"
+import { SalaryCard } from "./components/SalaryCard"
 
-const TABS = ["Overview", "Schedule", "Documents"] as const
+const TABS = ["Overview", "Salary", "Schedule", "Documents"] as const
 type Tab = typeof TABS[number]
 
 function OverviewTab({ user, userId }: { user: UserById; userId: string }) {
@@ -18,8 +20,9 @@ function OverviewTab({ user, userId }: { user: UserById; userId: string }) {
         <PersonalCard user={user} userId={userId} />
         <AccountCard  user={user} />
       </div>
-      <div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <EmploymentCard user={user} userId={userId} />
+        <SalaryCard salary={user.salary} />
       </div>
     </div>
   )
@@ -53,6 +56,7 @@ export default function EmployeeTabs({ user, userId }: { user: UserById; userId:
       </div>
 
       {active === "Overview"  && <OverviewTab  user={user} userId={userId} />}
+      {active === "Salary"    && <SalaryTab    userId={userId} />}
       {active === "Schedule"  && <ScheduleTab  userId={userId} />}
       {active === "Documents" && <DocumentsTab userId={userId} title="Employees files" />}
     </>

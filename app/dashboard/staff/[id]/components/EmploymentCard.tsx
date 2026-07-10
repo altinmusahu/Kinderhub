@@ -69,7 +69,7 @@ export function EmploymentCard({ user, userId }: { user: UserById; userId: strin
                   <span style={{ color: "var(--kh-ink-400)" }}>
                     Role
                     <KhTooltip label="What is Role?">
-                      The staff member's job title at this location, e.g. Admin, Director, Lead teacher, Assistant, or Staff.
+                      The staff member&apos;s job title at this location, e.g. Admin, Director, Lead teacher, Assistant, or Staff.
                     </KhTooltip>
                   </span>
                   <span style={{ color: "var(--kh-ink-800)" }}>{user.user.role || "—"}</span>
@@ -78,7 +78,7 @@ export function EmploymentCard({ user, userId }: { user: UserById; userId: strin
                   <span style={{ color: "var(--kh-ink-400)" }}>
                     Status
                     <KhTooltip label="What does Inactive mean?">
-                      Inactive is just a label for record-keeping — it doesn't block their login or remove them from any list. To fully remove someone, delete their profile instead.
+                      Inactive is just a label for record-keeping — it doesn&apos;t block their login or remove them from any list. To fully remove someone, delete their profile instead.
                     </KhTooltip>
                   </span>
                   <span style={{ color: user.user.is_active ? "#3A8C50" : "var(--kh-ink-500)" }}>
@@ -92,7 +92,7 @@ export function EmploymentCard({ user, userId }: { user: UserById; userId: strin
                   <label htmlFor="role" style={{ color: "var(--kh-ink-400)", alignSelf: "center" }}>
                     Role
                     <KhTooltip label="What is Role?">
-                      The staff member's job title at this location, e.g. Admin, Director, Lead teacher, Assistant, or Staff.
+                      The staff member&apos;s job title at this location, e.g. Admin, Director, Lead teacher, Assistant, or Staff.
                     </KhTooltip>
                   </label>
                   <input id="role" name="role" defaultValue={user.user.role || ""} style={inputStyle} />

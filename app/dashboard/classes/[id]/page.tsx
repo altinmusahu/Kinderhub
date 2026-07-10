@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Mail, MoreHorizontal } from "lucide-react"
+import { Mail } from "lucide-react"
 import { ClassesService } from "@/app/api/modules/classes/classes.service"
 import { KidsService } from "@/app/api/modules/kids/kids.service"
 import { WaitlistService } from "@/app/api/modules/waitlist/waitlist.service"
@@ -35,7 +35,7 @@ function CapacityRing({ enrolled, capacity }: { enrolled: number; capacity: numb
         <div style={{ fontSize: 10.5, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)", textTransform: "uppercase", letterSpacing: ".06em", display: "flex", alignItems: "center" }}>
           Enrolled
           <KhTooltip label="What does this show?">
-            How many children are currently enrolled compared to this class's total capacity.
+            How many children are currently enrolled compared to this class&apos;s total capacity.
           </KhTooltip>
         </div>
         <div style={{ fontFamily: "var(--kh-font-serif)", fontSize: 22, color: "var(--kh-ink-900)", lineHeight: 1 }}>{enrolled} / {capacity}</div>
@@ -135,9 +135,6 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
             <Mail size={13} /> <span className="kh-btn-label">Message room</span>
           </button>
           <TakeAttendanceButton classId={id} className={cls.name} />
-          <button className="kh-btn" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, padding: 0 }}>
-            <MoreHorizontal size={14} />
-          </button>
         </div>
       </header>
 

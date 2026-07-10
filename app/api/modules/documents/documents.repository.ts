@@ -39,7 +39,7 @@ export const DocumentsRepository = {
   async findAllRaw(): Promise<Documents[]> {
     const { data, error } = await supabaseAdmin
       .from("documents")
-      .select("id, file_url, kid_id, user_id, family_id, created_at")
+      .select("id, file_url, kid_id, user_id, family_id, class_id, created_at")
       .order("created_at", { ascending: false })
     if (error) throw new Error(error.message)
     return data ?? []

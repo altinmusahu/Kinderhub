@@ -30,6 +30,13 @@ export const UserRepository = {
           department:departments (
             name
           )
+        ),
+        salary_tracking!salary_tracking_user_id_fkey (
+          id,
+          user_id,
+          date,
+          salary,
+          is_active
         )
       `)
       .eq("id", id)
@@ -37,11 +44,12 @@ export const UserRepository = {
       .maybeSingle()
 
     if (error) throw new Error(error.message)
-      
+
     if (!data) return null
 
     // Pick the active work_tracking record (end_date is null), fall back to most recent
     const activeWt = data.work_tracking?.find((wt: any) => wt.end_date === null) ?? data.work_tracking?.[0] ?? null
+    const activeSalary = data.salary_tracking?.find((st: { is_active: boolean }) => st.is_active) ?? data.salary_tracking?.[0] ?? null
 
     return {
       user: {
@@ -64,6 +72,7 @@ export const UserRepository = {
       responsible_user_id: activeWt?.responsible_user_id ?? null,
       responsible_user_name: null,
       start_date: activeWt?.start_date ?? null,
+      salary: activeSalary,
     }
   },
 

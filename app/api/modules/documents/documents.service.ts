@@ -42,12 +42,13 @@ export const DocumentsService = {
         subject_name: subjectName ?? null,
         subject_type: subjectType,
         created_at: d.created_at,
+        class_id: d.class_id ?? null,
       }
     })
   },
 
   async upload(input: UploadDocumentInput): Promise<DocumentWithSubject> {
-    const { file, kid_id, user_id, family_id } = input
+    const { file, kid_id, user_id, family_id, class_id } = input
     if (!kid_id && !user_id && !family_id) {
       throw new Error("Select a family, staff member, or child for this document")
     }
@@ -57,7 +58,7 @@ export const DocumentsService = {
 
     await DocumentsRepository.uploadFile(storagePath, file)
 
-    const created = await DocumentsRepository.create({ file_url: storagePath, kid_id, user_id, family_id })
+    const created = await DocumentsRepository.create({ file_url: storagePath, kid_id, user_id, family_id, class_id })
     const signedUrl = await DocumentsRepository.createSignedUrl(storagePath)
 
     return {
@@ -67,6 +68,7 @@ export const DocumentsService = {
       kid_id: created.kid_id,
       user_id: created.user_id,
       family_id: created.family_id,
+      class_id: created.class_id,
       subject_name: null,
       subject_type: kid_id ? "Child" : user_id ? "Staff" : "Family",
       created_at: created.created_at,

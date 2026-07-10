@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation"
 import Link from "next/link"
 import { verifyToken, cookieName } from "@/lib/auth"
 import { UserService } from "@/app/api/modules/user/user.service"
+import { SalaryTrackingService } from "@/app/api/modules/salary_tracking/salary_tracking.service"
 import { avatarColor, initials } from "@/components/ui/helper"
 import EmployeeTabs from "./EmployeeTabs"
 import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
@@ -27,6 +28,8 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
   }
 
   if (!user) return notFound()
+
+  const activeSalary = await SalaryTrackingService.getActiveByUser(id)
 
   const color = avatarColor(user.user.id)
   const userInitials = initials(user.user.name, user.user.lastname)
@@ -156,6 +159,16 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
                   {user.user.role ? user.user.role.slice(0, 1).toUpperCase() : "—"}
                 </div>
                 <div style={{ fontSize: 11, color: "var(--kh-ink-400)" }}>{user.user.role || "not set"}</div>
+              </div>
+              <div style={{ width: 1, background: "var(--kh-border)" }} />
+              <div>
+                <div style={{ fontSize: 10, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)", textTransform: "uppercase", letterSpacing: ".06em" }}>Salary</div>
+                <div style={{ fontFamily: "var(--kh-font-serif)", fontSize: 18, color: "var(--kh-ink-900)", marginTop: 4 }}>
+                  {activeSalary ? `$${Number(activeSalary.salary).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                </div>
+                <div style={{ fontSize: 11, color: "var(--kh-ink-400)" }}>
+                  {activeSalary ? `since ${new Date(activeSalary.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : "not set"}
+                </div>
               </div>
             </div>
           </div>

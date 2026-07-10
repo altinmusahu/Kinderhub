@@ -7,12 +7,14 @@ import type { WaitlistEntry } from "@/app/api/modules/waitlist/waitlist.types"
 import AddChildButton from "./AddChildButton"
 import WaitlistTable from "./WaitlistTable"
 import ChecklistTab from "./ChecklistTab"
+import CurriculumTab from "./CurriculumTab"
 import ProgressTab from "./ProgressTab"
 import HubTab from "./HubTab"
 import IncidentsTab from "./IncidentsTab"
 import AttendanceTab from "./AttendanceTab"
 import { Heart, MapPin, Clock, User, Pencil, X, Check, ChevronLeft, ChevronRight } from "lucide-react"
 import { KhTooltip } from "@/components/ui/KhTooltip"
+import { DocumentsTab } from "./DocumentsTab"
 
 // ── Types for schedule JSON ────────────────────────────────────
 type DaySchedule = { opens: string; closes: string }
@@ -341,19 +343,6 @@ function ScheduleTab({ cls }: { cls: ClassWithRelations }) {
   )
 }
 
-function ComingSoonTab({ label }: { label: string }) {
-  return (
-    <div className="kh-card" style={{ padding: "40px 24px", textAlign: "center" }}>
-      <div style={{ fontFamily: "var(--kh-font-serif)", fontSize: 20, color: "var(--kh-ink-700)", marginBottom: 6 }}>
-        {label}
-      </div>
-      <div style={{ fontSize: 13, color: "var(--kh-ink-400)" }}>
-        This section is coming soon.
-      </div>
-    </div>
-  )
-}
-
 function TabStrip({ active, onChange }: { active: Tab; onChange: (tab: Tab) => void }) {
   const scrollerRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
@@ -498,11 +487,11 @@ export default function ClassTabs({
 
         {active === "Attendance"  && <AttendanceTab classId={classId} />}
         {active === "Incidents"   && <IncidentsTab classId={classId} roster={roster} />}
-        {active === "Curriculum"  && <ComingSoonTab label="Curriculum" />}
+        {active === "Curriculum"  && <CurriculumTab classId={classId} />}
         {active === "Checklist"   && <ChecklistTab classId={classId} />}
         {active === "Progress"    && <ProgressTab classId={classId} />}
         {active === "Hub"         && <HubTab classId={classId} />}
-        {active === "Documents"   && <ComingSoonTab label="Documents" />}
+        {active === "Documents"   && <DocumentsTab classId={classId} title={cls.name} />}
       </div>
     </>
   )

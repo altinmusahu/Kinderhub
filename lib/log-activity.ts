@@ -22,6 +22,7 @@ export type ActivityEntity =
   | "ContractTemplate"
   | "Legal info"
   | "Document"
+  | "Salary"
 
 function formatDate(date: Date): string {
   const d = date.getDate().toString().padStart(2, "0")
