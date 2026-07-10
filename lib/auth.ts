@@ -44,6 +44,7 @@ export async function signToken(payload: Omit<SessionPayload, "exp">): Promise<s
   return `${message}.${toB64Url(new Uint8Array(sig))}`
 }
 
+
 export async function verifyToken(token: string): Promise<SessionPayload | null> {
   try {
     const parts = token.split(".")
