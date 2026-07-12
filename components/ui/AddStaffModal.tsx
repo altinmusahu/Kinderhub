@@ -16,6 +16,7 @@ export default function AddStaffModal({ triggerLabel = "+ Add staff" }: { trigge
     name: "", lastname: "", email: "", phone_number: "",
     personal_number: "", role: "", department_id: "", position_name: "",
     is_active: true, date_of_birth: "",
+    street: "", house_number: "", city: "", postal_code: "", country: "",
   })
 
   function set(k: string, v: string | boolean) { setForm(f => ({ ...f, [k]: v })) }
@@ -31,7 +32,7 @@ export default function AddStaffModal({ triggerLabel = "+ Add staff" }: { trigge
       })
       if (res.ok) {
         setOpen(false)
-        setForm({ name: "", lastname: "", email: "", phone_number: "", personal_number: "", role: "", department_id: "", position_name: "", is_active: true, date_of_birth: "" })
+        setForm({ name: "", lastname: "", email: "", phone_number: "", personal_number: "", role: "", department_id: "", position_name: "", is_active: true, date_of_birth: "", street: "", house_number: "", city: "", postal_code: "", country: "" })
         router.refresh()
       } else {
         const j = await res.json().catch(() => ({}))
@@ -108,7 +109,27 @@ export default function AddStaffModal({ triggerLabel = "+ Add staff" }: { trigge
             </MGrid>
           </MSection>
 
-          <MSection idx="03" title="Access">
+          <MSection idx="03" title="Address">
+            <MGrid>
+              <MField label="Street" optional colSpan={2}>
+                <MInput value={form.street} onChange={e => set("street", e.target.value)} placeholder="Street" />
+              </MField>
+              <MField label="House No." optional>
+                <MInput value={form.house_number} onChange={e => set("house_number", e.target.value)} placeholder="No." />
+              </MField>
+              <MField label="Postal code" optional>
+                <MInput value={form.postal_code} onChange={e => set("postal_code", e.target.value)} placeholder="Postal code" />
+              </MField>
+              <MField label="City" optional>
+                <MInput value={form.city} onChange={e => set("city", e.target.value)} placeholder="City" />
+              </MField>
+              <MField label="Country" optional>
+                <MInput value={form.country} onChange={e => set("country", e.target.value)} placeholder="Country" />
+              </MField>
+            </MGrid>
+          </MSection>
+
+          <MSection idx="04" title="Access">
             <MToggle
               on={sendInvite}
               onChange={setSendInvite}

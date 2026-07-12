@@ -20,4 +20,17 @@ export const AddressService = {
   async delete(id: string): Promise<void> {
     return AddressRepository.delete(id)
   },
+
+  async upsertForUser(user_id: string, input: Omit<UpdateAddressInput, "user_id">): Promise<Address> {
+    const existing = await AddressRepository.findById(user_id)
+    if (existing) return AddressRepository.update(existing.id, input)
+    return AddressRepository.create({
+      street: input.street ?? null,
+      house_number: input.house_number ?? null,
+      city: input.city ?? null,
+      postal_code: input.postal_code ?? null,
+      country: input.country ?? null,
+      user_id,
+    })
+  },
 }

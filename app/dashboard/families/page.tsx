@@ -126,8 +126,8 @@ export default async function FamiliesPage() {
   const families = await FamiliesService.getAllWithDetails(tenant_id)
 
   const activeCount   = families.filter(f => f.status === "Active").length
-  const waitlistCount = families.filter(f => f.status === "Waitlist").length
-  const pausedCount   = families.filter(f => f.status === "Paused").length
+  // const waitlistCount = families.filter(f => f.status === "Waitlist").length
+  // const pausedCount   = families.filter(f => f.status === "Paused").length
   const balanceDue    = families.filter(f => f.balance > 0).length
 
   return (
@@ -154,7 +154,7 @@ export default async function FamiliesPage() {
           </h1>
 
           <p className="kh-sub">
-            {families.length} total · {activeCount} active · {waitlistCount} waitlist · {pausedCount} paused
+            {families.length} total · {activeCount} active
           </p>
         </div>
 

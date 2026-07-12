@@ -124,8 +124,16 @@ export const UserService = {
   },
 
   async update(id: string, tenantId: string, input: UpdateUserInput): Promise<Omit<User, "password_hash">> {
-    await UserService.getById(id, tenantId)
-    const user = await UserRepository.update(id, tenantId, input)
+    const existing = await UserService.getById(id, tenantId)
+    const { street, house_number, city, postal_code, country, ...userFields } = input
+
+    if (street !== undefined || house_number !== undefined || city !== undefined || postal_code !== undefined || country !== undefined) {
+      await AddressService.upsertForUser(id, { street, house_number, city, postal_code, country })
+    }
+
+    if (Object.keys(userFields).length === 0) return existing.user
+
+    const user = await UserRepository.update(id, tenantId, userFields)
     const { password_hash: _, ...rest } = user
     return rest
   },

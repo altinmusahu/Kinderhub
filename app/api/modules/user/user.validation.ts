@@ -29,6 +29,11 @@ export const updateUserSchema = z.object({
   is_active: z.boolean().optional(),
   date_of_birth: z.string().min(1).optional(),
   is_first_login_executed: z.boolean().optional(),
+  street: z.string().optional().nullable(),
+  house_number: z.string().optional().nullable(),
+  city: z.string().optional().nullable(),
+  postal_code: z.string().optional().nullable(),
+  country: z.string().optional().nullable(),
 })
 
 export const changePasswordSchema = z.object({
