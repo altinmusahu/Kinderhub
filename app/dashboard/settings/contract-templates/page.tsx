@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import type { ContractTemplate } from "@/app/api/modules/contract_templates/contract_templates.types"
+import { Spinner } from "@/components/ui/Spinner"
 
 type FormState = {
   name: string
@@ -35,6 +36,7 @@ export default function ContractTemplatesSettingsPage() {
   const [formError, setFormError] = useState<string | null>(null)
 
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [togglingId, setTogglingId] = useState<string | null>(null)
 
   async function load() {
     setLoading(true)
@@ -115,6 +117,7 @@ export default function ContractTemplatesSettingsPage() {
   }
 
   async function toggleActive(t: ContractTemplate) {
+    setTogglingId(t.id)
     try {
       await fetch(`/api/contract_templates/${t.id}`, {
         method: "PATCH",
@@ -124,6 +127,8 @@ export default function ContractTemplatesSettingsPage() {
       await load()
     } catch {
       // silent
+    } finally {
+      setTogglingId(null)
     }
   }
 
@@ -228,7 +233,8 @@ export default function ContractTemplatesSettingsPage() {
 
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
               <button className="kh-btn" onClick={closeForm} disabled={saving}>Cancel</button>
-              <button className="kh-btn kh-btn--primary" onClick={handleSave} disabled={saving}>
+              <button className="kh-btn kh-btn--primary" onClick={handleSave} disabled={saving} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                {saving && <Spinner size="sm" />}
                 {saving ? "Saving…" : editId ? "Save changes" : "Create template"}
               </button>
             </div>
@@ -238,7 +244,8 @@ export default function ContractTemplatesSettingsPage() {
 
       {/* Content */}
       {loading && (
-        <div style={{ color: "var(--kh-ink-400)", fontSize: 13, padding: "40px 0", textAlign: "center" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, color: "var(--kh-ink-400)", fontSize: 13, padding: "40px 0", textAlign: "center" }}>
+          <Spinner size="md" />
           Loading templates…
         </div>
       )}
@@ -290,13 +297,14 @@ export default function ContractTemplatesSettingsPage() {
                   <td>
                     <button
                       onClick={() => toggleActive(t)}
-                      style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                      disabled={togglingId === t.id}
+                      style={{ background: "none", border: "none", padding: 0, cursor: togglingId === t.id ? "not-allowed" : "pointer" }}
                     >
                       <span className="kh-status-badge" style={{
                         background: t.is_active ? "#EAF3EC" : "#F5F3EF",
                         color: t.is_active ? "#2E5E3A" : "#9E968A",
                       }}>
-                        <span className="kh-pill-dot" style={{ background: t.is_active ? "#6BA07C" : "#C4BDB5" }} />
+                        {togglingId === t.id ? <Spinner size="sm" /> : <span className="kh-pill-dot" style={{ background: t.is_active ? "#6BA07C" : "#C4BDB5" }} />}
                         {t.is_active ? "Active" : "Inactive"}
                       </span>
                     </button>
@@ -321,11 +329,12 @@ export default function ContractTemplatesSettingsPage() {
                       </button>
                       <button
                         className="kh-btn"
-                        style={{ fontSize: 12, padding: "4px 10px", color: "#B22222" }}
+                        style={{ fontSize: 12, padding: "4px 10px", color: "#B22222", display: "inline-flex", alignItems: "center", gap: 5 }}
                         onClick={() => handleDelete(t.id)}
                         disabled={deletingId === t.id}
                       >
-                        {deletingId === t.id ? "…" : "Delete"}
+                        {deletingId === t.id && <Spinner size="sm" />}
+                        {deletingId === t.id ? "Deleting…" : "Delete"}
                       </button>
                     </div>
                   </td>

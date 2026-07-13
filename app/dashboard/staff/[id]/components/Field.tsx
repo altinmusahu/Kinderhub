@@ -1,5 +1,7 @@
 "use client"
 
+import { Spinner } from "@/components/ui/Spinner"
+
 export function Field({
   label, name, value, type = "text", disabled = false,
 }: { label: string; name: string; value: string; type?: string; disabled?: boolean }) {
@@ -31,7 +33,8 @@ export function Field({
 export function SaveBar({ saving, onCancel }: { saving: boolean; onCancel: () => void }) {
   return (
     <div style={{ display: "flex", gap: 8, padding: "12px 18px", borderTop: "1px solid var(--kh-border)", background: "var(--kh-ink-50)" }}>
-      <button type="submit" disabled={saving} className="kh-btn kh-btn--primary" style={{ fontSize: 12.5 }}>
+      <button type="submit" disabled={saving} className="kh-btn kh-btn--primary" style={{ fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 6 }}>
+        {saving && <Spinner size="sm" />}
         {saving ? "Saving…" : "Save changes"}
       </button>
       <button type="button" className="kh-btn" style={{ fontSize: 12.5 }} onClick={onCancel}>

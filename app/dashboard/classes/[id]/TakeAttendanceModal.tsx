@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Check, X } from "lucide-react"
 import type { KidAttendanceWithDetails } from "@/app/api/modules/kid_attendance/kid_attendance.types"
 import { notifyAttendanceUpdated } from "@/lib/attendance-events"
+import { Spinner } from "@/components/ui/Spinner"
 
 type Parent = { id: string; firstname: string; lastname: string }
 
@@ -171,6 +172,8 @@ export default function TakeAttendanceModal({
   const [rows, setRows] = useState<KidAttendanceWithDetails[] | null>(null)
   const [expandedKidId, setExpandedKidId] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [pendingKidId, setPendingKidId] = useState<string | null>(null)
+  const [markingAll, setMarkingAll] = useState(false)
   const today = new Date().toISOString().split("T")[0]
 
   useEffect(() => {
@@ -190,20 +193,25 @@ export default function TakeAttendanceModal({
   }
 
   async function quickAction(kidId: string, kidName: string, action: "check_in" | "check_out") {
-    const res = await fetch(`/api/classes/${classId}/attendance/${today}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ kid_id: kidId, action }),
-    })
-    if (res.ok) {
-      const row: KidAttendanceWithDetails = await res.json()
-      if (action === "check_out") {
-        setExpandedKidId(kidId)
-      } else {
-        setToast(`${kidName} was checked in.`)
-        notifyAttendanceUpdated(classId)
+    setPendingKidId(kidId)
+    try {
+      const res = await fetch(`/api/classes/${classId}/attendance/${today}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kid_id: kidId, action }),
+      })
+      if (res.ok) {
+        const row: KidAttendanceWithDetails = await res.json()
+        if (action === "check_out") {
+          setExpandedKidId(kidId)
+        } else {
+          setToast(`${kidName} was checked in.`)
+          notifyAttendanceUpdated(classId)
+        }
+        updateRow(kidId, row)
       }
-      updateRow(kidId, row)
+    } finally {
+      setPendingKidId(null)
     }
   }
 
@@ -211,19 +219,23 @@ export default function TakeAttendanceModal({
     if (!rows) return
     const pending = rows.filter((r) => r.status === "pending")
     if (pending.length === 0) return
-    await Promise.all(
-      pending.map((r) =>
-        fetch(`/api/classes/${classId}/attendance/${today}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ kid_id: r.kid_id, action: "check_in" }),
-        }).then((res) => (res.ok ? res.json() : null))
+    setMarkingAll(true)
+    try {
+      const updated = await Promise.all(
+        pending.map((r) =>
+          fetch(`/api/classes/${classId}/attendance/${today}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ kid_id: r.kid_id, action: "check_in" }),
+          }).then((res) => (res.ok ? res.json() : null))
+        )
       )
-    ).then((updated) => {
       updated.forEach((row) => row && updateRow(row.kid_id, row))
       setToast(`Marked ${pending.length} ${pending.length === 1 ? "child" : "children"} present.`)
       notifyAttendanceUpdated(classId)
-    })
+    } finally {
+      setMarkingAll(false)
+    }
   }
 
   const marked = rows?.filter((r) => r.status !== "pending").length ?? 0
@@ -261,8 +273,8 @@ export default function TakeAttendanceModal({
             </button>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 14, paddingBottom: 6 }}>
-            <button onClick={markAllPresent} style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, padding: "5px 10px", border: "1px solid var(--kh-border)", borderRadius: 7, background: "var(--kh-bg)", color: "var(--kh-ink-600)", cursor: "pointer" }}>
-              <Check size={12} /> Mark all present
+            <button onClick={markAllPresent} disabled={markingAll} style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, padding: "5px 10px", border: "1px solid var(--kh-border)", borderRadius: 7, background: "var(--kh-bg)", color: "var(--kh-ink-600)", cursor: markingAll ? "not-allowed" : "pointer", opacity: markingAll ? 0.6 : 1 }}>
+              {markingAll ? <Spinner size="sm" /> : <Check size={12} />} {markingAll ? "Marking…" : "Mark all present"}
             </button>
           </div>
         </div>
@@ -299,11 +311,15 @@ export default function TakeAttendanceModal({
                     <div style={{ display: "flex", gap: 5 }}>
                       {r.status === "pending" ? (
                         <>
-                          <button onClick={() => quickAction(r.kid_id, r.kid_name ?? "Child", "check_in")} style={{ fontSize: 11.5, padding: "4px 10px", border: "none", borderRadius: 7, background: "var(--kh-peach)", color: "#fff", cursor: "pointer" }}>Check in</button>
+                          <button onClick={() => quickAction(r.kid_id, r.kid_name ?? "Child", "check_in")} disabled={pendingKidId === r.kid_id} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, padding: "4px 10px", border: "none", borderRadius: 7, background: "var(--kh-peach)", color: "#fff", cursor: pendingKidId === r.kid_id ? "not-allowed" : "pointer", opacity: pendingKidId === r.kid_id ? 0.6 : 1 }}>
+                            {pendingKidId === r.kid_id && <Spinner size="sm" />} Check in
+                          </button>
                           <button onClick={() => setExpandedKidId(expandedKidId === r.kid_id ? null : r.kid_id)} style={{ fontSize: 11.5, padding: "4px 10px", border: "1px solid var(--kh-border)", borderRadius: 7, background: "var(--kh-bg)", color: "var(--kh-ink-600)", cursor: "pointer" }}>Absent</button>
                         </>
                       ) : r.status === "in" || r.status === "late" ? (
-                        <button onClick={() => quickAction(r.kid_id, r.kid_name ?? "Child", "check_out")} style={{ fontSize: 11.5, padding: "4px 10px", border: "1px solid var(--kh-border)", borderRadius: 7, background: "var(--kh-bg)", color: "var(--kh-ink-600)", cursor: "pointer" }}>Check out</button>
+                        <button onClick={() => quickAction(r.kid_id, r.kid_name ?? "Child", "check_out")} disabled={pendingKidId === r.kid_id} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, padding: "4px 10px", border: "1px solid var(--kh-border)", borderRadius: 7, background: "var(--kh-bg)", color: "var(--kh-ink-600)", cursor: pendingKidId === r.kid_id ? "not-allowed" : "pointer", opacity: pendingKidId === r.kid_id ? 0.6 : 1 }}>
+                          {pendingKidId === r.kid_id && <Spinner size="sm" />} Check out
+                        </button>
                       ) : (
                         <button onClick={() => setExpandedKidId(expandedKidId === r.kid_id ? null : r.kid_id)} style={{ fontSize: 11.5, padding: "4px 10px", border: "1px solid var(--kh-border)", borderRadius: 7, background: "var(--kh-bg)", color: "var(--kh-ink-600)", cursor: "pointer" }}>Edit</button>
                       )}

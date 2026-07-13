@@ -4,6 +4,7 @@ import { useState, Suspense } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { FirstLoginModal } from "@/app/components/dashboard/FirstLoginModal"
+import { Spinner } from "@/components/ui/Spinner"
 
 function LoginForm() {
   const router = useRouter()
@@ -131,8 +132,10 @@ function LoginForm() {
                 color: "#fff", border: "none", borderRadius: 8,
                 padding: "11px 0", fontSize: 14, fontWeight: 600,
                 cursor: loading ? "not-allowed" : "pointer", width: "100%",
+                display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
               }}
             >
+              {loading && <Spinner size="sm" />}
               {loading ? "Signing in…" : "Sign in"}
             </button>
           </form>

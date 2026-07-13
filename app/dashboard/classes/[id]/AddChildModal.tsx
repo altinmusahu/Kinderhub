@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { X, Search, Loader2, Check } from "lucide-react"
+import { X, Search, Check } from "lucide-react"
+import { Spinner } from "@/components/ui/Spinner"
 
 type Kid = { id: string; firstname: string; lastname: string }
 
@@ -107,7 +108,7 @@ export default function AddChildModal({ classId, onClose, onSuccess }: Props) {
         <div style={{ flex: 1, overflowY: "auto", maxHeight: 280, padding: "0 20px 8px" }}>
           {loading ? (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "32px 0", gap: 8, color: "var(--kh-ink-400)" }}>
-              <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
+              <Spinner size="md" />
               <span style={{ fontSize: 13 }}>Loading children…</span>
             </div>
           ) : filtered.length === 0 ? (
@@ -157,13 +158,11 @@ export default function AddChildModal({ classId, onClose, onSuccess }: Props) {
             disabled={selected.size === 0 || saving}
             style={{ padding: "8px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600, border: "none", cursor: selected.size > 0 && !saving ? "pointer" : "not-allowed", background: selected.size > 0 && !saving ? "var(--kh-peach)" : "var(--kh-ink-200)", color: selected.size > 0 && !saving ? "#fff" : "var(--kh-ink-400)", display: "inline-flex", alignItems: "center", gap: 6, transition: "background 0.15s" }}
           >
-            {saving && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+            {saving && <Spinner size="sm" />}
             {saving ? "Assigning…" : selected.size > 0 ? `Assign ${selected.size} ${selected.size === 1 ? "child" : "children"}` : "Assign to class"}
           </button>
         </div>
       </div>
-
-      <style>{`@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }`}</style>
     </div>
   )
 }

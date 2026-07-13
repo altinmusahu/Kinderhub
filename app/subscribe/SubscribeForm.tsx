@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { Spinner } from "@/components/ui/Spinner"
 
 type Props = {
   planId: string
@@ -180,8 +181,9 @@ export default function SubscribeForm({ planId, planName, yearlyPrice }: Props) 
           <button
             type="submit"
             disabled={tenantLoading}
-            className="w-full rounded-xl bg-indigo-600 py-3 font-semibold text-white hover:bg-indigo-700 transition-colors disabled:opacity-60"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 font-semibold text-white hover:bg-indigo-700 transition-colors disabled:opacity-60"
           >
+            {tenantLoading && <Spinner size="sm" />}
             {tenantLoading ? "Creating…" : "Next →"}
           </button>
         </form>
@@ -239,8 +241,9 @@ export default function SubscribeForm({ planId, planName, yearlyPrice }: Props) 
           <button
             type="submit"
             disabled={subLoading}
-            className="flex-2 flex-grow rounded-xl bg-indigo-600 py-3 font-semibold text-white hover:bg-indigo-700 transition-colors disabled:opacity-60"
+            className="flex-2 flex-grow inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 font-semibold text-white hover:bg-indigo-700 transition-colors disabled:opacity-60"
           >
+            {subLoading && <Spinner size="sm" />}
             {subLoading ? "Processing…" : "Confirm subscription"}
           </button>
         </div>

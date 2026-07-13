@@ -13,6 +13,7 @@ import HubTab from "./HubTab"
 import IncidentsTab from "./IncidentsTab"
 import AttendanceTab from "./AttendanceTab"
 import { Heart, MapPin, Clock, User, Pencil, X, Check, ChevronLeft, ChevronRight } from "lucide-react"
+import { Spinner } from "@/components/ui/Spinner"
 import { KhTooltip } from "@/components/ui/KhTooltip"
 import { DocumentsTab } from "./DocumentsTab"
 
@@ -250,7 +251,7 @@ function ScheduleEditModal({
         <div style={{ padding: "12px 20px", borderTop: "1px solid var(--kh-ink-100)", display: "flex", gap: 8, justifyContent: "flex-end" }}>
           <button onClick={onClose} style={{ padding: "8px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, border: "1px solid var(--kh-ink-200)", background: "var(--kh-bg)", color: "var(--kh-ink-700)", cursor: "pointer" }}>Cancel</button>
           <button onClick={save} disabled={saving} style={{ padding: "8px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600, border: "none", background: saving ? "var(--kh-ink-200)" : "var(--kh-peach)", color: saving ? "var(--kh-ink-400)" : "#fff", cursor: saving ? "not-allowed" : "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
-            {saving ? "Saving…" : <><Check size={13} /> Save schedule</>}
+            {saving ? <Spinner size="sm" /> : <Check size={13} />} {saving ? "Saving…" : "Save schedule"}
           </button>
         </div>
       </div>

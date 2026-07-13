@@ -552,6 +552,94 @@
   to { transform: translateY(-50%) rotate(360deg); }
 }
 
+/* ── Loader (From Uiverse.io by SchawnnahJ) ── */
+.kh-loader {
+  position: relative;
+  width: 2.5em;
+  height: 2.5em;
+  transform: rotate(165deg);
+  flex-shrink: 0;
+}
+
+.kh-loader:before,
+.kh-loader:after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 0.25em;
+  transform: translate(-50%, -50%);
+}
+
+.kh-loader:before {
+  animation: kh-loader-before 2s infinite;
+}
+
+.kh-loader:after {
+  animation: kh-loader-after 2s infinite;
+}
+
+@keyframes kh-loader-before {
+  0% {
+    width: 0.5em;
+    box-shadow: 1em -0.5em rgba(225, 20, 98, 0.75), -1em 0.5em rgba(111, 202, 220, 0.75);
+  }
+  35% {
+    width: 2.5em;
+    box-shadow: 0 -0.5em rgba(225, 20, 98, 0.75), 0 0.5em rgba(111, 202, 220, 0.75);
+  }
+  70% {
+    width: 0.5em;
+    box-shadow: -1em -0.5em rgba(225, 20, 98, 0.75), 1em 0.5em rgba(111, 202, 220, 0.75);
+  }
+  100% {
+    box-shadow: 1em -0.5em rgba(225, 20, 98, 0.75), -1em 0.5em rgba(111, 202, 220, 0.75);
+  }
+}
+
+@keyframes kh-loader-after {
+  0% {
+    height: 0.5em;
+    box-shadow: 0.5em 1em rgba(61, 184, 143, 0.75), -0.5em -1em rgba(233, 169, 32, 0.75);
+  }
+  35% {
+    height: 2.5em;
+    box-shadow: 0.5em 0 rgba(61, 184, 143, 0.75), -0.5em 0 rgba(233, 169, 32, 0.75);
+  }
+  70% {
+    height: 0.5em;
+    box-shadow: 0.5em -1em rgba(61, 184, 143, 0.75), -0.5em 1em rgba(233, 169, 32, 0.75);
+  }
+  100% {
+    box-shadow: 0.5em 1em rgba(61, 184, 143, 0.75), -0.5em -1em rgba(233, 169, 32, 0.75);
+  }
+}
+
+/* Size variants — .kh-loader is 2.5em (40px) by default; scale down for inline/button use */
+.kh-loader--sm {
+  width: 1.1em;
+  height: 1.1em;
+  font-size: 10px;
+}
+
+.kh-loader--md {
+  font-size: 12px;
+}
+
+.kh-loader--overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.6);
+  z-index: 5;
+  border-radius: inherit;
+}
+
 /* ── Buttons ── */
 .kh-btn {
   display: inline-flex;
@@ -1364,6 +1452,68 @@
 
   /* Rooms list: remove extra padding */
   .kh-rooms-list { padding: 4px 2px 10px; }
+
+  /* Receipt modal: compact photo strip, full-height sheet */
+  .kh-receipt-modal-body {
+    flex-direction: column !important;
+    overflow-y: auto !important;
+  }
+  .kh-receipt-photo-strip {
+    padding: 10px 16px !important;
+  }
+  .kh-receipt-fields-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Receipt line-items: cards instead of a cramped table */
+  .kh-receipt-items-table thead {
+    display: none;
+  }
+  .kh-receipt-items-table,
+  .kh-receipt-items-table tbody,
+  .kh-receipt-items-table tr,
+  .kh-receipt-items-table td {
+    display: block;
+    width: 100%;
+  }
+  .kh-receipt-items-table tr {
+    position: relative;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 8px;
+    padding: 10px 34px 10px 12px;
+    border-top: 1px solid var(--kh-ink-100);
+  }
+  .kh-receipt-items-table td {
+    padding: 4px 0 !important;
+    width: auto;
+  }
+  .kh-receipt-items-table td.kh-receipt-item-name-cell {
+    grid-column: 1 / -1;
+  }
+  .kh-receipt-items-table td:last-child {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    width: 0;
+    height: 0;
+    padding: 0 !important;
+    overflow: visible;
+  }
+  .kh-receipt-items-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--kh-ink-400);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-bottom: 2px;
+  }
+  .kh-receipt-remove-row {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }
 }
 
 /* ── Tablet (768–1023px) ── */

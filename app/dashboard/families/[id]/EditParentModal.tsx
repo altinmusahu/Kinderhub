@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { X, Loader2 } from "lucide-react"
+import { X } from "lucide-react"
 import type { FamilyParent } from "@/app/api/modules/families/families.types"
+import { Spinner } from "@/components/ui/Spinner"
 
 type Props = {
   parent: FamilyParent
@@ -148,14 +149,12 @@ export default function EditParentModal({ parent, onClose, onSuccess }: Props) {
               Cancel
             </button>
             <button type="submit" disabled={saving} style={{ padding: "8px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600, border: "none", cursor: saving ? "not-allowed" : "pointer", background: saving ? "var(--kh-ink-200)" : "var(--kh-peach)", color: saving ? "var(--kh-ink-400)" : "#fff", display: "inline-flex", alignItems: "center", gap: 6 }}>
-              {saving && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+              {saving && <Spinner size="sm" />}
               {saving ? "Saving…" : "Save changes"}
             </button>
           </div>
         </form>
       </div>
-
-      <style>{`@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }`}</style>
     </div>
   )
 }

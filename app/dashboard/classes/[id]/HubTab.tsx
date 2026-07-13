@@ -5,6 +5,7 @@ import { Pencil, Pin, Plus, Trash2, X, Check } from "lucide-react"
 import type { ClassHubPostWithAuthor } from "@/app/api/modules/class_hub_posts/class_hub_posts.types"
 import type { ClassRule } from "@/app/api/modules/class_rules/class_rules.types"
 import type { ClassEvent } from "@/app/api/modules/class_events/class_events.types"
+import { Spinner } from "@/components/ui/Spinner"
 
 const POST_TYPES = ["Daily note", "Rule", "Issue", "Info"] as const
 
@@ -73,7 +74,8 @@ function Composer({ classId, onPosted }: { classId: string; onPosted: (p: ClassH
           </button>
         ))}
         <div style={{ flex: 1 }} />
-        <button onClick={submit} disabled={saving || !body.trim()} style={{ fontSize: 12, fontWeight: 600, padding: "6px 14px", border: "none", borderRadius: 8, background: "var(--kh-peach)", color: "#fff", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.6 : 1 }}>
+        <button onClick={submit} disabled={saving || !body.trim()} style={{ fontSize: 12, fontWeight: 600, padding: "6px 14px", border: "none", borderRadius: 8, background: "var(--kh-peach)", color: "#fff", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.6 : 1, display: "inline-flex", alignItems: "center", gap: 6 }}>
+          {saving && <Spinner size="sm" />}
           {saving ? "Posting…" : "Post"}
         </button>
       </div>
@@ -153,7 +155,7 @@ function PostCard({
               <Pencil size={12} />
             </button>
             <button onClick={handleDelete} disabled={deleting} title="Delete post" style={{ background: "none", border: "none", color: "var(--kh-ink-400)", cursor: deleting ? "not-allowed" : "pointer", display: "flex" }}>
-              <Trash2 size={12} />
+              {deleting ? <Spinner size="sm" /> : <Trash2 size={12} />}
             </button>
           </div>
         )}
@@ -173,7 +175,7 @@ function PostCard({
               <X size={12} /> Cancel
             </button>
             <button onClick={saveEdit} disabled={saving || !body.trim()} style={{ fontSize: 12, fontWeight: 600, padding: "5px 12px", border: "none", borderRadius: 7, background: "var(--kh-peach)", color: "#fff", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.6 : 1, display: "inline-flex", alignItems: "center", gap: 5 }}>
-              <Check size={12} /> {saving ? "Saving…" : "Save"}
+              {saving ? <Spinner size="sm" /> : <Check size={12} />} {saving ? "Saving…" : "Save"}
             </button>
           </div>
         </div>
@@ -222,8 +224,8 @@ function AddRuleRow({ classId, onAdded }: { classId: string; onAdded: (r: ClassR
   return (
     <div style={{ display: "flex", gap: 8, paddingTop: 10, borderTop: "1px solid var(--kh-ink-50)" }}>
       <input autoFocus value={text} onChange={(e) => setText(e.target.value)} placeholder="Rule text…" style={{ flex: 1, border: "1px solid var(--kh-border)", borderRadius: 8, padding: "7px 10px", fontSize: 12.5, outline: "none" }} />
-      <button onClick={submit} disabled={saving || !text.trim()} style={{ fontSize: 12, fontWeight: 600, padding: "5px 12px", border: "none", borderRadius: 7, background: "var(--kh-peach)", color: "#fff", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.6 : 1 }}>
-        {saving ? "…" : "Add"}
+      <button onClick={submit} disabled={saving || !text.trim()} style={{ fontSize: 12, fontWeight: 600, padding: "5px 12px", border: "none", borderRadius: 7, background: "var(--kh-peach)", color: "#fff", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.6 : 1, display: "inline-flex", alignItems: "center" }}>
+        {saving ? <Spinner size="sm" /> : "Add"}
       </button>
     </div>
   )
@@ -271,7 +273,8 @@ function AddEventForm({ classId, onAdded }: { classId: string; onAdded: (e: Clas
         <input type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} style={{ border: "1px solid var(--kh-border)", borderRadius: 8, padding: "8px 10px", fontSize: 12.5, outline: "none" }} />
         <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Location (optional)" style={{ border: "1px solid var(--kh-border)", borderRadius: 8, padding: "8px 10px", fontSize: 12.5, outline: "none" }} />
         {error && <span style={{ fontSize: 11.5, color: "#C0392B" }}>{error}</span>}
-        <button onClick={submit} disabled={saving} style={{ fontSize: 12, fontWeight: 600, padding: "7px 12px", border: "none", borderRadius: 8, background: "var(--kh-peach)", color: "#fff", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.6 : 1, alignSelf: "flex-start" }}>
+        <button onClick={submit} disabled={saving} style={{ fontSize: 12, fontWeight: 600, padding: "7px 12px", border: "none", borderRadius: 8, background: "var(--kh-peach)", color: "#fff", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.6 : 1, alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 6 }}>
+          {saving && <Spinner size="sm" />}
           {saving ? "Publishing…" : "Publish to hub"}
         </button>
       </div>
@@ -302,13 +305,25 @@ export default function HubTab({ classId }: { classId: string }) {
     })
   }, [classId, loaded])
 
+  const [deletingRuleId, setDeletingRuleId] = useState<string | null>(null)
+
   async function deleteRule(id: string) {
-    const res = await fetch(`/api/classes/${classId}/hub/rules/${id}`, { method: "DELETE" })
-    if (res.ok) setRules((prev) => prev.filter((r) => r.id !== id))
+    setDeletingRuleId(id)
+    try {
+      const res = await fetch(`/api/classes/${classId}/hub/rules/${id}`, { method: "DELETE" })
+      if (res.ok) setRules((prev) => prev.filter((r) => r.id !== id))
+    } finally {
+      setDeletingRuleId(null)
+    }
   }
 
   if (posts === null) {
-    return <div style={{ padding: "32px 0", textAlign: "center", fontSize: 13, color: "var(--kh-ink-400)" }}>Loading…</div>
+    return (
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "32px 0", textAlign: "center", fontSize: 13, color: "var(--kh-ink-400)" }}>
+        <Spinner size="md" />
+        Loading…
+      </div>
+    )
   }
 
   return (
@@ -351,8 +366,8 @@ export default function HubTab({ classId }: { classId: string }) {
                 <div key={r.id} style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "9px 0", borderTop: i === 0 ? "none" : "1px solid var(--kh-ink-50)" }}>
                   <span style={{ fontFamily: "var(--kh-font-mono)", fontSize: 11, color: "var(--kh-peach-d)", fontWeight: 600, marginTop: 1 }}>{String(i + 1).padStart(2, "0")}</span>
                   <div style={{ flex: 1, fontSize: 12.5, color: "var(--kh-ink-800)", lineHeight: 1.5 }}>{r.rule_text}</div>
-                  <button onClick={() => deleteRule(r.id)} style={{ background: "none", border: "none", color: "var(--kh-ink-300)", cursor: "pointer", display: "flex" }}>
-                    <Trash2 size={12} />
+                  <button onClick={() => deleteRule(r.id)} disabled={deletingRuleId === r.id} style={{ background: "none", border: "none", color: "var(--kh-ink-300)", cursor: deletingRuleId === r.id ? "not-allowed" : "pointer", display: "flex" }}>
+                    {deletingRuleId === r.id ? <Spinner size="sm" /> : <Trash2 size={12} />}
                   </button>
                 </div>
               ))

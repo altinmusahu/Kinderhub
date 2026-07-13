@@ -3,6 +3,10 @@ import type { ClassWithRelations } from "./classes.types"
 import type { CreateClassInput, UpdateClassInput } from "./classes.validation"
 
 export const ClassesService = {
+  async getAllLight(): Promise<{ id: string; name: string }[]> {
+    return ClassesRepository.findAllLight()
+  },
+
   async getAll(): Promise<ClassWithRelations[]> {
     return ClassesRepository.findAll()
   },

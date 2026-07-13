@@ -1,7 +1,8 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { Loader2, Camera } from "lucide-react"
+import { Camera } from "lucide-react"
+import { Spinner } from "@/components/ui/Spinner"
 
 export function ProfileAvatar({
   userId, color, initials, isActive, initialUrl,
@@ -70,7 +71,7 @@ export function ProfileAvatar({
           }}
             className="kh-avatar-hover-overlay"
           >
-            {uploading && <Loader2 size={18} color="#fff" style={{ animation: "spin 1s linear infinite" }} />}
+            {uploading && <Spinner size="sm" />}
           </div>
         </div>
         <div style={{
@@ -95,7 +96,6 @@ export function ProfileAvatar({
         </div>
       )}
       <style>{`
-        @keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
         .kh-avatar-label:hover .kh-avatar-hover-overlay { opacity: 1; }
       `}</style>
     </div>

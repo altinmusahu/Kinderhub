@@ -2,6 +2,15 @@ import { supabaseAdmin } from "@/lib/supabase-admin"
 import type { Class, ClassWithRelations, CreateClassDto, UpdateClassDto } from "./classes.types"
 
 export const ClassesRepository = {
+  async findAllLight(): Promise<{ id: string; name: string }[]> {
+    const { data, error } = await supabaseAdmin
+      .from("classes")
+      .select("id, name")
+      .order("name", { ascending: true })
+    if (error) throw new Error(error.message)
+    return data ?? []
+  },
+
   async findAll(): Promise<ClassWithRelations[]> {
     const [{ data, error }, { data: kidRows, error: kidsError }, { data: waitlistRows, error: waitlistError }] = await Promise.all([
       supabaseAdmin

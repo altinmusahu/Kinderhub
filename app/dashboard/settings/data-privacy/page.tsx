@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Download, Loader2, Trash2, Mail, ShieldCheck, Clock, FileText, AlertTriangle } from "lucide-react"
+import { Download, Trash2, Mail, ShieldCheck, Clock, FileText, AlertTriangle } from "lucide-react"
+import { Spinner } from "@/components/ui/Spinner"
 
 // ── CSV helpers ────────────────────────────────────────────────────────────────
 
@@ -91,7 +92,7 @@ function ActionButton({
       }}
     >
       {loading
-        ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />
+        ? <Spinner size="sm" />
         : icon}
       {loading ? (loadingLabel ?? label) : label}
     </button>
@@ -163,7 +164,7 @@ function ExportSection() {
           }}
         >
           {loading !== null
-            ? <><Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />Exporting…</>
+            ? <><Spinner size="sm" />Exporting…</>
             : <><Download size={13} />Export all data</>}
         </button>
       </div>
@@ -317,8 +318,6 @@ export default function DataPrivacySettingsPage() {
         <ErasureSection />
 
       </div>
-
-      <style>{`@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}`}</style>
     </>
   )
 }

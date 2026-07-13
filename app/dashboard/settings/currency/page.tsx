@@ -1,9 +1,10 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Loader2, Plus, Pencil, Trash2, X, Check, CurrencyIcon, ChevronDown, Search } from "lucide-react"
+import { Plus, Pencil, Trash2, X, Check, CurrencyIcon, ChevronDown, Search } from "lucide-react"
 import { Currency } from "@/app/api/modules/currency/currency.types"
 import { WORLD_CURRENCIES, WorldCurrency } from "./world-currencies"
+import { Spinner } from "@/components/ui/Spinner"
 
 type FormState = {
   currency: string
@@ -219,13 +220,12 @@ function CurrencyModal({
               Cancel
             </button>
             <button type="submit" disabled={saving} style={{ padding: "8px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600, border: "none", cursor: saving ? "not-allowed" : "pointer", background: saving ? "var(--kh-ink-200)" : "var(--kh-peach)", color: saving ? "var(--kh-ink-400)" : "#fff", display: "inline-flex", alignItems: "center", gap: 6 }}>
-              {saving && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+              {saving && <Spinner size="sm" />}
               {saving ? "Saving…" : isEdit ? "Save changes" : "Add currency"}
             </button>
           </div>
         </form>
       </div>
-      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 }
@@ -263,12 +263,11 @@ function DeleteConfirm({ currency, onClose, onDeleted }: { currency: Currency; o
             Cancel
           </button>
           <button type="button" onClick={handleDelete} disabled={deleting} style={{ padding: "8px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600, border: "none", cursor: deleting ? "not-allowed" : "pointer", background: deleting ? "var(--kh-ink-200)" : "#C0392B", color: deleting ? "var(--kh-ink-400)" : "#fff", display: "inline-flex", alignItems: "center", gap: 6 }}>
-            {deleting && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+            {deleting && <Spinner size="sm" />}
             {deleting ? "Deleting…" : "Delete"}
           </button>
         </div>
       </div>
-      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 }
@@ -328,8 +327,7 @@ export default function CurrencySettingsPage() {
 
       {loading ? (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 160, color: "var(--kh-ink-400)" }}>
-          <Loader2 size={20} style={{ animation: "spin 1s linear infinite" }} />
-          <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+          <Spinner size="md" />
         </div>
       ) : currency.length === 0 ? (
         <div className="kh-card" style={{ padding: "48px 24px", textAlign: "center" }}>
@@ -401,8 +399,6 @@ export default function CurrencySettingsPage() {
           onDeleted={handleDeleted}
         />
       )}
-
-      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
     </>
   )
 }

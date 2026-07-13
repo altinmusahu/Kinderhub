@@ -3,6 +3,7 @@
 import { useState, Suspense } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { Spinner } from "@/components/ui/Spinner"
 
 function SignupForm() {
   const router = useRouter()
@@ -296,8 +297,10 @@ function SignupForm() {
               fontWeight: 600,
               cursor: loading ? "not-allowed" : "pointer",
               width: "100%",
+              display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
             }}
           >
+            {loading && <Spinner size="sm" />}
             {loading ? "Creating account…" : "Sign up"}
           </button>
         </form>

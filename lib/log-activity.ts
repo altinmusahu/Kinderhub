@@ -23,6 +23,8 @@ export type ActivityEntity =
   | "Legal info"
   | "Document"
   | "Salary"
+  | "Food supply"
+  | "Class menu"
 
 function formatDate(date: Date): string {
   const d = date.getDate().toString().padStart(2, "0")

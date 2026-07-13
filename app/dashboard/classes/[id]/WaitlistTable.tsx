@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useTransition, useEffect } from "react"
-import { Trash2, Plus, X, Loader2, Search } from "lucide-react"
+import { Trash2, Plus, X, Search } from "lucide-react"
 import type { WaitlistEntry } from "@/app/api/modules/waitlist/waitlist.types"
+import { Spinner } from "@/components/ui/Spinner"
 
 type KidOption = { id: string; firstname: string; lastname: string; date_of_birth: string }
 
@@ -152,7 +153,7 @@ export default function WaitlistTable({
               disabled={isPending || !selectedKid}
               style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 14px", fontSize: 12, fontWeight: 600, borderRadius: 8, cursor: selectedKid && !isPending ? "pointer" : "not-allowed", background: selectedKid && !isPending ? "var(--kh-peach)" : "var(--kh-ink-200)", color: selectedKid && !isPending ? "#fff" : "var(--kh-ink-400)", border: "none" }}
             >
-              {isPending && <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} />}
+              {isPending && <Spinner size="sm" />}
               {isPending ? "Adding…" : selectedKid ? `Add ${selectedKid.firstname}` : "Add"}
             </button>
             <button
@@ -209,7 +210,7 @@ export default function WaitlistTable({
                     title="Remove from waitlist"
                     style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 26, height: 26, borderRadius: 6, border: "none", cursor: "pointer", background: "transparent", color: "var(--kh-ink-300)" }}
                   >
-                    {deletingId === e.id ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Trash2 size={13} />}
+                    {deletingId === e.id ? <Spinner size="sm" /> : <Trash2 size={13} />}
                   </button>
                 </td>
               </tr>
@@ -218,7 +219,6 @@ export default function WaitlistTable({
         </table>
       )}
 
-      <style>{`@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }`}</style>
     </div>
   )
 }

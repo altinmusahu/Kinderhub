@@ -14,6 +14,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table"
 import type { User, UserById } from "@/app/api/modules/user/user.types"
+import { Spinner } from "@/components/ui/Spinner"
 
 type DisplayUser = Omit<User, "password_hash">
 
@@ -78,6 +79,7 @@ export default function UsersTable({ users }: { users: DisplayUser[] }) {
   const [error, setError] = useState("")
   const [selectedUser, setSelectedUser] = useState<UserById | null>(null)
   const [viewLoading, setViewLoading] = useState(false)
+  const [viewingId, setViewingId] = useState<string | null>(null)
 
   useEffect(() => { setLocalUsers(users) }, [users])
 
@@ -87,10 +89,15 @@ export default function UsersTable({ users }: { users: DisplayUser[] }) {
 
   async function handleViewUser(id: string) {
     setViewLoading(true)
-    const res = await fetch(`/api/users/${id}`)
-    const data = await res.json()
-    setViewLoading(false)
-    if (res.ok) setSelectedUser(data as UserById)
+    setViewingId(id)
+    try {
+      const res = await fetch(`/api/users/${id}`)
+      const data = await res.json()
+      if (res.ok) setSelectedUser(data as UserById)
+    } finally {
+      setViewLoading(false)
+      setViewingId(null)
+    }
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -162,7 +169,10 @@ export default function UsersTable({ users }: { users: DisplayUser[] }) {
                     )
                   })}
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => handleViewUser(user.id)}>View</Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleViewUser(user.id)} disabled={viewingId === user.id} className="inline-flex items-center gap-1.5">
+                      {viewingId === user.id && <Spinner size="sm" />}
+                      View
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -224,7 +234,10 @@ export default function UsersTable({ users }: { users: DisplayUser[] }) {
             {error && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeModal}>Cancel</Button>
-              <Button type="submit" disabled={loading}>{loading ? "Saving..." : "Save User"}</Button>
+              <Button type="submit" disabled={loading} className="inline-flex items-center gap-1.5">
+                {loading && <Spinner size="sm" />}
+                {loading ? "Saving..." : "Save User"}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -235,7 +248,10 @@ export default function UsersTable({ users }: { users: DisplayUser[] }) {
         <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>User Details</DialogTitle></DialogHeader>
           {viewLoading ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">Loading...</div>
+            <div className="flex flex-col items-center gap-2 py-10 text-center text-sm text-muted-foreground">
+              <Spinner size="md" />
+              Loading...
+            </div>
           ) : selectedUser ? (
             <div className="space-y-3">
               {(Object.entries(selectedUser.user) as [string, unknown][])

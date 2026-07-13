@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { CalendarDays, ChevronDown, ChevronUp, Plus, Trash2, BookOpen } from "lucide-react"
 import type { ClassCurriculumWithCreator } from "@/app/api/modules/class_curriculum/class_curriculum.types"
 import type { ClassCurriculumItem } from "@/app/api/modules/class_curriculum_items/class_curriculum_items.types"
+import { Spinner } from "@/components/ui/Spinner"
 
 const PERIOD_TYPES = ["week", "month", "term"] as const
 const LEARNING_DOMAINS = ["Motor skills", "Language", "Cognitive", "Social-emotional", "Creative arts"]
@@ -213,6 +214,8 @@ function PeriodCard({
   onItemDeleted: (curriculumId: string, itemId: string) => void
 }) {
   const [deleting, setDeleting] = useState(false)
+  const [togglingStatus, setTogglingStatus] = useState(false)
+  const [deletingItemId, setDeletingItemId] = useState<string | null>(null)
   const tone = STATUS_TONE[period.status] ?? STATUS_TONE.draft
 
   async function handleDelete() {
@@ -227,18 +230,28 @@ function PeriodCard({
   }
 
   async function toggleStatus() {
-    const nextStatus = period.status === "published" ? "draft" : "published"
-    const res = await fetch(`/api/classes/${classId}/curriculum/${period.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: nextStatus }),
-    })
-    if (res.ok) onStatusChanged(await res.json())
+    setTogglingStatus(true)
+    try {
+      const nextStatus = period.status === "published" ? "draft" : "published"
+      const res = await fetch(`/api/classes/${classId}/curriculum/${period.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: nextStatus }),
+      })
+      if (res.ok) onStatusChanged(await res.json())
+    } finally {
+      setTogglingStatus(false)
+    }
   }
 
   async function deleteItem(itemId: string) {
-    const res = await fetch(`/api/classes/${classId}/curriculum/${period.id}/items/${itemId}`, { method: "DELETE" })
-    if (res.ok) onItemDeleted(period.id, itemId)
+    setDeletingItemId(itemId)
+    try {
+      const res = await fetch(`/api/classes/${classId}/curriculum/${period.id}/items/${itemId}`, { method: "DELETE" })
+      if (res.ok) onItemDeleted(period.id, itemId)
+    } finally {
+      setDeletingItemId(null)
+    }
   }
 
   return (
@@ -254,14 +267,15 @@ function PeriodCard({
         <div style={{ flex: 1 }} />
         <button
           onClick={toggleStatus}
+          disabled={togglingStatus}
           title="Toggle status"
-          style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "2px 8px", borderRadius: 999, fontSize: 11.5, fontWeight: 500, background: tone.bg, color: tone.color, border: "none", cursor: "pointer", textTransform: "capitalize" }}
+          style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "2px 8px", borderRadius: 999, fontSize: 11.5, fontWeight: 500, background: tone.bg, color: tone.color, border: "none", cursor: togglingStatus ? "not-allowed" : "pointer", textTransform: "capitalize" }}
         >
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: tone.dot }} /> {period.status}
+          {togglingStatus ? <Spinner size="sm" /> : <span style={{ width: 6, height: 6, borderRadius: "50%", background: tone.dot }} />} {period.status}
         </button>
         <span style={{ fontSize: 11, color: "var(--kh-ink-400)" }}>{period.created_by_name ?? "Unknown"}</span>
         <button onClick={handleDelete} disabled={deleting} title="Delete period" style={{ background: "none", border: "none", color: "var(--kh-ink-300)", cursor: deleting ? "not-allowed" : "pointer", display: "flex" }}>
-          <Trash2 size={13} />
+          {deleting ? <Spinner size="sm" /> : <Trash2 size={13} />}
         </button>
       </div>
 
@@ -287,8 +301,8 @@ function PeriodCard({
                   {item.description && <div style={{ fontSize: 12, color: "var(--kh-ink-600)", marginTop: 3 }}>{item.description}</div>}
                   {item.materials_needed && <div style={{ fontSize: 11, color: "var(--kh-ink-400)", marginTop: 3 }}>Materials: {item.materials_needed}</div>}
                 </div>
-                <button onClick={() => deleteItem(item.id)} title="Remove activity" style={{ background: "none", border: "none", color: "var(--kh-ink-300)", cursor: "pointer", display: "flex", marginTop: 2 }}>
-                  <Trash2 size={12} />
+                <button onClick={() => deleteItem(item.id)} disabled={deletingItemId === item.id} title="Remove activity" style={{ background: "none", border: "none", color: "var(--kh-ink-300)", cursor: deletingItemId === item.id ? "not-allowed" : "pointer", display: "flex", marginTop: 2 }}>
+                  {deletingItemId === item.id ? <Spinner size="sm" /> : <Trash2 size={12} />}
                 </button>
               </div>
             ))
@@ -326,7 +340,12 @@ export default function CurriculumTab({ classId }: { classId: string }) {
   }
 
   if (periods === null) {
-    return <div style={{ padding: "32px 0", textAlign: "center", fontSize: 13, color: "var(--kh-ink-400)" }}>Loading…</div>
+    return (
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "32px 0", textAlign: "center", fontSize: 13, color: "var(--kh-ink-400)" }}>
+        <Spinner size="md" />
+        Loading…
+      </div>
+    )
   }
 
   return (

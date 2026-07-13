@@ -1,8 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Loader2, CreditCard, Calendar, RefreshCw, DollarSign, CheckCircle2, Clock, ArrowUpRight, Sparkles } from "lucide-react"
+import { CreditCard, Calendar, RefreshCw, DollarSign, CheckCircle2, Clock, ArrowUpRight, Sparkles } from "lucide-react"
 import { PLANS, getPlanByCode, getPlanByName, type PlanInfo } from "@/lib/plans"
+import { Spinner } from "@/components/ui/Spinner"
 
 type DbPlan = {
   id: string
@@ -136,9 +137,8 @@ export default function BillingPlanPage() {
   if (loading) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 260, color: "var(--kh-ink-400)", gap: 10 }}>
-        <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} />
+        <Spinner size="md" />
         <span style={{ fontSize: 13 }}>Loading billing…</span>
-        <style>{`@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}`}</style>
       </div>
     )
   }
@@ -333,8 +333,6 @@ export default function BillingPlanPage() {
           or click any plan above to get started.
         </span>
       </div>
-
-      <style>{`@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}`}</style>
     </>
   )
 }

@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Loader2, Save, Building2, MapPin, User, CreditCard } from "lucide-react"
+import { Save, Building2, MapPin, User, CreditCard } from "lucide-react"
+import { Spinner } from "@/components/ui/Spinner"
 
 type LegalInfo = {
   id: string
@@ -135,8 +136,7 @@ export default function GeneralSettingsPage() {
   if (loading) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 200, color: "var(--kh-ink-400)" }}>
-        <Loader2 size={20} style={{ animation: "spin 1s linear infinite" }} />
-        <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+        <Spinner size="md" />
       </div>
     )
   }
@@ -252,7 +252,7 @@ export default function GeneralSettingsPage() {
             }}
           >
             {saving
-              ? <><Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />Saving…</>
+              ? <><Spinner size="sm" />Saving…</>
               : <><Save size={13} />{existingId ? "Save changes" : "Save"}</>
             }
           </button>
@@ -261,8 +261,6 @@ export default function GeneralSettingsPage() {
           )}
         </div>
       </form>
-
-      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
     </>
   )
 }

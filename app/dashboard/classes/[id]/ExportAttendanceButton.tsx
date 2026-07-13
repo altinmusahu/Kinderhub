@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Download, Loader2 } from "lucide-react"
+import { Download } from "lucide-react"
+import { Spinner } from "@/components/ui/Spinner"
 
 export default function ExportAttendanceButton({ classId, queryString, label = "Export to Excel" }: { classId: string; queryString: string; label?: string }) {
   const [loading, setLoading] = useState(false)
@@ -32,7 +33,7 @@ export default function ExportAttendanceButton({ classId, queryString, label = "
 
   return (
     <button className="kh-btn" onClick={handleExport} disabled={loading} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5 }}>
-      {loading ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Download size={13} />}
+      {loading ? <Spinner size="sm" /> : <Download size={13} />}
       <span className="kh-btn-label">{label}</span>
     </button>
   )

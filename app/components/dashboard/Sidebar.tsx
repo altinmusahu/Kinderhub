@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import {
   LayoutDashboard, Users, UserSquare2, BookOpen,
   Receipt, MessageSquare, FileText, Calendar, Settings,
-  PanelLeftClose, PanelLeftOpen, X,
+  PanelLeftClose, PanelLeftOpen, X, Utensils,
 } from "lucide-react"
 
 function ArchMarkSVG({ size = 32 }: { size?: number }) {
@@ -36,6 +36,7 @@ const WORKSPACE_ITEMS = [
   { href: "/dashboard/families",  icon: Users,           label: "Families",  badge: 124  },
   { href: "/dashboard/staff",     icon: UserSquare2,     label: "Staff",     badge: 18   },
   { href: "/dashboard/classes",   icon: BookOpen,        label: "Classes",   badge: 5    },
+  { href: "/dashboard/food-menus", icon: Utensils,       label: "Food & menus", badge: null },
   { href: "/dashboard/billing",   icon: Receipt,         label: "Billing",   badge: 9    },
   { href: "/dashboard/messages",  icon: MessageSquare,   label: "Messages",  badge: 3    },
   { href: "/dashboard/documents", icon: FileText,        label: "Documents", badge: null },

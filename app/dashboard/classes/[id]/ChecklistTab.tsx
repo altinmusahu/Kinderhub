@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Plus, Trash2 } from "lucide-react"
 import type { ClassChecklistItem } from "@/app/api/modules/class_checklist_items/class_checklist_items.types"
 import type { KidChecklistProgress } from "@/app/api/modules/family_checklist_progress/family_checklist_progress.types"
+import { Spinner } from "@/components/ui/Spinner"
 
 const CATEGORY_TONE: Record<string, string> = {
   Documents: "var(--kh-sage)",
@@ -127,6 +128,7 @@ export default function ChecklistTab({ classId }: { classId: string }) {
   const [items, setItems] = useState<ClassChecklistItem[] | null>(null)
   const [progress, setProgress] = useState<KidChecklistProgress[]>([])
   const [loaded, setLoaded] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
     if (loaded) return
@@ -141,12 +143,22 @@ export default function ChecklistTab({ classId }: { classId: string }) {
   }, [classId, loaded])
 
   async function deleteItem(id: string) {
-    const res = await fetch(`/api/classes/${classId}/checklist/${id}`, { method: "DELETE" })
-    if (res.ok) setItems((prev) => (prev ?? []).filter((i) => i.id !== id))
+    setDeletingId(id)
+    try {
+      const res = await fetch(`/api/classes/${classId}/checklist/${id}`, { method: "DELETE" })
+      if (res.ok) setItems((prev) => (prev ?? []).filter((i) => i.id !== id))
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   if (items === null) {
-    return <div style={{ padding: "32px 0", textAlign: "center", fontSize: 13, color: "var(--kh-ink-400)" }}>Loading…</div>
+    return (
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "32px 0", textAlign: "center", fontSize: 13, color: "var(--kh-ink-400)" }}>
+        <Spinner size="md" />
+        Loading…
+      </div>
+    )
   }
 
   const categories = [...new Set(items.map((i) => i.category))]
@@ -191,8 +203,8 @@ export default function ChecklistTab({ classId }: { classId: string }) {
                       ) : (
                         <span style={{ fontSize: 11, color: "var(--kh-ink-400)", background: "var(--kh-ink-50)", borderRadius: 999, padding: "2px 8px" }}>Optional</span>
                       )}
-                      <button onClick={() => deleteItem(r.id)} title="Remove item" style={{ background: "none", border: "none", color: "var(--kh-ink-300)", cursor: "pointer", display: "flex" }}>
-                        <Trash2 size={13} />
+                      <button onClick={() => deleteItem(r.id)} disabled={deletingId === r.id} title="Remove item" style={{ background: "none", border: "none", color: "var(--kh-ink-300)", cursor: deletingId === r.id ? "not-allowed" : "pointer", display: "flex" }}>
+                        {deletingId === r.id ? <Spinner size="sm" /> : <Trash2 size={13} />}
                       </button>
                     </div>
                   ))}

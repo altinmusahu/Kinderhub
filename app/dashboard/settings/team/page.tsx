@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Plus, X, Loader2, Building2, Users, ShieldCheck } from "lucide-react"
+import { Plus, X, Building2, Users, ShieldCheck } from "lucide-react"
 import { KhTooltip } from "@/components/ui/KhTooltip"
+import { Spinner } from "@/components/ui/Spinner"
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -162,13 +163,12 @@ function AddDeptModal({ locations, onClose, onSaved }: {
               Cancel
             </button>
             <button type="submit" disabled={saving || locations.length === 0} style={{ padding: "8px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600, border: "none", cursor: (saving || locations.length === 0) ? "not-allowed" : "pointer", background: (saving || locations.length === 0) ? "var(--kh-ink-200)" : "var(--kh-peach)", color: (saving || locations.length === 0) ? "var(--kh-ink-400)" : "#fff", display: "inline-flex", alignItems: "center", gap: 6 }}>
-              {saving && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+              {saving && <Spinner size="sm" />}
               {saving ? "Saving…" : "Add department"}
             </button>
           </div>
         </form>
       </div>
-      <style>{`@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 }
@@ -216,9 +216,8 @@ export default function TeamPage() {
   if (loading) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 260, color: "var(--kh-ink-400)", gap: 10 }}>
-        <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} />
+        <Spinner size="md" />
         <span style={{ fontSize: 13 }}>Loading team…</span>
-        <style>{`@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}`}</style>
       </div>
     )
   }
@@ -487,8 +486,6 @@ export default function TeamPage() {
           onSaved={handleDeptAdded}
         />
       )}
-
-      <style>{`@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}`}</style>
     </>
   )
 }

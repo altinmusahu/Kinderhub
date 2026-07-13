@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Search, Users, BookOpen, Baby, Loader2 } from "lucide-react"
+import { Search, Users, BookOpen, Baby } from "lucide-react"
+import { Spinner } from "@/components/ui/Spinner"
 
 type SearchFamilyResult = { id: string; name: string; status: string }
 type SearchClassResult = { id: string; name: string }
@@ -70,7 +71,9 @@ export default function GlobalSearch() {
           }}
         />
         {loading && (
-          <Loader2 size={13} className="kh-spin" style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "var(--kh-ink-400)" }} />
+          <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)" }}>
+            <Spinner size="sm" />
+          </span>
         )}
       </div>
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { AlertTriangle, Plus, Trash2, X } from "lucide-react"
 import type { Kids } from "@/app/api/modules/kids/kids.types"
 import type { IncidentWithDetails } from "@/app/api/modules/incidents/incidents.types"
+import { Spinner } from "@/components/ui/Spinner"
 
 const INCIDENT_TYPES = ["Injury", "Illness", "Behavior", "Allergy reaction", "Other"]
 const SEVERITIES = ["Low", "Medium", "High"] as const
@@ -139,7 +140,8 @@ function ReportIncidentForm({
 
         <div style={{ padding: "12px 20px", borderTop: "1px solid var(--kh-ink-100)", display: "flex", gap: 8, justifyContent: "flex-end", flexShrink: 0 }}>
           <button onClick={onClose} style={{ padding: "8px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, border: "1px solid var(--kh-ink-200)", background: "var(--kh-bg)", color: "var(--kh-ink-700)", cursor: "pointer" }}>Cancel</button>
-          <button onClick={submit} disabled={saving || roster.length === 0} style={{ padding: "8px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600, border: "none", cursor: saving ? "not-allowed" : "pointer", background: saving ? "var(--kh-ink-200)" : "var(--kh-peach)", color: saving ? "var(--kh-ink-400)" : "#fff" }}>
+          <button onClick={submit} disabled={saving || roster.length === 0} style={{ padding: "8px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600, border: "none", cursor: saving ? "not-allowed" : "pointer", background: saving ? "var(--kh-ink-200)" : "var(--kh-peach)", color: saving ? "var(--kh-ink-400)" : "#fff", display: "inline-flex", alignItems: "center", gap: 6 }}>
+            {saving && <Spinner size="sm" />}
             {saving ? "Reporting…" : "Report incident"}
           </button>
         </div>
@@ -166,13 +168,25 @@ export default function IncidentsTab({ classId, roster }: { classId: string; ros
     })
   }, [classId, loaded])
 
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
   async function deleteIncident(id: string) {
-    const res = await fetch(`/api/classes/${classId}/incidents/${id}`, { method: "DELETE" })
-    if (res.ok) setIncidents((prev) => (prev ?? []).filter((i) => i.id !== id))
+    setDeletingId(id)
+    try {
+      const res = await fetch(`/api/classes/${classId}/incidents/${id}`, { method: "DELETE" })
+      if (res.ok) setIncidents((prev) => (prev ?? []).filter((i) => i.id !== id))
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   if (incidents === null) {
-    return <div style={{ padding: "32px 0", textAlign: "center", fontSize: 13, color: "var(--kh-ink-400)" }}>Loading…</div>
+    return (
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "32px 0", textAlign: "center", fontSize: 13, color: "var(--kh-ink-400)" }}>
+        <Spinner size="md" />
+        Loading…
+      </div>
+    )
   }
 
   return (
@@ -210,8 +224,8 @@ export default function IncidentsTab({ classId, roster }: { classId: string; ros
                 </span>
                 <span style={{ marginLeft: "auto", fontSize: 10.5, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)" }}>{formatDateTime(inc.created_at)}</span>
                 {isMine && (
-                  <button onClick={() => deleteIncident(inc.id)} title="Delete incident" style={{ background: "none", border: "none", color: "var(--kh-ink-300)", cursor: "pointer", display: "flex" }}>
-                    <Trash2 size={13} />
+                  <button onClick={() => deleteIncident(inc.id)} disabled={deletingId === inc.id} title="Delete incident" style={{ background: "none", border: "none", color: "var(--kh-ink-300)", cursor: deletingId === inc.id ? "not-allowed" : "pointer", display: "flex" }}>
+                    {deletingId === inc.id ? <Spinner size="sm" /> : <Trash2 size={13} />}
                   </button>
                 )}
               </div>
