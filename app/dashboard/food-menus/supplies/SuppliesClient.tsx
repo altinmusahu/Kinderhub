@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Camera, Plus } from "lucide-react"
+import { Camera, Eye, Plus } from "lucide-react"
 import { DataTable, Column } from "@/app/components/dashboard/DataTable"
 import ExportSuppliesButton from "./ExportSuppliesButton"
 import { UploadReceiptModal } from "./UploadReceiptModal"
@@ -85,19 +85,15 @@ export function SuppliesClient({ initialSupplies }: { initialSupplies: FoodSuppl
     },
     {
       key: "view", header: "",
-      cell: s => s.receipt_url ? (
+      cell: s => (
         <button
           type="button"
           onClick={() => setViewing(s)}
-          title="View receipt"
+          title={s.receipt_url ? "View receipt" : "View items"}
           style={{ background: "none", border: "none", color: "var(--kh-ink-400)", cursor: "pointer", display: "flex" }}
         >
-          <Camera size={14} />
+          {s.receipt_url ? <Camera size={14} /> : <Eye size={14} />}
         </button>
-      ) : (
-        <span title="No photo attached" style={{ color: "var(--kh-ink-200)", display: "flex" }}>
-          <Camera size={14} />
-        </span>
       ),
     },
   ]

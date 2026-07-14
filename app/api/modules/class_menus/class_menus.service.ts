@@ -58,4 +58,23 @@ export const ClassMenusService = {
       created_at: saved.created_at,
     }
   },
+
+  async copyWeek(tenantId: string, sourceClassId: string, targetClassId: string, userId: string, weekStart: string): Promise<ClassMenuCell[]> {
+    const sourceCells = await ClassMenusService.getWeek(tenantId, sourceClassId, weekStart)
+
+    for (const cell of sourceCells) {
+      if (!cell.description) continue
+      const existing = await ClassMenusRepository.findOne(tenantId, targetClassId, cell.date, cell.meal_type)
+      if (existing) {
+        await ClassMenusRepository.update(existing.id, cell.description, userId)
+      } else {
+        await ClassMenusRepository.create({
+          tenant_id: tenantId, class_id: targetClassId, date: cell.date, meal_type: cell.meal_type,
+          description: cell.description, created_by: userId,
+        })
+      }
+    }
+
+    return ClassMenusService.getWeek(tenantId, targetClassId, weekStart)
+  },
 }

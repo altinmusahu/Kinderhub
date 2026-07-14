@@ -161,7 +161,9 @@ app/
 │   │       ├── attendance/route.ts             GET filtered/paginated attendance log ({ rows, total, stats }) — dateFrom/dateTo/search/checkedOutBy/releasedTo/status/page/pageSize
 │   │       ├── attendance/[date]/route.ts      GET roster merged with that date's rows (pending kids synthesized) / PUT upsert one kid's check-in, check-out, or absent action
 │   │       └── attendance/export/route.ts      GET — streams branded .xlsx honoring the same filters as the log route + logActivity("exported")
-│   │       └── menus/route.ts        GET a week's grid (5 weekdays × 3 meal types, empty cells synthesized) / PUT upsert one cell
+│   │       └── menus/
+│   │           ├── route.ts          GET a week's grid (5 weekdays × 3 meal types, empty cells synthesized) / PUT upsert one cell
+│   │           └── copy/route.ts     POST { source_class_id, week } — overwrites the target class's week with the source class's menu for cells that have a description (cells the source never filled in are left untouched in the target)
 │   ├── classes/light/route.ts        GET lightweight { id, name }[] class list (no tenant filter, matches rest of classes module) — powers the Menus tab's class picker
 │   ├── food-supplies/
 │   │   ├── route.ts                  GET list for tenant / POST multipart upload (file optional, items JSON field) + logActivity
@@ -705,6 +707,8 @@ FoodSupplyWithItems: FoodSupply & { items: FoodSupplyItem[], receipt_url: string
 > `receipt_storage_path` was originally `NOT NULL` in the schema the user provided; altered to nullable in Supabase partway through this module's build once the user decided staff should be able to save a receipt with no photo at all (manual entry only). Every layer — types, repository (`findAllForTenant`/`findById` skip signed-URL generation when the path is null), service (`upload()` only touches Storage when a `file` is present), and the route — treats the photo as fully optional; `FoodSuppliesService.delete()` only calls `removeFile()` when a path exists. Private `receipt` bucket (singular — user corrected this from the initially-planned `receipts`), signed URLs with a 7-day TTL.
 >
 > `food_supplies.parser.ts` (`parseReceiptImage()`) sends the photo to Claude (`claude-opus-4-8`, vision + `output_config.format: json_schema`) and returns a `ParsedReceipt` — the upload modal calls this immediately on file pick (not a separate "Scan" button) and pre-fills vendor/date/total/items, flagging any row the model wasn't confident about (`confidence: "low"`) with an amber highlight. Scanning is best-effort: a parse failure (or no photo at all) never blocks saving, it just leaves the fields for manual entry.
+>
+> **Supplies table "view" button is always clickable, regardless of photo** — `SuppliesClient.tsx`'s view column originally only opened `ReceiptViewer` when `receipt_url` was present (a leftover from before photos were made optional), so a supply saved with no photo had no way to see its logged items at all. Fixed: the button now always opens `ReceiptViewer` — camera icon when a photo exists, eye icon when it doesn't — since `ReceiptViewer` already rendered the line-items table correctly with or without a photo; only the button's own gating was wrong.
 
 ### Class Menus (`class_menus/class_menus.types.ts`)
 ```typescript
@@ -716,6 +720,10 @@ ClassMenu: {
 }
 ```
 > One row per class+date+meal_type (`UNIQUE(class_id, date, meal_type)` in the DB). `ClassMenusService.getWeek()` always synthesizes all 15 grid cells (5 weekdays × 3 meals) even when a cell has no row yet, so the weekly grid renders a full shape from day one. `saveCell()` is a find-then-branch upsert (same pattern as `kid_attendance`/`family_checklist_progress`) rather than relying on Supabase's `.upsert()` + `onConflict`. Powered by a new lightweight `GET /api/classes/light` endpoint ({id, name} only) for the class-picker, since the existing `/api/classes` does extra joins/counts not needed here — note `classes` itself has no `tenant_id` column (pre-existing gap, not introduced by this module), so `findAllLight()` is unscoped by tenant like the rest of the classes module.
+>
+> **Copy week between classes** — the Menus page has a "Copy from another class" button so staff don't have to retype an identical menu for every class (e.g. Blue Birds → Yellow Birds). `ClassMenusService.copyWeek(tenantId, sourceClassId, targetClassId, userId, weekStart)` reads the source class's week via `getWeek()`, then for every cell that has a `description`, upserts that same description into the target class's matching date+meal_type cell — overwriting whatever was already there. Cells the source left empty are skipped, so copying never blanks out target content the source never touched. User-confirmed behavior: this is an intentional overwrite (no per-cell merge/confirm step), with a warning shown in the copy modal since it can't be undone.
+>
+> **Print week (landscape, chrome-free)** — "Print week" calls `window.print()` against a dedicated `@media print` block in `globals.css` (first print stylesheet in this app). The week table is wrapped in `.kh-print-area` (and a `.kh-print-only` heading shows the class name + week, hidden on screen); everything else — sidebar, activity panel, topbar, breadcrumb/tab strip, page header, class-picker pills, the "click any cell to edit" footer note — is tagged `no-print` or hidden by component class (`.kh-sidebar`, `.kh-activity-panel`, etc.) so only the grid prints. `@page { size: landscape }` forces landscape since 5 weekday columns don't fit a portrait page. `.kh-app`'s `height: 100vh; overflow: hidden` (needed for the scrollable dashboard shell on screen) is explicitly reset to `height: auto; overflow: visible` under print, or the print output would clip to one viewport instead of flowing across pages.
 
 ---
 

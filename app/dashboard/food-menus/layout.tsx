@@ -29,7 +29,7 @@ export default function FoodMenusLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <div style={{ display: "flex", alignItems: "center", background: "var(--kh-surface)", borderBottom: "1px solid var(--kh-ink-100)" }}>
+      <div className="no-print" style={{ display: "flex", alignItems: "center", background: "var(--kh-surface)", borderBottom: "1px solid var(--kh-ink-100)" }}>
         <div style={{ display: "flex", gap: 18, padding: "0 28px" }}>
           {TABS.map(tab => {
             const active = pathname.startsWith(tab.href)

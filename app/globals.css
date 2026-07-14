@@ -1744,3 +1744,60 @@
     padding: 18px 18px 32px !important;
   }
 }
+
+/* ── Print: show only the marked print area (e.g. the class-menus week table), landscape ── */
+.kh-print-only {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: landscape;
+    margin: 12mm;
+  }
+
+  html, body {
+    height: auto !important;
+  }
+
+  .kh-app, .kh-main, .kh-page, .kh-content {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .kh-sidebar,
+  .kh-sidebar-overlay,
+  .kh-activity-panel,
+  .kh-global-search-bar,
+  .kh-topbar,
+  .no-print {
+    display: none !important;
+  }
+
+  .kh-content {
+    padding: 0 !important;
+  }
+
+  .kh-print-only {
+    display: block !important;
+  }
+
+  .kh-print-area {
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .kh-print-area .kh-table-scroll {
+    overflow: visible !important;
+  }
+
+  .kh-print-area table {
+    width: 100% !important;
+    table-layout: fixed !important;
+  }
+}

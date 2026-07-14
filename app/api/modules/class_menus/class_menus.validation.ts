@@ -7,3 +7,10 @@ export const upsertClassMenuCellSchema = z.object({
 })
 
 export type UpsertClassMenuCellInput = z.infer<typeof upsertClassMenuCellSchema>
+
+export const copyClassMenuWeekSchema = z.object({
+  source_class_id: z.string().uuid(),
+  week: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Week must be YYYY-MM-DD"),
+})
+
+export type CopyClassMenuWeekInput = z.infer<typeof copyClassMenuWeekSchema>
