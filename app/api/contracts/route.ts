@@ -3,6 +3,7 @@ import { getTenant } from "@/lib/get-tenant"
 import { logActivity } from "@/lib/log-activity"
 import { ContractsService } from "@/app/api/modules/contracts/contracts.service"
 import { createContractSchema } from "@/app/api/modules/contracts/contracts.validation"
+import { can } from "@/lib/permissions/can"
 import { ZodError } from "zod"
 
 export async function GET(req: NextRequest) {
@@ -25,6 +26,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await getTenant()
+
+    const allowed = await can(session, "billing", "edit")
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to generate contracts" }, { status: 403 })
+
     const body = await req.json()
     const parsed = createContractSchema.parse(body)
 

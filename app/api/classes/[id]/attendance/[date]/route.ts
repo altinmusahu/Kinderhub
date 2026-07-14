@@ -3,6 +3,7 @@ import { ZodError } from "zod"
 import { getTenant } from "@/lib/get-tenant"
 import { KidAttendanceService } from "@/app/api/modules/kid_attendance/kid_attendance.service"
 import { upsertKidAttendanceSchema } from "@/app/api/modules/kid_attendance/kid_attendance.validation"
+import { can } from "@/lib/permissions/can"
 
 type Params = { params: Promise<{ id: string; date: string }> }
 
@@ -22,6 +23,10 @@ export async function PUT(req: NextRequest, { params }: Params) {
   try {
     const session = await getTenant()
     const { id, date } = await params
+
+    const allowed = await can(session, "attendance", "edit", id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to edit attendance for this class" }, { status: 403 })
+
     const body = await req.json()
     const parsed = upsertKidAttendanceSchema.parse(body)
 

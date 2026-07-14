@@ -19,6 +19,42 @@ Data table of user, that we register information, role and other properties
 | `password_hash` | `text` |  |
 | `is_first_login_executed` | `bool` |  |
 | `email` | `text` |  Unique |
+| `role_id` | `uuid` | Nullable, references `roles(id)` — added via `supabase/migrations/20260714100342_add_users_role_id.sql`. `role` (above) is intentionally left in place; not yet backfilled or dropped (manual follow-up) |
+
+## Table `roles`
+
+Tenant-editable role definitions for the Roles & Permissions system. See PROJECT_OVERVIEW.md → "Roles & Permissions System" for the full design.
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `uuid` | Primary Unique, default `gen_random_uuid()` |
+| `tenant_id` | `uuid` |  |
+| `name` | `text` |  |
+| `color` | `text` | Nullable |
+| `is_system` | `bool` | default `false` — true for the 5 seeded roles (Owner/Admin/Lead Teacher/Assistant/Staff); can't be deleted |
+| `is_owner_role` | `bool` | default `false` — true only for the Owner role; immutable (can't be renamed, recolored, deleted, or have permissions changed) |
+| `created_at` | `timestamptz` | default `now()` |
+
+No `unique(tenant_id, name)` — enforced at the application layer instead (`RolesService`).
+
+## Table `role_permissions`
+
+One row per (role, resource) pair.
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `uuid` | Primary Unique, default `gen_random_uuid()` |
+| `tenant_id` | `uuid` |  |
+| `role_id` | `uuid` | FK → `roles(id)`, `ON DELETE CASCADE` |
+| `resource` | `text` | One of the keys in `lib/permissions/resources.ts` (`RESOURCES`) |
+| `level` | `text` | One of `none`/`view`/`edit`/`full`/`own_only`, default `'none'` |
+| `updated_at` | `timestamptz` | default `now()` |
+
+`UNIQUE(role_id, resource)` — one level per role per resource.
 
 ## Table `tenants`
 

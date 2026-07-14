@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getTenant } from "@/lib/get-tenant"
 import { CurrencyService } from "../modules/currency/currency.service"
 import { createCurrencySchema } from "../modules/currency/currency.validation"
+import { can } from "@/lib/permissions/can"
 
 export async function GET() {
   try {
@@ -17,6 +18,10 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await getTenant()
+
+    const allowed = await can(session, "settings", "full")
+    if (!allowed) return NextResponse.json({ message: "You don't have permission to add currencies" }, { status: 403 })
+
     const body = await req.json()
     const parsed = createCurrencySchema.parse({ ...body, tenant_id: session.tenant_id })
     const currency = await CurrencyService.create(parsed)

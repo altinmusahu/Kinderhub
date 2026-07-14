@@ -3,6 +3,7 @@ import { UserService } from "@/app/api/modules/user/user.service"
 import { updateUserSchema } from "@/app/api/modules/user/user.validation"
 import { getTenant } from "@/lib/get-tenant"
 import { logActivity } from "@/lib/log-activity"
+import { can } from "@/lib/permissions/can"
 import { ZodError } from "zod"
 
 type Params = { params: Promise<{ id: string }> }
@@ -24,6 +25,12 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const session = await getTenant()
     const { id } = await params
     const body = updateUserSchema.parse(await request.json())
+
+    if (body.role_id !== undefined) {
+      const allowed = await can(session, "settings", "full")
+      if (!allowed) return NextResponse.json({ error: "You don't have permission to change this staff member's role" }, { status: 403 })
+    }
+
     const user = await UserService.update(id, session.tenant_id, body)
     logActivity(session, "updated", "Staff", `${user.name} ${user.lastname}`)
     return NextResponse.json(user)

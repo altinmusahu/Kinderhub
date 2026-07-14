@@ -7,6 +7,8 @@ import type { DocumentWithSubject } from "@/app/api/modules/documents/documents.
 import { DataTable, Column } from "@/app/components/dashboard/DataTable"
 import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
 import UploadDocumentModal from "@/components/ui/UploadDocumentModal"
+import { AccessDenied } from "@/app/components/dashboard/AccessDenied"
+import { hasAnyAccess } from "@/lib/permissions/can"
 
 function fileName(url: string) {
   const withoutQuery = url.split("?")[0]
@@ -91,6 +93,9 @@ export default async function DocumentsPage() {
   if (!token) redirect("/login")
   const session = await verifyToken(token)
   if (!session) redirect("/login")
+
+  const allowed = await hasAnyAccess(session, "documents")
+  if (!allowed) return <AccessDenied />
 
   let documents: DocumentWithSubject[] = []
   try {

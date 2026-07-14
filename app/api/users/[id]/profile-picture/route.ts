@@ -3,6 +3,7 @@ import { getTenant } from "@/lib/get-tenant"
 import { UserService } from "@/app/api/modules/user/user.service"
 import { UserProfilesRepository } from "@/app/api/modules/user_profiles/user_profiles.repository"
 import { UserProfilesService } from "@/app/api/modules/user_profiles/user_profiles.service"
+import { can } from "@/lib/permissions/can"
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -25,9 +26,13 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
 export async function POST(req: NextRequest, { params }: Params) {
   try {
-    const { tenant_id } = await getTenant()
+    const session = await getTenant()
     const { id } = await params
-    await UserService.getById(id, tenant_id)
+
+    const allowed = await can(session, "staff", "edit", id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to update this profile picture" }, { status: 403 })
+
+    await UserService.getById(id, session.tenant_id)
 
     const formData = await req.formData()
     const file = formData.get("file") as File | null
@@ -44,9 +49,13 @@ export async function POST(req: NextRequest, { params }: Params) {
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
   try {
-    const { tenant_id } = await getTenant()
+    const session = await getTenant()
     const { id } = await params
-    await UserService.getById(id, tenant_id)
+
+    const allowed = await can(session, "staff", "edit", id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to remove this profile picture" }, { status: 403 })
+
+    await UserService.getById(id, session.tenant_id)
 
     await UserProfilesService.remove(id)
     return new NextResponse(null, { status: 204 })

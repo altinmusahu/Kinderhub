@@ -4,6 +4,7 @@ import { getTenant } from "@/lib/get-tenant"
 import { logActivity } from "@/lib/log-activity"
 import { TenantLegalInfoService } from "@/app/api/modules/tenant_legal_info/tenant_legal_info.service"
 import { createTenantLegalInfoSchema } from "@/app/api/modules/tenant_legal_info/tenant_legal_info.validation"
+import { can } from "@/lib/permissions/can"
 
 export async function GET() {
   try {
@@ -19,6 +20,10 @@ export async function GET() {
 export async function PUT(req: NextRequest) {
   try {
     const session = await getTenant()
+
+    const allowed = await can(session, "legal_entity", "edit")
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to edit legal & registration info" }, { status: 403 })
+
     const body = createTenantLegalInfoSchema.parse(await req.json())
     const info = await TenantLegalInfoService.upsert(session.tenant_id, session.sub, body)
     logActivity(session, "updated", "Legal info", info.legal_entity_name)

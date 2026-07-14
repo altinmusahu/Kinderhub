@@ -3,13 +3,18 @@ import { ZodError } from "zod"
 import { getTenant } from "@/lib/get-tenant"
 import { ClassHubPostsService } from "@/app/api/modules/class_hub_posts/class_hub_posts.service"
 import { updateClassHubPostSchema } from "@/app/api/modules/class_hub_posts/class_hub_posts.validation"
+import { can } from "@/lib/permissions/can"
 
 type Params = { params: Promise<{ id: string; postId: string }> }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
   try {
     const session = await getTenant()
-    const { postId } = await params
+    const { id, postId } = await params
+
+    const allowed = await can(session, "hub", "edit", id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to edit this class's hub" }, { status: 403 })
+
     const body = await req.json()
     const parsed = updateClassHubPostSchema.parse(body)
     const post = await ClassHubPostsService.update(postId, session.tenant_id, session.sub, parsed)

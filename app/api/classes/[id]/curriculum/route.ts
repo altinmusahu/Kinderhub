@@ -3,6 +3,7 @@ import { ZodError } from "zod"
 import { getTenant } from "@/lib/get-tenant"
 import { ClassCurriculumService } from "@/app/api/modules/class_curriculum/class_curriculum.service"
 import { createClassCurriculumSchema } from "@/app/api/modules/class_curriculum/class_curriculum.validation"
+import { can } from "@/lib/permissions/can"
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -22,6 +23,10 @@ export async function POST(req: NextRequest, { params }: Params) {
   try {
     const session = await getTenant()
     const { id } = await params
+
+    const allowed = await can(session, "curriculum", "edit", id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to edit this class's curriculum" }, { status: 403 })
+
     const body = await req.json()
     const parsed = createClassCurriculumSchema.parse({
       ...body,

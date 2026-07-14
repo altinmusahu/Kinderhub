@@ -1,6 +1,7 @@
 import type { Tenant } from "./tenant.types"
 import { TenantRepository } from "./tenant.repository"
 import { CreateTenantInput } from "./tenant.validation"
+import { RolesService } from "@/app/api/modules/roles/roles.service"
 
 export const TenantService = {
   async getAll(): Promise<Tenant[]> {
@@ -14,9 +15,18 @@ export const TenantService = {
   },
 
   async create(input: CreateTenantInput): Promise<Tenant> {
-    return TenantRepository.create({
+    const tenant = await TenantRepository.create({
       ...input,
       CreatedAt: new Date().toISOString().split("T")[0],
     })
+
+    try {
+      await RolesService.seedDefaultRoles(tenant.Id)
+    } catch (error) {
+      await TenantRepository.delete(tenant.Id).catch(() => {})
+      throw error
+    }
+
+    return tenant
   },
 }

@@ -2,11 +2,19 @@ import { NextRequest, NextResponse } from "next/server"
 import { getTenant } from "@/lib/get-tenant"
 import { logActivity } from "@/lib/log-activity"
 import { ParentsRepository } from "@/app/api/modules/parents/parents.repository"
+import { can } from "@/lib/permissions/can"
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const session = await getTenant()
+
+    const existing = await ParentsRepository.findById(id, session.tenant_id)
+    if (!existing) return NextResponse.json({ error: "Parent not found" }, { status: 404 })
+
+    const allowed = await can(session, "families", "edit", existing.family_id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to edit this parent" }, { status: 403 })
+
     const body = await req.json()
 
     const updated = await ParentsRepository.update(id, session.tenant_id, {
@@ -32,6 +40,13 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params
     const session = await getTenant()
+
+    const existing = await ParentsRepository.findById(id, session.tenant_id)
+    if (!existing) return NextResponse.json({ error: "Parent not found" }, { status: 404 })
+
+    const allowed = await can(session, "families", "full", existing.family_id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to delete this parent" }, { status: 403 })
+
     await ParentsRepository.delete(id, session.tenant_id)
     return NextResponse.json({ success: true })
   } catch (e) {

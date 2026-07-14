@@ -2,6 +2,8 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { verifyToken, cookieName } from "@/lib/auth"
 import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
+import { AccessDenied } from "@/app/components/dashboard/AccessDenied"
+import { hasAnyAccess } from "@/lib/permissions/can"
 
 export default async function CalendarPage() {
   const store = await cookies()
@@ -9,6 +11,9 @@ export default async function CalendarPage() {
   if (!token) redirect("/login")
   const session = await verifyToken(token)
   if (!session) redirect("/login")
+
+  const allowed = await hasAnyAccess(session, "calendar")
+  if (!allowed) return <AccessDenied />
 
   const days = ["Mon 21", "Tue 22", "Wed 23", "Thu 24", "Fri 25", "Sat 26", "Sun 27"]
   const hours = ["8", "9", "10", "11", "12", "13", "14", "15", "16", "17"]

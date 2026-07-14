@@ -26,6 +26,7 @@ export const updateUserSchema = z.object({
   phone_number: z.string().min(1).optional(),
   personal_number: z.string().min(1).optional(),
   role: z.string().min(1).optional(),
+  role_id: z.string().uuid().nullable().optional(),
   is_active: z.boolean().optional(),
   date_of_birth: z.string().min(1).optional(),
   is_first_login_executed: z.boolean().optional(),

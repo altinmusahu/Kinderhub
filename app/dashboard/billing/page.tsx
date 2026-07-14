@@ -1,6 +1,11 @@
 import React from "react"
 import { DataTable, Column } from "@/app/components/dashboard/DataTable"
 import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
+import { hasAnyAccess } from "@/lib/permissions/can"
+import { AccessDenied } from "@/app/components/dashboard/AccessDenied"
+import { cookies } from "next/headers"
+import { cookieName, verifyToken } from "@/lib/auth"
+import { redirect } from "next/navigation"
 
 const invoices = [
   { id: "INV-2051", family: "Okafor-Lind",   fid: "OL", color: "#E8866A", amount: "$2,840.00", status: "Paid",    due: "Apr 10", method: "Visa · 4242" },
@@ -82,7 +87,21 @@ const columns: Column<Invoice>[] = [
   },
 ]
 
-export default function BillingPage() {
+export default async function BillingPage() {
+
+  const store = await cookies()
+  const token = store.get(cookieName())?.value ?? null
+
+  if (!token) {
+    redirect("/login")
+  }
+
+  const session = await verifyToken(token)
+  if (!session) redirect("/login")
+
+  const allowed = await hasAnyAccess(session, "billing")
+  if (!allowed) return <AccessDenied />
+
   return (
     <div className="kh-page">
       <header className="kh-topbar">

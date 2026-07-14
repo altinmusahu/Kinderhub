@@ -3,6 +3,7 @@ import { ZodError } from "zod"
 import { getTenant } from "@/lib/get-tenant"
 import { ClassCurriculumItemsService } from "@/app/api/modules/class_curriculum_items/class_curriculum_items.service"
 import { createClassCurriculumItemSchema } from "@/app/api/modules/class_curriculum_items/class_curriculum_items.validation"
+import { can } from "@/lib/permissions/can"
 
 type Params = { params: Promise<{ id: string; curriculumId: string }> }
 
@@ -20,10 +21,14 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
 export async function POST(req: NextRequest, { params }: Params) {
   try {
-    const { tenant_id } = await getTenant()
-    const { curriculumId } = await params
+    const session = await getTenant()
+    const { id, curriculumId } = await params
+
+    const allowed = await can(session, "curriculum", "edit", id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to edit this class's curriculum" }, { status: 403 })
+
     const body = await req.json()
-    const parsed = createClassCurriculumItemSchema.parse({ ...body, curriculum_id: curriculumId, tenant_id })
+    const parsed = createClassCurriculumItemSchema.parse({ ...body, curriculum_id: curriculumId, tenant_id: session.tenant_id })
     const item = await ClassCurriculumItemsService.create(parsed)
     return NextResponse.json(item, { status: 201 })
   } catch (error) {

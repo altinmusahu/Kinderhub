@@ -4,6 +4,7 @@ import { getTenant } from "@/lib/get-tenant"
 import { logActivity } from "@/lib/log-activity"
 import { ClassMenusService } from "@/app/api/modules/class_menus/class_menus.service"
 import { upsertClassMenuCellSchema } from "@/app/api/modules/class_menus/class_menus.validation"
+import { can } from "@/lib/permissions/can"
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -34,6 +35,10 @@ export async function PUT(req: NextRequest, { params }: Params) {
   try {
     const session = await getTenant()
     const { id } = await params
+
+    const allowed = await can(session, "curriculum", "edit", id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to edit this class's menus" }, { status: 403 })
+
     const body = upsertClassMenuCellSchema.parse(await req.json())
 
     const cell = await ClassMenusService.saveCell(

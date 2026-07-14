@@ -3,6 +3,7 @@ import { getTenant } from "@/lib/get-tenant"
 import { logActivity } from "@/lib/log-activity"
 import { ContractsService } from "@/app/api/modules/contracts/contracts.service"
 import { updateContractSchema } from "@/app/api/modules/contracts/contracts.validation"
+import { can } from "@/lib/permissions/can"
 import { ZodError } from "zod"
 
 type Params = { params: Promise<{ id: string }> }
@@ -24,6 +25,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   try {
     const session = await getTenant()
     const { id } = await params
+
+    const allowed = await can(session, "billing", "edit")
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to update contracts" }, { status: 403 })
+
     const body = await req.json()
     const parsed = updateContractSchema.parse(body)
     const contract = await ContractsService.updateStatus(id, session.tenant_id, parsed)
@@ -41,6 +46,10 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   try {
     const session = await getTenant()
     const { id } = await params
+
+    const allowed = await can(session, "billing", "full")
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to delete contracts" }, { status: 403 })
+
     const contract = await ContractsService.getById(id, session.tenant_id)
     await ContractsService.delete(id, session.tenant_id)
     logActivity(session, "deleted", "Contract", contract.contract_number)

@@ -3,6 +3,7 @@ import { WorkTrackingService } from "../modules/work_tracking/work_tracking.serv
 import { createWorkTrackingSchema } from "../modules/work_tracking/work_tracking.validation"
 import { getTenant } from "@/lib/get-tenant"
 import { logActivity } from "@/lib/log-activity"
+import { can } from "@/lib/permissions/can"
 
 export async function GET() {
   try {
@@ -19,6 +20,10 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getTenant()
     const body = await req.json()
+
+    const allowed = await can(session, "staff", "edit", body.user_id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to add a work tracking record for this staff member" }, { status: 403 })
+
     const parsed = createWorkTrackingSchema.parse({ ...body, tenant_id: session.tenant_id })
     const record = await WorkTrackingService.create(parsed)
     logActivity(session, "added", "Work tracking record")

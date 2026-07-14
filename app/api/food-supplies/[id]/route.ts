@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getTenant } from "@/lib/get-tenant"
 import { logActivity } from "@/lib/log-activity"
 import { FoodSuppliesService } from "@/app/api/modules/food_supplies/food_supplies.service"
+import { can } from "@/lib/permissions/can"
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -22,6 +23,10 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   try {
     const session = await getTenant()
     const { id } = await params
+
+    const allowed = await can(session, "food_supplies", "full")
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to delete food supplies" }, { status: 403 })
+
     const supply = await FoodSuppliesService.getById(id, session.tenant_id)
     await FoodSuppliesService.delete(id, session.tenant_id)
     logActivity(session, "deleted", "Food supply", supply.vendor_name ?? undefined)

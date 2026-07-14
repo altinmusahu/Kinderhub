@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getTenant } from "@/lib/get-tenant"
 import { supabaseAdmin } from "@/lib/supabase-admin"
+import { can } from "@/lib/permissions/can"
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -58,8 +59,11 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
 export async function POST(req: NextRequest, { params }: Params) {
   try {
-    await getTenant()
+    const session = await getTenant()
     const { id } = await params
+
+    const allowed = await can(session, "staff", "edit", id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to upload documents for this staff member" }, { status: 403 })
 
     const formData = await req.formData()
     const file = formData.get("file") as File | null
@@ -101,8 +105,12 @@ export async function POST(req: NextRequest, { params }: Params) {
 
 export async function DELETE(req: NextRequest, { params }: Params) {
   try {
-    await getTenant()
+    const session = await getTenant()
     const { id } = await params
+
+    const allowed = await can(session, "staff", "full", id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to delete documents for this staff member" }, { status: 403 })
+
     const { documentId, storagePath } = await req.json()
 
     if (storagePath) {

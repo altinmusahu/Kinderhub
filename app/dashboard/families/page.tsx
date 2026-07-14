@@ -8,6 +8,8 @@ import { DataTable, Column } from "@/app/components/dashboard/DataTable"
 import AddFamilyModal from "@/components/ui/AddFamilyModal"
 import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
 import ExportFamiliesButton from "@/app/components/dashboard/ExportFamiliesButton"
+import { AccessDenied } from "@/app/components/dashboard/AccessDenied"
+import { hasAnyAccess } from "@/lib/permissions/can"
 
 const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
   Active:   { bg: "#E8F5EC", color: "#3A8C50" },
@@ -122,6 +124,9 @@ export default async function FamiliesPage() {
   const session = await verifyToken(token)
   if (!session) redirect("/login")
   const { tenant_id } = session
+
+  const allowed = await hasAnyAccess(session, "families")
+  if (!allowed) return <AccessDenied />
 
   const families = await FamiliesService.getAllWithDetails(tenant_id)
 

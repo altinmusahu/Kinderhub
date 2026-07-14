@@ -3,6 +3,7 @@ import { UserService } from "@/app/api/modules/user/user.service"
 import { createUserSchema } from "@/app/api/modules/user/user.validation"
 import { getTenant } from "@/lib/get-tenant"
 import { logActivity } from "@/lib/log-activity"
+import { can } from "@/lib/permissions/can"
 
 export async function GET() {
   try {
@@ -18,6 +19,10 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await getTenant()
+
+    const allowed = await can(session, "staff", "full")
+    if (!allowed) return NextResponse.json({ message: "You don't have permission to add staff" }, { status: 403 })
+
     const body = await req.json()
     const parsed = createUserSchema.parse(body)
     const user = await UserService.create(parsed)

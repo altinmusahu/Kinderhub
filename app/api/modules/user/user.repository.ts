@@ -77,6 +77,7 @@ export const UserRepository = {
         phone_number: data.phone_number,
         personal_number: data.personal_number,
         role: data.role,
+        role_id: data.role_id ?? null,
         created_at: data.created_at,
         is_active: data.is_active,
         date_of_birth: data.date_of_birth,

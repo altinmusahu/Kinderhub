@@ -3,6 +3,7 @@ import { DepartmentService } from "../modules/departments/department.service"
 import { createDepartmentSchema } from "../modules/departments/department.validation"
 import { getTenant } from "@/lib/get-tenant"
 import { logActivity } from "@/lib/log-activity"
+import { can } from "@/lib/permissions/can"
 
 export async function GET() {
   try {
@@ -18,6 +19,10 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await getTenant()
+
+    const allowed = await can(session, "staff", "full")
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to create departments" }, { status: 403 })
+
     const body = await req.json()
     const parsed = createDepartmentSchema.parse({ ...body, tenant_id: session.tenant_id })
     const department = await DepartmentService.create(parsed)

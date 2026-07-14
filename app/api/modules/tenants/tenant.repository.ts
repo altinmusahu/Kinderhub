@@ -37,5 +37,14 @@ export const TenantRepository = {
       .maybeSingle()
     if (error) throw new Error(error.message)
     return data
+  },
+
+  async delete(id: string): Promise<void> {
+    const supabase = await client()
+    const { error } = await supabase
+      .from("tenants")
+      .delete()
+      .eq("Id", id)
+    if (error) throw new Error(error.message)
   }
 }

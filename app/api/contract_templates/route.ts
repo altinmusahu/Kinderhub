@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getTenant } from "@/lib/get-tenant"
 import { ContractTemplatesService } from "@/app/api/modules/contract_templates/contract_templates.service"
 import { createContractTemplateSchema } from "@/app/api/modules/contract_templates/contract_templates.validation"
+import { can } from "@/lib/permissions/can"
 import { ZodError } from "zod"
 
 export async function GET() {
@@ -17,10 +18,14 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const { tenant_id } = await getTenant()
+    const session = await getTenant()
+
+    const allowed = await can(session, "billing", "full")
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to create contract templates" }, { status: 403 })
+
     const body = await req.json()
     const parsed = createContractTemplateSchema.parse(body)
-    const template = await ContractTemplatesService.create(tenant_id, parsed)
+    const template = await ContractTemplatesService.create(session.tenant_id, parsed)
     return NextResponse.json(template, { status: 201 })
   } catch (e) {
     if (e instanceof ZodError) return NextResponse.json({ error: e.issues[0]?.message ?? "Validation error" }, { status: 400 })

@@ -48,6 +48,7 @@ export const UserService = {
     const user = await UserRepository.createWithId({
       id: authData.user.id,
       ...userInput,
+      role_id: null,
       tenant_id: TENANT_ID,
       password_hash,
       is_first_login_executed: false,
@@ -113,6 +114,7 @@ export const UserService = {
       personal_number: input.personal_number,
       date_of_birth: input.date_of_birth,
       role: input.role,
+      role_id: null,
       is_active: input.is_active,
       tenant_id: TENANT_ID,
       is_first_login_executed: false,

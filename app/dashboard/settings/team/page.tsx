@@ -6,6 +6,8 @@ import Link from "next/link"
 import { Plus, X, Building2, Users, ShieldCheck } from "lucide-react"
 import { KhTooltip } from "@/components/ui/KhTooltip"
 import { Spinner } from "@/components/ui/Spinner"
+import { PermissionMatrix } from "@/app/dashboard/settings/roles/PermissionMatrix"
+import type { RoleWithPermissions } from "@/app/api/modules/roles/roles.types"
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -31,34 +33,6 @@ type StaffMember = {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const TONE_COLORS = ["#D2592F","#E8866A","#7FA06A","#D97F8C","#C9AE4E","#8FB7C9","#A07FC9","#6BA07C"]
-
-const ROLES = [
-  { name: "Owner",         scope: "Everything · billing · export",                  external: false },
-  { name: "Director",      scope: "All departments · billing · messaging",           external: false },
-  { name: "Lead teacher",  scope: "Own room · own families · attendance",            external: false },
-  { name: "Assistant",     scope: "Own room · attendance only",                      external: false },
-  { name: "Finance",       scope: "Billing · reports · no profiles",                 external: false },
-  { name: "Parent portal", scope: "Own child · messages · invoices",                 external: true  },
-]
-
-const RESOURCES = ["Families","Children","Staff","Classes","Billing","Messages","Documents","Calendar","Settings"]
-
-const MATRIX: Record<string, string[]> = {
-  "Owner":          ["full","full","full","full","full","full","full","full","full"],
-  "Director":       ["full","full","full","full","full","full","full","full","edit"],
-  "Lead teacher":   ["view","edit","view","edit","none","edit","view","edit","none"],
-  "Assistant":      ["view","view","none","view","none","view","view","view","none"],
-  "Finance":        ["view","none","view","view","full","none","view","view","none"],
-  "Parent portal":  ["own", "own", "none","own", "own", "own", "own", "own", "none"],
-}
-
-const CELL: Record<string, { bg: string; color: string; dot: string; label: string }> = {
-  full: { bg: "#EAF3EC", color: "#2E5E3A", dot: "#6BA07C", label: "Full"     },
-  edit: { bg: "#FEF0E8", color: "#7A3318", dot: "#E8866A", label: "Edit"     },
-  view: { bg: "#FEF7E0", color: "#6B5A10", dot: "#C9AE4E", label: "View"     },
-  own:  { bg: "#FCEEF0", color: "#7A303A", dot: "#D97F8C", label: "Own only" },
-  none: { bg: "#F5F3EF", color: "#9E968A", dot: "transparent", label: "—"   },
-}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -181,6 +155,7 @@ export default function TeamPage() {
   const [departments, setDepartments] = useState<Department[]>([])
   const [staff, setStaff]             = useState<StaffMember[]>([])
   const [locations, setLocations]     = useState<{ id: string; name: string }[]>([])
+  const [roles, setRoles]             = useState<RoleWithPermissions[]>([])
   const [loading, setLoading]         = useState(true)
   const [selectedDept, setSelectedDept] = useState<string | null>(null)
   const [showAddDept, setShowAddDept] = useState(false)
@@ -190,11 +165,13 @@ export default function TeamPage() {
       fetch("/api/departments").then(r => r.json()),
       fetch("/api/users/with-department").then(r => r.json()),
       fetch("/api/locations").then(r => r.json()),
-    ]).then(([depts, users, locs]) => {
+      fetch("/api/roles").then(r => r.json()),
+    ]).then(([depts, users, locs, rolesData]) => {
       const deptList = Array.isArray(depts) ? depts : []
       setDepartments(deptList)
       setStaff(Array.isArray(users) ? users : [])
       setLocations(Array.isArray(locs) ? locs : [])
+      setRoles(Array.isArray(rolesData) ? rolesData : [])
       if (deptList.length > 0) setSelectedDept(deptList[0].id)
     }).catch(() => {}).finally(() => setLoading(false))
   }, [])
@@ -398,82 +375,41 @@ export default function TeamPage() {
         <div className="kh-card">
           <div className="kh-card-header">
             <span className="kh-card-title">Roles</span>
-            <span className="kh-card-meta">{ROLES.length} defined</span>
+            <span className="kh-card-meta">{roles.length} defined</span>
           </div>
           <div style={{ padding: "0 8px 12px" }}>
-            {ROLES.map((r, i) => (
-              <div key={r.name} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 10px", borderTop: "1px solid var(--kh-border)" }}>
-                <span style={{ width: 8, height: 8, borderRadius: 3, background: toneColor(i), flexShrink: 0 }} />
+            {roles.map(r => (
+              <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 10px", borderTop: "1px solid var(--kh-border)" }}>
+                <span style={{ width: 8, height: 8, borderRadius: 3, background: r.color ?? "var(--kh-ink-300)", flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <div style={{ fontWeight: 600, color: "var(--kh-ink-900)", fontSize: 12.5 }}>{r.name}</div>
-                    {r.external && (
-                      <span className="kh-status-badge" style={{ background: "var(--kh-ink-50)", color: "var(--kh-ink-500)", fontSize: 10 }}>external</span>
+                    {r.is_owner_role && (
+                      <span className="kh-status-badge" style={{ background: "var(--kh-ink-50)", color: "var(--kh-ink-500)", fontSize: 10 }}>owner</span>
                     )}
                   </div>
-                  <div style={{ fontSize: 11, color: "var(--kh-ink-500)", marginTop: 1 }}>{r.scope}</div>
                 </div>
               </div>
             ))}
           </div>
+          <div style={{ padding: "0 8px 10px" }}>
+            <Link
+              href="/dashboard/settings/roles"
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px 10px", borderRadius: 9, fontSize: 12.5, fontWeight: 500, color: "var(--kh-peach)", textDecoration: "none", border: "1px solid var(--kh-border)" }}
+            >
+              Manage roles &amp; permissions →
+            </Link>
+          </div>
         </div>
 
-        {/* Permission matrix */}
+        {/* Permission matrix (read-only) */}
         <div className="kh-card" style={{ overflow: "hidden" }}>
           <div className="kh-card-header">
             <span className="kh-card-title">What each role can access</span>
             <span className="kh-card-meta">permission matrix</span>
           </div>
-          <div style={{ padding: "4px 14px 14px", overflowX: "auto" }}>
-            <table className="kh-table" style={{ minWidth: "100%" }}>
-              <thead>
-                <tr>
-                  <th>Resource</th>
-                  {Object.keys(MATRIX).map(k => (
-                    <th key={k} style={{ textAlign: "center", whiteSpace: "nowrap", fontSize: 11 }}>{k}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {RESOURCES.map((res, ri) => (
-                  <tr key={res}>
-                    <td style={{ fontWeight: 500, color: "var(--kh-ink-800)", whiteSpace: "nowrap", fontSize: 12.5 }}>{res}</td>
-                    {Object.keys(MATRIX).map(role => {
-                      const v = MATRIX[role][ri]
-                      const s = CELL[v] ?? CELL.none
-                      return (
-                        <td key={role} style={{ textAlign: "center" }}>
-                          <span style={{
-                            display: "inline-flex", alignItems: "center", gap: 4,
-                            padding: "2px 7px", borderRadius: 6,
-                            background: s.bg, color: s.color,
-                            fontSize: 10.5, fontWeight: 500, whiteSpace: "nowrap",
-                          }}>
-                            {s.dot !== "transparent" && (
-                              <span style={{ width: 5, height: 5, borderRadius: "50%", background: s.dot, flexShrink: 0 }} />
-                            )}
-                            {s.label}
-                          </span>
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div style={{ display: "flex", gap: 14, padding: "12px 2px 0", fontSize: 11, color: "var(--kh-ink-500)", flexWrap: "wrap" }}>
-              {[
-                { dot: "#6BA07C", label: "Full — create, edit, delete" },
-                { dot: "#E8866A", label: "Edit — modify only" },
-                { dot: "#C9AE4E", label: "View — read only" },
-                { dot: "#D97F8C", label: "Own only — scoped to their records" },
-              ].map(l => (
-                <span key={l.label} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: l.dot, flexShrink: 0 }} />
-                  {l.label}
-                </span>
-              ))}
-            </div>
+          <div style={{ padding: "4px 14px 14px" }}>
+            <PermissionMatrix roles={roles} editable={false} />
           </div>
         </div>
       </div>

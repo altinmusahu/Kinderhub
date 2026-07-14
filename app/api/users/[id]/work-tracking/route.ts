@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getTenant } from "@/lib/get-tenant"
 import { logActivity } from "@/lib/log-activity"
 import { supabaseAdmin } from "@/lib/supabase-admin"
+import { can } from "@/lib/permissions/can"
 
 export async function POST(
   req: NextRequest,
@@ -10,6 +11,10 @@ export async function POST(
   try {
     const session = await getTenant()
     const { id } = await params
+
+    const allowed = await can(session, "staff", "edit", id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to update this staff member's employment record" }, { status: 403 })
+
     const body = await req.json()
 
     // Verify user belongs to tenant

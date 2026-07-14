@@ -1,28 +1,53 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
 import type { UserById } from "./types"
 import { Field, SaveBar } from "./Field"
 import { WorkHistoryModal } from "./WorkHistoryModal"
 import { KhTooltip } from "@/components/ui/KhTooltip"
+import { permissionSummary } from "@/app/dashboard/settings/roles/PermissionMatrix"
+import type { RoleWithPermissions } from "@/app/api/modules/roles/roles.types"
 
 export function EmploymentCard({ user, userId }: { user: UserById; userId: string }) {
+  const router = useRouter()
   const [editing, setEditing] = useState(false)
   const [saving, startSave] = useTransition()
   const [error, setError] = useState("")
   const [showHistory, setShowHistory] = useState(false)
+  const [roles, setRoles] = useState<RoleWithPermissions[]>([])
+  const [roleId, setRoleId] = useState(user.user.role_id ?? "")
+  const [canManageRoles, setCanManageRoles] = useState(false)
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/roles").then(r => r.json()),
+      fetch("/api/auth/me").then(r => r.json()),
+    ]).then(([rolesData, me]) => {
+      const roleList: RoleWithPermissions[] = Array.isArray(rolesData) ? rolesData : []
+      setRoles(roleList)
+      const myRole = roleList.find(r => r.id === me?.role_id)
+      const mySettingsLevel = myRole?.permissions.find(p => p.resource === "settings")?.level ?? "none"
+      setCanManageRoles(mySettingsLevel === "full")
+    }).catch(() => {})
+  }, [])
+
+  const assignedRole = roles.find(r => r.id === user.user.role_id) ?? null
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
-    const body = { role: fd.get("role"), is_active: fd.get("is_active") === "true" }
+    const body: { is_active: boolean; role_id?: string | null } = {
+      is_active: fd.get("is_active") === "true",
+    }
+    if (canManageRoles) body.role_id = roleId || null
     startSave(async () => {
       const res = await fetch(`/api/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       })
-      if (res.ok) { setEditing(false); setError("") }
+      if (res.ok) { setEditing(false); setError(""); router.refresh() }
       else setError("Failed to save. Please try again.")
     })
   }
@@ -67,15 +92,6 @@ export function EmploymentCard({ user, userId }: { user: UserById; userId: strin
               <>
                 <div style={rowStyle}>
                   <span style={{ color: "var(--kh-ink-400)" }}>
-                    Role
-                    <KhTooltip label="What is Role?">
-                      The staff member&apos;s job title at this location, e.g. Admin, Director, Lead teacher, Assistant, or Staff.
-                    </KhTooltip>
-                  </span>
-                  <span style={{ color: "var(--kh-ink-800)" }}>{user.user.role || "—"}</span>
-                </div>
-                <div style={rowStyle}>
-                  <span style={{ color: "var(--kh-ink-400)" }}>
                     Status
                     <KhTooltip label="What does Inactive mean?">
                       Inactive is just a label for record-keeping — it doesn&apos;t block their login or remove them from any list. To fully remove someone, delete their profile instead.
@@ -85,18 +101,25 @@ export function EmploymentCard({ user, userId }: { user: UserById; userId: strin
                     {user.user.is_active ? "Active" : "Inactive"}
                   </span>
                 </div>
+                <div style={rowStyle}>
+                  <span style={{ color: "var(--kh-ink-400)" }}>
+                    Permissions role
+                    <KhTooltip label="Role vs. Permissions role">
+                      This is different from the "Role" job title above — it&apos;s what actually controls what this person can see and do in Kinderhub. Managed under Settings → Roles &amp; permissions.
+                    </KhTooltip>
+                  </span>
+                  {assignedRole ? (
+                    <span style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--kh-ink-800)" }}>
+                      <span style={{ width: 7, height: 7, borderRadius: "50%", background: assignedRole.color ?? "var(--kh-ink-300)", flexShrink: 0 }} />
+                      {assignedRole.name}
+                    </span>
+                  ) : (
+                    <span style={{ color: "var(--kh-ink-300)" }}>Not assigned</span>
+                  )}
+                </div>
               </>
             ) : (
               <>
-                <div style={rowStyle}>
-                  <label htmlFor="role" style={{ color: "var(--kh-ink-400)", alignSelf: "center" }}>
-                    Role
-                    <KhTooltip label="What is Role?">
-                      The staff member&apos;s job title at this location, e.g. Admin, Director, Lead teacher, Assistant, or Staff.
-                    </KhTooltip>
-                  </label>
-                  <input id="role" name="role" defaultValue={user.user.role || ""} style={inputStyle} />
-                </div>
                 <div style={rowStyle}>
                   <label htmlFor="is_active" style={{ color: "var(--kh-ink-400)", alignSelf: "center" }}>Status</label>
                   <select id="is_active" name="is_active" defaultValue={user.user.is_active ? "true" : "false"} style={inputStyle}>
@@ -104,6 +127,26 @@ export function EmploymentCard({ user, userId }: { user: UserById; userId: strin
                     <option value="false">Inactive</option>
                   </select>
                 </div>
+                <div style={rowStyle}>
+                  <label htmlFor="role_id" style={{ color: "var(--kh-ink-400)", alignSelf: "center" }}>
+                    Permissions role
+                  </label>
+                  {canManageRoles ? (
+                    <select id="role_id" name="role_id" value={roleId} onChange={e => setRoleId(e.target.value)} style={inputStyle}>
+                      <option value="">Not assigned</option>
+                      {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                    </select>
+                  ) : (
+                    <span style={{ color: assignedRole ? "var(--kh-ink-800)" : "var(--kh-ink-300)", alignSelf: "center" }}>
+                      {assignedRole?.name ?? "Not assigned"}
+                    </span>
+                  )}
+                </div>
+                {canManageRoles && roleId && (
+                  <div style={{ padding: "0 0 6px", fontSize: 11.5, color: "var(--kh-ink-400)" }}>
+                    {permissionSummary(roles.find(r => r.id === roleId)?.permissions ?? [])}
+                  </div>
+                )}
               </>
             )}
           </div>

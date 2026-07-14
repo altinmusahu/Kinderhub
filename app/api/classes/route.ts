@@ -3,6 +3,7 @@ import { getTenant } from "@/lib/get-tenant"
 import { logActivity } from "@/lib/log-activity"
 import { ClassesService } from "@/app/api/modules/classes/classes.service"
 import { createClassSchema } from "@/app/api/modules/classes/classes.validation"
+import { can } from "@/lib/permissions/can"
 import { ZodError } from "zod"
 
 export async function GET() {
@@ -19,6 +20,10 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await getTenant()
+
+    const allowed = await can(session, "classes", "full")
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to create classes" }, { status: 403 })
+
     const body = await req.json()
     const parsed = createClassSchema.parse({
       ...body,

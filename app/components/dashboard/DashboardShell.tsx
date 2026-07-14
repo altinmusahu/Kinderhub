@@ -6,14 +6,17 @@ import ActivityPanel from "./ActivityPanel"
 import GlobalSearch from "./GlobalSearch"
 import type { ActivityItem } from "./ActivityFeed"
 import { MobileNavContext } from "./MobileNavContext"
+import type { PermissionLevel, ResourceKey } from "@/lib/permissions/resources"
 
 type Props = {
   activityItems: ActivityItem[]
   activityError: string | null
+  currentUser: { name: string; avatarUrl: string | null }
+  permissions: Record<ResourceKey, PermissionLevel>
   children: ReactNode
 }
 
-export default function DashboardShell({ activityItems, activityError, children }: Props) {
+export default function DashboardShell({ activityItems, activityError, currentUser, permissions, children }: Props) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activityCollapsed, setActivityCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -78,6 +81,8 @@ export default function DashboardShell({ activityItems, activityError, children 
           onToggle={toggleSidebar}
           mobileOpen={mobileOpen}
           onMobileClose={() => setMobileOpen(false)}
+          currentUser={currentUser}
+          permissions={permissions}
         />
 
         <div

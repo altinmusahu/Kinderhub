@@ -48,7 +48,7 @@ app/
 │   │           ├── Field.tsx         Field + SaveBar form primitives
 │   │           ├── PersonalCard.tsx  Editable personal info card (also shows read-only formatted Address)
 │   │           ├── AccountCard.tsx   Read-only account details card
-│   │           ├── EmploymentCard.tsx Editable role/status + History button
+│   │           ├── EmploymentCard.tsx Editable role/status/permissions-role + History button — see "Roles & Permissions System" for the role_id assignment UI
 │   │           ├── WorkHistoryModal.tsx Side drawer timeline + add position form
 │   │           ├── ScheduleTab.tsx   Weekly schedule grid (lazy-loaded, shows opens/closes per day)
 │   │           ├── SalaryTab.tsx     Salary history — add form includes a currency `<select>` sourced from `/api/currency`; amounts render with each record's own currency symbol
@@ -159,14 +159,14 @@ app/
 │   │       ├── incidents/route.ts             GET incidents for class roster / POST new incident (reported_by = session user)
 │   │       ├── incidents/[incidentId]/route.ts DELETE — only the original reporter (403 otherwise)
 │   │       ├── attendance/route.ts             GET filtered/paginated attendance log ({ rows, total, stats }) — dateFrom/dateTo/search/checkedOutBy/releasedTo/status/page/pageSize
-│   │       ├── attendance/[date]/route.ts      GET roster merged with that date's rows (pending kids synthesized) / PUT upsert one kid's check-in, check-out, or absent action
+│   │       ├── attendance/[date]/route.ts      GET roster merged with that date's rows (pending kids synthesized) / PUT upsert one kid's check-in, check-out, or absent action — PUT is the first `can()` pilot check: `can(session, "attendance", "edit", classId)`, 403 if false
 │   │       └── attendance/export/route.ts      GET — streams branded .xlsx honoring the same filters as the log route + logActivity("exported")
 │   │       └── menus/
 │   │           ├── route.ts          GET a week's grid (5 weekdays × 3 meal types, empty cells synthesized) / PUT upsert one cell
 │   │           └── copy/route.ts     POST { source_class_id, week } — overwrites the target class's week with the source class's menu for cells that have a description (cells the source never filled in are left untouched in the target)
 │   ├── classes/light/route.ts        GET lightweight { id, name }[] class list (no tenant filter, matches rest of classes module) — powers the Menus tab's class picker
 │   ├── food-supplies/
-│   │   ├── route.ts                  GET list for tenant / POST multipart upload (file optional, items JSON field) + logActivity
+│   │   ├── route.ts                  GET list for tenant / POST multipart upload (file optional, items JSON field) + logActivity — POST is the second `can()` pilot check: `can(session, "food_supplies", "edit")`, 403 if false
 │   │   ├── [id]/route.ts             GET single (with items) / DELETE (removes items, row, then storage object if present)
 │   │   ├── export/route.ts           GET — streams branded .xlsx of all receipts (ExcelJS) + logActivity("exported")
 │   │   └── parse/route.ts            POST — multipart single file, returns Claude-vision-parsed { vendor_name, purchase_date, items[], total_cost }; requires a file (nothing to scan without one), independent of the save route's optional-file rule
@@ -176,7 +176,11 @@ app/
 │   ├── search/route.ts               GET global search — families/classes/kids by name (tenant-scoped, min 2-char query)
 │   ├── activities/route.ts           GET activities (tenant-scoped, latest 50)
 │   ├── work_tracking/route.ts        GET / POST (module-level)
-│   ├── tenants/route.ts              Tenant CRUD
+│   ├── roles/
+│   │   ├── route.ts                  GET all roles + their permissions for tenant / POST create custom role + logActivity
+│   │   ├── [id]/route.ts             GET single / PATCH name+color / DELETE — all three 403 if is_owner_role (or is_system, for DELETE); DELETE also 400s if any user still references the role
+│   │   └── [id]/permissions/route.ts PUT — bulk-replace the full { resource, level }[] array for that role in one call + logActivity
+│   ├── tenants/route.ts              Tenant CRUD — now routes through `TenantService.create()` (was an inline `supabaseAdmin` insert that bypassed the service entirely) so the roles-seeding cascade below actually fires on real signups
 │   ├── tenant-legal-info/route.ts    GET legal info (or null) / PUT upsert (create or update)
 │   ├── subscription_plans/
 │   │   ├── route.ts                  GET all plans
@@ -211,7 +215,8 @@ app/
     ├── salary_tracking/{service,repository,types,validation}.ts  Per-user salary history with FK to `currency`; creating a record closes the previously active one
     ├── food_supplies/{service,repository,types,validation}.ts  Receipts + line items; file upload optional (`receipt_storage_path` nullable end-to-end), private `receipt` bucket, signed URLs (7-day TTL)
     ├── food_supplies/food_supplies.parser.ts                   parseReceiptImage() — Claude vision (structured JSON output) turns a receipt photo into { vendor_name, purchase_date, items[], total_cost }; best-effort, never blocks manual entry on failure
-    └── class_menus/{service,repository,types,validation}.ts   Weekly menu grid; upsert-by-natural-key (class_id, date, meal_type) via find-then-branch, same pattern as kid_attendance/family_checklist_progress
+    ├── class_menus/{service,repository,types,validation}.ts   Weekly menu grid; upsert-by-natural-key (class_id, date, meal_type) via find-then-branch, same pattern as kid_attendance/family_checklist_progress
+    └── roles/{service,repository,types,validation}.ts         Role × resource permission matrix. is_owner_role is an immutable invariant enforced in the service (not just a permission check); RolesService.seedDefaultRoles() creates the 5 system roles for a brand-new tenant — see "Roles & Permissions System" below
 
 app/components/
 └── dashboard/
@@ -221,6 +226,7 @@ app/components/
     │                                 Wraps children in MobileNavContext.Provider; manages body scroll lock on mobile
     ├── Sidebar.tsx                   Collapsible nav sidebar (52px icon-only); on mobile slides in as off-canvas drawer
     │                                 Accepts mobileOpen + onMobileClose props; shows X close button when mobile open
+    │                                 Also accepts a `permissions` prop (resolved server-side in dashboard/layout.tsx) and hides any nav item whose mapped resource(s) are all "none" for the caller — see "Roles & Permissions System" → "Sidebar nav hiding by permission"
     ├── MobileNavContext.tsx          React context exposing openMobileNav(); used by any page topbar
     ├── MobileMenuButton.tsx          Hamburger button (kh-hamburger class); calls openMobileNav() via context
     ├── ActivityFeed.tsx              fetchActivityItems() async server function
@@ -463,7 +469,8 @@ User: {
   id, name, lastname, email, password_hash,
   phone_number, personal_number, date_of_birth,
   role, is_active, tenant_id,
-  is_first_login_executed, created_at
+  is_first_login_executed, created_at,
+  role_id: string | null    // FK → roles(id); null until manually/UI-assigned — see "Roles & Permissions System"
 }
 
 UserById: {
@@ -727,6 +734,113 @@ ClassMenu: {
 
 ---
 
+## Roles & Permissions System
+
+Replaces the free-text `users.role` column with a tenant-editable role × resource permission matrix. `users.role` itself is **not removed** in this pass — a new nullable `users.role_id uuid references roles(id)` was added instead (`supabase/migrations/20260714100342_add_users_role_id.sql`, the first file in a newly-created `supabase/migrations/` folder — no migrations folder existed before this). Backfilling `role_id` from the old `role` strings, and eventually dropping `role`, are **manual follow-ups** the user will run after reviewing seeded role names per tenant — not done here.
+
+### Schema (already existed, not modified by this feature)
+```sql
+roles             (id, tenant_id, name, color, is_system, is_owner_role, created_at)
+role_permissions  (id, tenant_id, role_id, resource, level, updated_at, UNIQUE(role_id, resource))
+```
+No `unique(tenant_id, name)` on `roles` — name uniqueness per tenant is enforced at the service layer (`RolesService.create()`/`update()` check via `RolesRepository.findByName()`, a case-insensitive `ilike` lookup), returning a clean 400 rather than relying on a DB constraint that doesn't exist.
+
+### Resource catalog & levels (`lib/permissions/resources.ts`)
+`RESOURCES` (15 keys: families, children, staff, classes, attendance, incidents, curriculum, hub, documents, food_supplies, billing, messages, calendar, settings, legal_entity) is the single source of truth for every resource key, label, and Zod validation — same "one file, imported everywhere" pattern as `lib/plans.ts`. `PermissionLevel = "none" | "view" | "edit" | "full" | "own_only"` — one level per cell, no compound/two-axis encoding. `own_only` implies edit-level access scoped to the caller's own records; exactly which actions that allows is resolved per-resource by the ownership checkers below, not stored as a second field.
+
+### Default role seed (`lib/permissions/default-roles.ts`)
+5 system roles seeded for every tenant: **Owner** (`is_owner_role: true`, `is_system: true`, full on everything, immutable), **Admin** (`is_system: true`, full on everything except `legal_entity`), **Lead Teacher** / **Assistant** (`is_system: true`, `own_only` on classroom-facing resources, `none` on staff/billing/settings), **Staff** (`is_system: true`, `own_only` on their own staff record, `full` on `food_supplies`, `view` on `calendar`, `none` elsewhere). The exact per-resource matrix mirrors a table the user specified verbatim — see the file for the literal values, not paraphrased here to avoid drift if it's edited later.
+
+### Seeding on tenant creation
+`TenantService.create()` now does: insert tenant row → `try { RolesService.seedDefaultRoles(tenant.Id) } catch { TenantRepository.delete(tenant.Id); throw }` — same create-then-cascade-then-rollback-on-failure shape as `UserService.create()` (which cascades into `WorkTrackingService`/`AddressService` and rolls back the Auth user + row on failure). `RolesService.seedDefaultRoles()` creates each of the 5 roles (via `RolesRepository.create()`, passing explicit `{ is_system, is_owner_role }` flags — the route-facing `RolesService.create()` for custom roles always forces both to `false`) then bulk-inserts that role's 15 `role_permissions` rows.
+> **Fixed a pre-existing bug to make this actually run**: `app/api/tenants/route.ts` (the real signup entry point, reached from `/subscribe`) did its own inline `supabaseAdmin` insert and never called `TenantService.create()` at all — so the seeding cascade would have been dead code. The route now calls `TenantService.create(parsed)`; response shape is unchanged (still 201 with the tenant row). `TenantRepository` also gained a `delete()` method (it had none) for the rollback path. This whole `tenants`/`tenant_subscriptions` pair pre-dates the rest of the app's snake_case convention (uses PascalCase `Name`/`Slug`/`Id`) — a pre-existing inconsistency, not introduced here, and out of scope to fully normalize in this pass.
+
+### `roles` backend module (`app/api/modules/roles/`)
+Standard 4-file split, `currency` module is the closest template. Notable service-layer invariants (enforced in the service, not just the route, since these are hard invariants rather than permission checks):
+- `update()`/`delete()`/`upsertPermissions()` all throw immediately if `role.is_owner_role` — the Owner role cannot be renamed, recolored, deleted, or have its permissions changed, regardless of caller.
+- `delete()` additionally throws if `is_system` (the other 4 seeded roles can't be deleted either) or if `RolesRepository.countUsersWithRole()` finds any user still assigned to it.
+- `findAllForTenant()`/`findById()` join `role_permissions` in one query (`roles` + embedded `role_permissions(*)`) — no N+1 across roles, same principle as the staff list's `user_profiles` embed.
+
+Routes: `GET/POST /api/roles`, `GET/PATCH/DELETE /api/roles/[id]`, `PUT /api/roles/[id]/permissions` (bulk-replaces the whole `{resource, level}[]` array for that role in one call — the frontend batches one PUT per edited role on "Save changes", never one request per cell). `"Role"` added to `ActivityEntity` in `lib/log-activity.ts`.
+
+### Core permission check (`lib/permissions/can.ts`, `lib/permissions/ownership.ts`)
+```ts
+can(session, resource, action, ownerCheckId?): Promise<boolean>
+```
+Looks up the caller's `users.role_id` fresh on every call (one indexed query), then that role's `role_permissions` row for `resource` (a second indexed query) — **not cached in the JWT**. `SessionPayload` (from `getTenant()`) only carries `role: string` (the old free-text field), no `role_id`, so this fresh-lookup approach was chosen specifically to avoid touching login/JWT issuance in this pass; the tradeoff is two small queries per `can()` call instead of zero, and a role change takes effect on the very next request rather than waiting for a token refresh (actually better than the JWT-embedded alternative on that axis).
+
+`none` → false. `full` → true for any action. `view` → true only for `action === "view"`. `edit` → true for view/edit, false for `"full"`-only actions (e.g. delete). `own_only` → false immediately for `action === "full"`; otherwise delegates to a resource-specific checker in `ownership.ts`. **If no checker is registered for a resource with an `own_only` level, `can()` throws** (fail loud) rather than defaulting either way — this is a deliberate developer-facing error, since silently allowing or denying would hide a missing implementation.
+
+`ownership.ts` checkers (derived entirely from existing columns — no new tables):
+- `classes` / `attendance` / `hub` / `curriculum` — `ownerCheckId` is the class's own id; true if `session.sub` is that class's `lead_user_id` or `assistant_user_id`.
+- `incidents` — `ownerCheckId` is the incident's id (incidents have no `class_id` of their own); resolves `incidents.kid_id` → `kids.class_id` → same class-lead/assistant check. Mirrors the two-step "resolve roster, then check" shape `IncidentsService.getByClassId()` already uses, just inverted (record → kid → class instead of class → kids → records).
+- `families` — `ownerCheckId` is the family's id; true if **any** kid in that family has a `class_id` led/assisted by the session user.
+- `children` — `ownerCheckId` is the kid's id; true if that kid's own `class_id` is led/assisted by the session user.
+- `staff` — `ownerCheckId` is a user id; true only if it equals `session.sub` (self).
+- `documents` — `ownerCheckId` is the document's id; defers to whichever of `kid_id`/`family_id`/`user_id` is set on that row (checked in that order), reusing the `children`/`families`/`staff` rules rather than duplicating logic.
+
+### Full rollout — `can()` on every mutating route (expanded from the original 2-route pilot)
+After the pilot (`attendance` PUT, `food_supplies` POST) was validated, `can()` was wired into every other mutating API route across the app — ~50 route files total. One `can()` call per route, right after `getTenant()`, before request-body parsing/validation; 403 with a clear message on failure. Resource/action mapping, by module:
+
+| Module | Resource | Notes |
+|---|---|---|
+| Families, Parents, Kids (create/assign), Waitlist | `families` | `own_only` scoped by `family_id` (resolved from the parent/kid row when the route only has a child id, e.g. `parents/[id]` looks up `family_id` via `ParentsRepository.findById()` first) |
+| Kid ↔ class assignment (`kids/[class_id]/kids/[kid_id]`) | `classes` | scoped by the class id already in the URL |
+| Classes (create/edit/delete) | `classes` | **create requires `full`, not `edit`** — there's no existing class to scope `own_only` against yet, and `own_only` roles (Lead Teacher/Assistant) are correctly blocked from creating brand-new classes as a result (a deliberate call, not an oversight) |
+| Attendance | `attendance` | original pilot route, unchanged |
+| Incidents (create) | `incidents` | scoped via a new `{ class_id }` ownership-check shape (see below) — the create route only has a class id, not an incident id yet |
+| Incidents (delete) | — (no `can()`) | **deliberately skipped** — `IncidentsService.delete()` already restricts delete to the original `reported_by` user; layering a `can(..., "full")` check on top would incorrectly lock out `own_only` roles (Lead Teacher/Assistant) from deleting even their *own* reported incidents, since `own_only` always denies `"full"`-level actions. Same reasoning applied to Hub posts' DELETE. |
+| Checklist, Curriculum, Class Menus (incl. copy-week) | `curriculum` | all class-scoped via the class id already in each route's URL params |
+| Hub (posts/rules/events) | `hub` | post/rule/event **creation** and post **edit** use `edit` (fine for `own_only`); rule/event **delete** use `full` (correctly blocks `own_only`); post delete/edit already had author-scoping and got the same "don't double-gate" treatment as incidents where it would conflict |
+| Class documents, family documents, org-wide documents (`/api/documents`), user documents | `documents` | see the `DocumentSubject` extension below — now carries `kid_id`/`family_id`/`user_id`/`class_id` |
+| Food Supplies (delete, receipt parse) | `food_supplies` | delete requires `full`; the Claude-vision parse route requires `edit` (it's a cost-bearing operation, not just a read) |
+| Staff/Users (create, work tracking, salary, documents, profile picture, change-password) | `staff` | **change-password is special-cased**: always allowed for `id === session.sub` (changing your own password doesn't require any `staff` permission level at all — a basic account action every user gets); changing *someone else's* password requires `staff: full` |
+| Departments | `staff` | tenant-level HR structure, `full` only (no per-department ownership concept) |
+| Contracts, Contract Templates | `billing` | create/edit use `edit`, delete uses `full` |
+| Currency, Locations | `settings` | tenant configuration, `full` only |
+| Legal & Registration (`tenant-legal-info` PUT) | `legal_entity` | no default role except Owner has anything above `none` here, so this is Owner-only by default |
+| Roles & Permissions (`/api/roles*`) | `settings` | **the most sensitive routes in the app** — create/edit/delete a role, and the bulk permission-matrix PUT, all require `settings: full`. These previously had *no* permission check at all (only the service-layer Owner/system-role immutability guards, which are data invariants, not access control) — closing this was as important as the original pilot, since without it anyone authenticated could rewrite the permission matrix, including granting themselves Owner-level access. |
+
+**Deliberately left unguarded** (not oversights): `auth/login`, `auth/logout`, `auth/signup` (pre-auth by definition), `tenants` POST and `tenant_subscriptions` POST (part of the pre-auth `/subscribe` signup flow — tracing the actual flow confirmed no user account or session exists yet at the point a tenant is created, so there's no role to check against).
+
+### Ownership-check shape extensions (`lib/permissions/ownership.ts`)
+The original pilot's `ownerCheckId?: string` signature was too narrow once real routes needed to check ownership *before* a record exists (creating a new incident/document, not editing an existing one). `can()`'s `ownerCheckId` parameter now accepts `string | DocumentSubject | ClassScoped`:
+- `DocumentSubject = { kid_id?, family_id?, user_id?, class_id? }` — used by the `documents` checker. A plain string is treated as an existing document's id (look up its subject from the DB); an object is the subject *directly*, for upload routes where no document row exists yet.
+- `ClassScoped = { class_id: string }` — used by the `incidents` checker's create path, for the same "no record yet" reason.
+- Every other resource's checker (`classes`, `attendance`, `hub`, `curriculum`, `families`, `children`, `staff`) still takes a plain id string via a shared `asId()` helper that throws if it receives an object instead — keeping the common case simple while only the two resources that actually need it accept the richer shape.
+
+### Known gap: new-tenant Owner bootstrap
+`TenantService.create()` seeds the 5 default roles (including Owner) for a new tenant, but **does not** auto-assign any user's `role_id` to the new Owner role — tracing the actual `/subscribe` flow confirmed `POST /api/tenants` runs with no user account or session in scope at all (tenant creation and user creation are two separate, unconnected steps in this app today), so there's no single "creating user" to assign Owner to at that point. **Net effect: a brand-new tenant's first real user has `role_id: null` until someone manually sets it in Supabase** — the same one-time manual step already required earlier in this project for backfilling existing tenants. Until that's done, `/dashboard/settings/roles` and every `can()`-gated route will correctly deny that user (since `none` is the only safe default for an unassigned role), which is expected, not a bug — just something to do once per new tenant until the signup flow is reworked to connect user creation to tenant creation.
+
+### Sidebar nav hiding by permission
+`Sidebar.tsx` hides workspace/tools nav items the caller's role has zero access to, rather than just relying on the API-level `can()` checks to reject actions after the fact — this was added specifically because API-level gating alone left every module fully visible (and its forms fully interactive up to the point of submission) even for roles with no access, which read as "the permission system isn't doing anything" from a user's perspective.
+- **`app/dashboard/layout.tsx`** resolves the caller's full permission map server-side: looks up `users.role_id`, then all matching `role_permissions` rows, and builds a `Record<ResourceKey, PermissionLevel>` defaulting every one of the 15 resources to `"none"` first (so a role with no `role_permissions` rows at all — or no `role_id` yet — safely hides everything gated, rather than crashing or defaulting open). Passed down through `DashboardShell` → `Sidebar` as a new `permissions` prop.
+- **`Sidebar.tsx`**: each nav item now declares a `resources: ResourceKey[] | null` — `null` means always visible (Overview), an array means the item shows if **any** of those resources is above `"none"` for the caller. "Food & menus" is the one item mapped to two resources (`food_supplies` for the Supplies tab, `curriculum` for the Menus tab) since a role could have access to just one of its two tabs; every other item maps to a single resource 1:1 with its module's primary permission key.
+- **Scope note (superseded below)**: this pass originally only hid sidebar navigation — hitting a gated page's URL directly (e.g. `/dashboard/staff` as Assistant) still rendered it in full, since nothing stopped the page itself from loading. That gap is closed by the page-level guards described next.
+
+### Page-level access guards (`AccessDenied`, `hasAnyAccess()`)
+Added after the sidebar-only pass turned out to be an easy bypass: typing a gated page's URL directly (or clicking a bookmark/stale link) still rendered the full page, since the sidebar hiding was cosmetic only — no server-side check backed it up. Every top-level dashboard page now calls a real guard before fetching or rendering any data.
+- **`lib/permissions/can.ts`** — added `hasAnyAccess(session, resource): Promise<boolean>`, a page-level sibling to `can()`. Returns `true` for any level except `"none"` (including `own_only`, since an own_only role should still reach the page and see whatever their own-scoped content ends up being — same logic `Sidebar.tsx` already used to decide visibility). Deliberately takes no `ownerCheckId`/action — a page-load check isn't scoped to a specific record the way a mutation's `can()` check is.
+- **`app/components/dashboard/AccessDenied.tsx`** — small shared "Access denied" card (`kh-card`, `ShieldOff` icon), rendered in place of the page's real content when the guard fails. Chosen over a redirect-to-`/dashboard` behavior specifically so the user gets a clear reason rather than a silent bounce.
+- **Gated pages** (each returns `<AccessDenied />` early, before any data fetch, if `hasAnyAccess()` is false): `staff` (`staff`), `families` (`families`), `classes` (`classes` — this page previously had **no session check at all**, relying purely on middleware; `getTenant()` was added alongside the guard), `documents` (`documents`), `calendar` (`calendar`), `billing` (`billing` — a pre-existing bug here mapped this page's guard to `"staff"` instead of `"billing"` and was missing a `redirect("/login")` fallback for a null session; both fixed), `messages` (`messages`), `food-menus/*` (`food_supplies` **or** `curriculum`, matching the sidebar's dual-resource rule for that module), `settings/*` (`settings`, gates the entire settings tree at once rather than mapping each of the ~13 sub-pages to its own precise resource — a deliberate scope call, since the sidebar already hides the whole "Settings" entry for `settings: none` and finer per-sub-page mapping, e.g. Contract Templates really being `billing`, was left as a smaller future refinement).
+- **Client-component layouts split into shell + guard**: `settings/layout.tsx` and `food-menus/layout.tsx` were both `"use client"` (they use `usePathname()` for active-tab highlighting), so the permission check — which needs server-side `supabaseAdmin` access — couldn't live inside them directly. Both were split: the original client component was renamed to `SettingsShell.tsx` / `FoodMenusShell.tsx` (unchanged internals), and a new server-component `layout.tsx` does the auth + `hasAnyAccess()` check, then renders the shell around `children`. `messages/page.tsx` is `"use client"` with no existing layout file at all, so a new `messages/layout.tsx` (server component) was added purely to hold the guard.
+- **Not gated**: `/dashboard/users` — an unlinked legacy prototype page (uses the old hardcoded-tenant `lib/db.ts` helper, not `UserService`) discovered while auditing every route under `app/dashboard/`. Left untouched at the user's request; still reachable by direct URL with no permission check if anyone knows to look for it.
+
+### Frontend
+- **`app/dashboard/settings/roles/PermissionMatrix.tsx`** — the one shared matrix component, used both as the editable surface (Roles & Permissions page) and read-only (`editable={false}`, Team & Access page) rather than building two components. Owner's column is always rendered as static badges regardless of the `editable` prop (`editable && !role.is_owner_role` per cell) — there's no code path that makes it interactive.
+- **`app/dashboard/settings/roles/page.tsx`** — full editable page: roles list with an auto-computed summary line (no stored description field), "+ Add role" gated by the caller's own `settings: full` permission (resolved by cross-referencing `GET /api/auth/me`'s `role_id` — a new field added to that route's response — against the fetched roles list, rather than adding a bespoke "can I do X" endpoint), batched "Save changes" (one PUT per dirty role), and the settings-lockout confirm guard.
+- **`app/dashboard/settings/team/page.tsx`** — its old hardcoded `ROLES`/`RESOURCES`/`MATRIX`/`CELL` mock constants and matrix JSX were deleted; now fetches `GET /api/roles` alongside its existing department/staff/location fetches and renders the same `PermissionMatrix` read-only, plus a "Manage roles & permissions →" link to the real page.
+
+### Assigning a role to a user (`EmploymentCard.tsx`, Staff detail page)
+Building the role/permission matrix and *assigning* a role to a person are two different surfaces — this is the second one, added after the user asked "how do I actually give someone a role?" and realized there was no UI for it (only `users.role_id` existed as a raw column, meant to be set manually in Supabase per the original scoping of this feature).
+
+- `users.role_id` is now exposed end-to-end: `User`/`UserById.user` types (`role_id: string | null`), `UserRepository.findById()` selects it, `updateUserSchema` accepts it (`z.string().uuid().nullable().optional()`), and both `UserService.create()` call sites (`create()` and `createFromSignup()`) explicitly pass `role_id: null` for new users — nobody is auto-assigned a role at signup.
+- **This is deliberately a separate field from the pre-existing `role` (free-text job title)** — same card, same form, but two distinct concepts: `role` is descriptive ("Lead teacher" as a title), `role_id` is the actual permission grant (an FK to `roles`). The UI labels the new one "Permissions role" with a tooltip explaining the distinction, specifically because the two are easy to conflate.
+- On the Employment card: view mode shows the assigned role's color dot + name (or "Not assigned"); edit mode shows a `<select>` of all tenant roles, plus a live summary line (`permissionSummary()`, reused from `PermissionMatrix.tsx`) previewing what that role grants before saving. Saves via the existing `PATCH /api/users/[id]` (same request as the `role`/`is_active` fields), and now calls `router.refresh()` on success — this card previously didn't refresh after save at all (a pre-existing gap fixed as a side effect, matching `PersonalCard.tsx`'s convention).
+- **Gated both client- and server-side**: the card fetches `GET /api/auth/me` + `GET /api/roles` to check whether the *caller's own* role has `settings: full`; if not, the field renders as a read-only badge instead of a `<select>`, and `role_id` is simply omitted from the PATCH body (not sent as `null`, which would've cleared it). Server-side, `PATCH /api/users/[id]` independently checks `can(session, "settings", "full")` whenever `role_id` is present in the request body, 403 otherwise — this is the first place outside the two original pilot routes that got a `can()` check, because leaving `role_id` assignable with zero server-side gating would have been a real privilege-escalation gap (anyone able to PATCH a user could set their own `role_id` to Owner).
+
+---
+
 ## Plan Constants (`lib/plans.ts`)
 
 Single source of truth for all plan data — imported by billing-plan page, PricingSection, FAQ, etc.
@@ -806,12 +920,20 @@ Informational page with 5 sections:
 5. **Right to erasure**: warning banner + pre-filled `mailto:privacy@kinderhub.io` GDPR Article 17 request; button becomes confirmation message after click
 
 ### Team & Access (`/dashboard/settings/team`)
-- Fetches `GET /api/departments`, `GET /api/users/with-department`, `GET /api/locations` in parallel
+- Fetches `GET /api/departments`, `GET /api/users/with-department`, `GET /api/locations`, `GET /api/roles` in parallel
 - **Department cards**: color-coded, show member count; click to filter staff table; "Add department" button
 - **Add Department modal**: name + location picker (locations from `/api/locations`); graceful notice if no locations exist; POSTs to `/api/departments`
 - **Staff table**: name + avatar initials, position, department, active/inactive badge, join date, link to profile
-- **Roles list**: 6 roles (Owner → Parent portal) with scope descriptions; external roles tagged
-- **Permission matrix**: 9 resources × 6 roles with color-coded Full/Edit/View/Own-only/None cells + legend
+- **Roles list + permission matrix**: live data from `GET /api/roles`, rendered via the shared `PermissionMatrix` component (`app/dashboard/settings/roles/PermissionMatrix.tsx`) in **read-only** mode (`editable={false}`) — replaced the original hardcoded 6-role/9-resource mock. "Manage roles & permissions →" links to the real editable page.
+
+### Roles & Permissions (`/dashboard/settings/roles`)
+See the dedicated **Roles & Permissions System** section below for the full backend design. This page:
+- Fetches `GET /api/roles` (all roles + their permissions, one query) and `GET /api/auth/me` (to resolve the caller's own `role_id` → whether they have `settings: full`, which gates editing)
+- **Roles list** (left): color dot, name, an `owner` tag on the Owner role, and an auto-generated summary line ("X full · Y edit · Z view · W own only") computed from that role's permissions client-side — no stored description field
+- **"+ Add role"** — hidden entirely unless the caller's own role has `full` on `settings`; opens a small modal (name + color swatch picker), POSTs `/api/roles`, new role starts with zero permission rows (all resources implicitly `none` until edited)
+- **Permission matrix** (right): same shared `PermissionMatrix` component, `editable={true}` — each non-Owner cell is a `<select>` of `none/view/edit/full/own_only`; the Owner column always renders as read-only badges (component enforces this internally via `editable && !role.is_owner_role`, so Owner can't be made interactive even if a caller somehow reaches the page)
+- **Save changes** — only appears once at least one cell changed; batches one `PUT /api/roles/[id]/permissions` request per **dirty role** (not per cell), sending that role's full permission array in one call
+- **Guard**: before saving, if the pending change would leave zero non-Owner roles with `full` on `settings`, shows a confirm dialog ("No other role will be able to manage Roles & Permissions after this change") before allowing the save through
 
 ---
 
@@ -987,7 +1109,8 @@ On submit: creates family → guardians → kids sequentially; then for each kid
 | Settings — Locations | `/dashboard/settings/locations` | Live (LocationService) | Yes |
 | Settings — Billing Plan | `/dashboard/settings/billing-plan` | Live (tenant_subscriptions + subscription_plans) | Yes |
 | Settings — Data & Privacy | `/dashboard/settings/data-privacy` | Informational + client-side CSV export | Partial |
-| Settings — Team | `/dashboard/settings/team` | Live (departments + users with-department) | Yes |
+| Settings — Team | `/dashboard/settings/team` | Live (departments + users with-department + RolesService, read-only matrix) | Yes |
+| Settings — Roles & Permissions | `/dashboard/settings/roles` | Live (RolesService) | Yes |
 | FAQ | `/faq` | Static | No |
 | Billing | `/dashboard/billing` | Mock | No |
 | Messages | `/dashboard/messages` | Mock | No |
@@ -1020,6 +1143,9 @@ On submit: creates family → guardians → kids sequentially; then for each kid
 18. **"Publish to parents" on Class Menus is decorative** — the mockup shows a toggle/pill implying parent-portal visibility, but `class_menus` has no supporting column for it. Left as a no-op in the UI rather than fabricating new schema; revisit if/when parent-portal visibility is actually scoped.
 19. **Food supply "Awaiting review" stat is hardcoded to 0** — there's no review-queue/flagging workflow persisted anywhere; low-confidence OCR rows are a per-save, in-modal concern only (never written to the DB), so nothing is actually "awaiting" anything yet. The stat card exists to match the mockup and is ready for a future review-queue feature.
 20. **`food_supply_items` has no `ON DELETE CASCADE`** — `FoodSuppliesService.delete()` explicitly deletes the item rows before deleting the parent `food_supplies` row to avoid orphaning them.
+21. **`users.role` (free text) still exists alongside the new `users.role_id` (FK)** — the Roles & Permissions system only added the nullable FK column; it deliberately did not touch the old column or backfill it. Until a tenant's users are manually migrated to `role_id`, `can()` treats them as having no role (`role_id IS NULL` → every permission check returns `false`) even though their old `role` string may look meaningful. This is an intentional, user-requested gap — not a bug — but worth knowing before wiring `can()` into more routes.
+22. **`app/api/tenants/route.ts` bypassed `TenantService.create()` entirely until the Roles feature fixed it** — it used to insert directly via `supabaseAdmin`. Fixed so the new role-seeding cascade actually runs on signup; flagged here because the `tenants`/`tenant_subscriptions` pair still uses an inconsistent PascalCase convention (`Name`, `Slug`, `Id`) that the rest of the app doesn't — not fully normalized in this pass.
+23. **`can()` does two fresh DB queries per call, not a JWT-cached lookup** — `SessionPayload` only carries the old `role: string`, not `role_id`, so `lib/permissions/can.ts` re-resolves `users.role_id` → `role_permissions.level` on every call rather than trusting anything in the token. Deliberate tradeoff: slightly more DB load per permission check, but role changes apply on the caller's very next request instead of waiting for token refresh.
 
 ---
 

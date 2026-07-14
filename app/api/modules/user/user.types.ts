@@ -8,6 +8,7 @@ export type User = {
   phone_number: string
   personal_number: string
   role: string
+  role_id: string | null
   created_at: string
   is_active: boolean
   date_of_birth: string

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getTenant } from "@/lib/get-tenant"
 import { ContractTemplatesService } from "@/app/api/modules/contract_templates/contract_templates.service"
 import { updateContractTemplateSchema } from "@/app/api/modules/contract_templates/contract_templates.validation"
+import { can } from "@/lib/permissions/can"
 import { ZodError } from "zod"
 
 type Params = { params: Promise<{ id: string }> }
@@ -21,11 +22,15 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
 export async function PATCH(req: NextRequest, { params }: Params) {
   try {
-    const { tenant_id } = await getTenant()
+    const session = await getTenant()
     const { id } = await params
+
+    const allowed = await can(session, "billing", "full")
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to edit contract templates" }, { status: 403 })
+
     const body = await req.json()
     const parsed = updateContractTemplateSchema.parse(body)
-    const template = await ContractTemplatesService.update(id, tenant_id, parsed)
+    const template = await ContractTemplatesService.update(id, session.tenant_id, parsed)
     return NextResponse.json(template)
   } catch (e) {
     if (e instanceof ZodError) return NextResponse.json({ error: e.issues[0]?.message ?? "Validation error" }, { status: 400 })
@@ -37,9 +42,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
   try {
-    const { tenant_id } = await getTenant()
+    const session = await getTenant()
     const { id } = await params
-    await ContractTemplatesService.delete(id, tenant_id)
+
+    const allowed = await can(session, "billing", "full")
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to delete contract templates" }, { status: 403 })
+
+    await ContractTemplatesService.delete(id, session.tenant_id)
     return new NextResponse(null, { status: 204 })
   } catch (e) {
     const status = e instanceof Error && e.message === "Unauthorized" ? 401

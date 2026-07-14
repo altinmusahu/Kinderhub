@@ -4,6 +4,7 @@ import { logActivity } from "@/lib/log-activity"
 import { UserService } from "@/app/api/modules/user/user.service"
 import { SalaryTrackingService } from "@/app/api/modules/salary_tracking/salary_tracking.service"
 import { createSalaryTrackingSchema } from "@/app/api/modules/salary_tracking/salary_tracking.validation"
+import { can } from "@/lib/permissions/can"
 import { ZodError } from "zod"
 
 type Params = { params: Promise<{ id: string }> }
@@ -27,6 +28,10 @@ export async function POST(req: NextRequest, { params }: Params) {
   try {
     const session = await getTenant()
     const { id } = await params
+
+    const allowed = await can(session, "staff", "full", id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to manage this staff member's salary" }, { status: 403 })
+
     const user = await UserService.getById(id, session.tenant_id)
 
     const parsed = createSalaryTrackingSchema.parse(await req.json())
@@ -44,9 +49,13 @@ export async function POST(req: NextRequest, { params }: Params) {
 
 export async function DELETE(req: NextRequest, { params }: Params) {
   try {
-    const { tenant_id } = await getTenant()
+    const session = await getTenant()
     const { id } = await params
-    await UserService.getById(id, tenant_id)
+
+    const allowed = await can(session, "staff", "full", id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to manage this staff member's salary" }, { status: 403 })
+
+    await UserService.getById(id, session.tenant_id)
 
     const { salaryId } = await req.json()
     if (!salaryId) return NextResponse.json({ error: "salaryId is required" }, { status: 400 })

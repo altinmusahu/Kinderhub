@@ -3,6 +3,7 @@ import { ZodError } from "zod"
 import { getTenant } from "@/lib/get-tenant"
 import { ClassHubPostsService } from "@/app/api/modules/class_hub_posts/class_hub_posts.service"
 import { createClassHubPostSchema } from "@/app/api/modules/class_hub_posts/class_hub_posts.validation"
+import { can } from "@/lib/permissions/can"
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -22,6 +23,10 @@ export async function POST(req: NextRequest, { params }: Params) {
   try {
     const session = await getTenant()
     const { id } = await params
+
+    const allowed = await can(session, "hub", "edit", id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to post to this class's hub" }, { status: 403 })
+
     const body = await req.json()
     const parsed = createClassHubPostSchema.parse({
       ...body,

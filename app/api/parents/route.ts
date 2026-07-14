@@ -2,11 +2,16 @@ import { NextRequest, NextResponse } from "next/server"
 import { getTenant } from "@/lib/get-tenant"
 import { logActivity } from "@/lib/log-activity"
 import { supabaseAdmin } from "@/lib/supabase-admin"
+import { can } from "@/lib/permissions/can"
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getTenant()
     const body = await req.json()
+
+    const allowed = await can(session, "families", "edit", body.family_id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to add parents to this family" }, { status: 403 })
+
     const { data, error } = await supabaseAdmin
       .from("parents")
       .insert({

@@ -40,7 +40,7 @@ function LoginForm() {
       return
     }
 
-    router.push("/dashboard/staff")
+    router.push("/dashboard")
   }
 
   return (

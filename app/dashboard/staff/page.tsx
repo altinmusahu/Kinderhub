@@ -9,6 +9,8 @@ import { redirect } from "next/navigation"
 import { avatarColor, initials } from "@/components/ui/helper"
 import { UserWithWorkTrackingAndDepartment } from "@/app/api/modules/user/user.types"
 import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
+import { AccessDenied } from "@/app/components/dashboard/AccessDenied"
+import { hasAnyAccess } from "@/lib/permissions/can"
 
 export default async function StaffPage() {
   const store = await cookies()
@@ -25,6 +27,9 @@ export default async function StaffPage() {
   }
 
   const { tenant_id } = session!
+
+  const allowed = await hasAnyAccess(session!, "staff")
+  if (!allowed) return <AccessDenied />
 
   const [users] = await Promise.all([
     UserService.getUsersWithWorkTrackingAndDepartment(tenant_id),

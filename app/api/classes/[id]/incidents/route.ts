@@ -3,6 +3,7 @@ import { ZodError } from "zod"
 import { getTenant } from "@/lib/get-tenant"
 import { IncidentsService } from "@/app/api/modules/incidents/incidents.service"
 import { createIncidentSchema } from "@/app/api/modules/incidents/incidents.validation"
+import { can } from "@/lib/permissions/can"
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -21,7 +22,11 @@ export async function GET(_req: NextRequest, { params }: Params) {
 export async function POST(req: NextRequest, { params }: Params) {
   try {
     const session = await getTenant()
-    await params
+    const { id } = await params
+
+    const allowed = await can(session, "incidents", "edit", { class_id: id })
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to report incidents for this class" }, { status: 403 })
+
     const body = await req.json()
     const parsed = createIncidentSchema.parse({
       ...body,

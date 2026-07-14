@@ -82,7 +82,7 @@ export default function DashboardPage() {
         {/* Heading */}
         <div className="kh-heading-row">
           <div>
-            <h1 className="kh-h1">Good morning, Nina.</h1>
+            <h1 className="kh-h1">Hello, Nina.</h1>
             <p className="kh-sub">Everything's on track. 3 items need your eye today.</p>
           </div>
           <div className="kh-pills-row">

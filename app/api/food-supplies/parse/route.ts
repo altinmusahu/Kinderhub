@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getTenant } from "@/lib/get-tenant"
 import { parseReceiptImage } from "@/app/api/modules/food_supplies/food_supplies.parser"
+import { can } from "@/lib/permissions/can"
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"])
 
 export async function POST(req: NextRequest) {
   try {
-    await getTenant()
+    const session = await getTenant()
+
+    const allowed = await can(session, "food_supplies", "edit")
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to scan receipts" }, { status: 403 })
 
     const formData = await req.formData()
     const file = formData.get("file") as File | null

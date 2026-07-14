@@ -4,6 +4,9 @@ import AddClassModal from "@/components/ui/AddClassModal"
 import { ClassesService } from "@/app/api/modules/classes/classes.service"
 import type { ClassWithRelations } from "@/app/api/modules/classes/classes.types"
 import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
+import { AccessDenied } from "@/app/components/dashboard/AccessDenied"
+import { hasAnyAccess } from "@/lib/permissions/can"
+import { getTenant } from "@/lib/get-tenant"
 
 function initials(name: string | null): string {
   if (!name) return "?"
@@ -136,6 +139,10 @@ function ClassCard({ cls, color }: { cls: ClassWithRelations; color: string }) {
 }
 
 export default async function ClassesPage() {
+  const session = await getTenant()
+  const allowed = await hasAnyAccess(session, "classes")
+  if (!allowed) return <AccessDenied />
+
   let classes: ClassWithRelations[] = []
   try {
     classes = await ClassesService.getAll()

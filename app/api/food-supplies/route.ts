@@ -4,6 +4,7 @@ import { getTenant } from "@/lib/get-tenant"
 import { logActivity } from "@/lib/log-activity"
 import { FoodSuppliesService } from "@/app/api/modules/food_supplies/food_supplies.service"
 import { createFoodSupplySchema } from "@/app/api/modules/food_supplies/food_supplies.validation"
+import { can } from "@/lib/permissions/can"
 
 export async function GET() {
   try {
@@ -19,6 +20,9 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await getTenant()
+
+    const allowed = await can(session, "food_supplies", "edit")
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to log food supplies" }, { status: 403 })
 
     const formData = await req.formData()
     const file = formData.get("file") as File | null
