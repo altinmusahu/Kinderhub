@@ -35,6 +35,13 @@ export async function hasAnyAccess(session: SessionPayload, resource: ResourceKe
   return level !== "none"
 }
 
+// Exposes the caller's raw level for a resource, for pages that need to make finer UI
+// decisions than a plain yes/no (e.g. hide row-level "Open"/"Edit" actions on "view",
+// but keep them on "edit"/"full"/"own_only").
+export async function getMyPermissionLevel(session: SessionPayload, resource: ResourceKey): Promise<PermissionLevel> {
+  return getPermissionLevel(session, resource)
+}
+
 export async function can(
   session: SessionPayload,
   resource: ResourceKey,

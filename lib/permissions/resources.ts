@@ -1,6 +1,5 @@
 export const RESOURCES = [
   { key: "families", label: "Families" },
-  { key: "children", label: "Children" },
   { key: "staff", label: "Staff" },
   { key: "classes", label: "Classes" },
   { key: "attendance", label: "Attendance" },

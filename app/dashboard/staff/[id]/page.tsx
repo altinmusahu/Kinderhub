@@ -10,6 +10,8 @@ import { avatarColor, initials } from "@/components/ui/helper"
 import EmployeeTabs from "./EmployeeTabs"
 import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
 import { ProfileAvatar } from "./components/ProfileAvatar"
+import { AccessDenied } from "@/app/components/dashboard/AccessDenied"
+import { can } from "@/lib/permissions/can"
 
 export default async function EmployeePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -31,6 +33,10 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
   }
 
   if (!user) return notFound()
+
+  const canView = await can(session, "staff", "view", id)
+  if (!canView) return <AccessDenied />
+  const canEdit = await can(session, "staff", "edit", id)
 
   const activeSalary = await SalaryTrackingService.getActiveByUser(id)
   const profilePicture = await UserProfilesService.getByUser(id)
@@ -172,7 +178,7 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
         </div>
 
         {/* All tabs + content — client component */}
-        <EmployeeTabs user={user} userId={id} />
+        <EmployeeTabs user={user} userId={id} canEdit={canEdit} />
       </div>
     </div>
   )

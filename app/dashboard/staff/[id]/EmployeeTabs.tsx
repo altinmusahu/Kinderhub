@@ -28,7 +28,7 @@ function OverviewTab({ user, userId }: { user: UserById; userId: string }) {
   )
 }
 
-export default function EmployeeTabs({ user, userId }: { user: UserById; userId: string }) {
+export default function EmployeeTabs({ user, userId, canEdit }: { user: UserById; userId: string; canEdit: boolean }) {
   const [active, setActive] = useState<Tab>("Overview")
 
   return (
@@ -58,7 +58,7 @@ export default function EmployeeTabs({ user, userId }: { user: UserById; userId:
       {active === "Overview"  && <OverviewTab  user={user} userId={userId} />}
       {active === "Salary"    && <SalaryTab    userId={userId} />}
       {active === "Schedule"  && <ScheduleTab  userId={userId} />}
-      {active === "Documents" && <DocumentsTab userId={userId} title="Employees files" />}
+      {active === "Documents" && <DocumentsTab userId={userId} title="Employees files" canEdit={canEdit} />}
     </>
   )
 }

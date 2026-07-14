@@ -13,7 +13,7 @@ function fileExt(url: string) {
   return fileName(url).split(".").pop()?.toUpperCase() ?? "FILE"
 }
 
-export function DocumentsTab({ userId, familyId, title }: { userId?: string, familyId?: string, title: string }) {
+export function DocumentsTab({ userId, familyId, title, canEdit = true }: { userId?: string, familyId?: string, title: string, canEdit?: boolean }) {
   const [docs, setDocs] = useState<DocRow[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [loaded, setLoaded] = useState(false)
@@ -101,14 +101,16 @@ export function DocumentsTab({ userId, familyId, title }: { userId?: string, fam
           <h2 style={{ fontFamily: "var(--kh-font-serif)", fontSize: 22, margin: 0 }}>Documents</h2>
           <p style={{ fontSize: 13, color: "var(--kh-ink-400)", margin: "4px 0 0" }}>{title} and attachments</p>
         </div>
-        <div>
-          <input ref={inputRef} type="file" id="doc-upload" style={{ display: "none" }} onChange={handleUpload} />
-          <label htmlFor="doc-upload">
-            <span className="kh-btn kh-btn--primary" style={{ fontSize: 12.5, cursor: "pointer", display: "inline-block" }}>
-              {uploading ? "Uploading…" : "+ Upload document"}
-            </span>
-          </label>
-        </div>
+        {canEdit && (
+          <div>
+            <input ref={inputRef} type="file" id="doc-upload" style={{ display: "none" }} onChange={handleUpload} />
+            <label htmlFor="doc-upload">
+              <span className="kh-btn kh-btn--primary" style={{ fontSize: 12.5, cursor: "pointer", display: "inline-block" }}>
+                {uploading ? "Uploading…" : "+ Upload document"}
+              </span>
+            </label>
+          </div>
+        )}
       </div>
 
       {error && <p style={{ fontSize: 12, color: "#D2592F", marginBottom: 12 }}>{error}</p>}
@@ -148,14 +150,16 @@ export function DocumentsTab({ userId, familyId, title }: { userId?: string, fam
               <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="kh-btn" style={{ fontSize: 12, textDecoration: "none", flexShrink: 0 }}>
                 View
               </a>
-              <button
-                className="kh-btn"
-                style={{ fontSize: 12, color: "#D2592F", borderColor: "#F0C4A8", flexShrink: 0 }}
-                onClick={() => handleDelete(doc)}
-                disabled={deleting === doc.id}
-              >
-                {deleting === doc.id ? "…" : "Delete"}
-              </button>
+              {canEdit && (
+                <button
+                  className="kh-btn"
+                  style={{ fontSize: 12, color: "#D2592F", borderColor: "#F0C4A8", flexShrink: 0 }}
+                  onClick={() => handleDelete(doc)}
+                  disabled={deleting === doc.id}
+                >
+                  {deleting === doc.id ? "…" : "Delete"}
+                </button>
+              )}
             </div>
           ))}
         </div>

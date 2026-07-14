@@ -16,7 +16,6 @@ export const DEFAULT_ROLES: DefaultRole[] = [
     is_owner_role: true,
     permissions: {
       families: "full",
-      children: "full",
       staff: "full",
       classes: "full",
       attendance: "full",
@@ -39,7 +38,6 @@ export const DEFAULT_ROLES: DefaultRole[] = [
     is_owner_role: false,
     permissions: {
       families: "full",
-      children: "full",
       staff: "full",
       classes: "full",
       attendance: "full",
@@ -61,8 +59,7 @@ export const DEFAULT_ROLES: DefaultRole[] = [
     is_system: true,
     is_owner_role: false,
     permissions: {
-      families: "own_only",   // view (own_only)
-      children: "own_only",   // edit (own_only)
+      families: "own_only",   // view (own_only) — covers children too, no separate resource
       staff: "none",
       classes: "own_only",    // full (own_only)
       attendance: "own_only", // full (own_only)
@@ -84,8 +81,7 @@ export const DEFAULT_ROLES: DefaultRole[] = [
     is_system: true,
     is_owner_role: false,
     permissions: {
-      families: "own_only",   // view (own_only)
-      children: "own_only",   // view (own_only)
+      families: "own_only",   // view (own_only) — covers children too, no separate resource
       staff: "none",
       classes: "own_only",    // edit (own_only)
       attendance: "own_only", // edit (own_only)
@@ -108,7 +104,6 @@ export const DEFAULT_ROLES: DefaultRole[] = [
     is_owner_role: false,
     permissions: {
       families: "none",
-      children: "none",
       staff: "own_only",      // view (own_only)
       classes: "none",
       attendance: "none",

@@ -23,13 +23,13 @@ function age(dob: string) {
   return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25))
 }
 
-function ChildrenCard({ kids, familyId }: { kids: FamilyKid[]; familyId: string }) {
+function ChildrenCard({ kids, familyId, canEdit }: { kids: FamilyKid[]; familyId: string; canEdit: boolean }) {
   return (
     <div className="kh-card" style={{ padding: "18px 20px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
         <span className="kh-card-title">Children</span>
         <span style={{ fontSize: 11.5, color: "var(--kh-ink-400)" }}>{kids.length} enrolled</span>
-        <AddKidButton familyId={familyId} class_id={null} />
+        {canEdit && <AddKidButton familyId={familyId} class_id={null} />}
       </div>
       {kids.length === 0 ? (
         <p style={{ fontSize: 13, color: "var(--kh-ink-400)", margin: 0 }}>No children added yet.</p>
@@ -174,10 +174,10 @@ function BillingCard({ family }: { family: FamilyDetail }) {
   )
 }
 
-function OverviewTab({ family }: { family: FamilyDetail }) {
+function OverviewTab({ family, canEdit }: { family: FamilyDetail; canEdit: boolean }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-      <ChildrenCard kids={family.kids} familyId={family.id} />
+      <ChildrenCard kids={family.kids} familyId={family.id} canEdit={canEdit} />
       <ParentsCard parents={family.parents} familyId={family.id} showButton={false} />
       <BillingCard family={family} />
       <div className="kh-card" style={{ padding: "18px 20px" }}>
@@ -252,7 +252,7 @@ function ActivityTab({ familyId }: { familyId: string }) {
   )
 }
 
-export default function FamilyTabs({ family }: { family: FamilyDetail }) {
+export default function FamilyTabs({ family, canEdit }: { family: FamilyDetail; canEdit: boolean }) {
   const [tab, setTab] = useState<Tab>("Overview")
 
   return (
@@ -284,9 +284,9 @@ export default function FamilyTabs({ family }: { family: FamilyDetail }) {
 
       {/* Tab body */}
       <div style={{ padding: "20px 28px" }}>
-        {tab === "Overview" && <OverviewTab family={family} />}
-        {tab === "Documents" && <DocumentsTab familyId={family.id} title="Family documents" />}
-        {tab === "Parents" && <ParentsCard parents={family.parents} familyId={family.id} showButton={true} />}
+        {tab === "Overview" && <OverviewTab family={family} canEdit={canEdit} />}
+        {tab === "Documents" && <DocumentsTab familyId={family.id} title="Family documents" canEdit={canEdit} />}
+        {tab === "Parents" && <ParentsCard parents={family.parents} familyId={family.id} showButton={canEdit} />}
         {tab === "Activity" && <ActivityTab familyId={family.id} />}
       </div>
     </>

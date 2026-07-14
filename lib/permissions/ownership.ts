@@ -88,8 +88,6 @@ const OWNERSHIP_CHECKERS: Partial<Record<ResourceKey, OwnershipChecker>> = {
 
   families: async (session, arg) => isFamilyInOwnClass(session, asId(arg)),
 
-  children: async (session, arg) => isKidInOwnClass(session, asId(arg)),
-
   staff: async (session, arg) => asId(arg) === session.sub,
 
   // documents accepts either an existing document's id (look up its subject), or — for upload

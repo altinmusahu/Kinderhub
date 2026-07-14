@@ -9,7 +9,7 @@ import AddFamilyModal from "@/components/ui/AddFamilyModal"
 import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
 import ExportFamiliesButton from "@/app/components/dashboard/ExportFamiliesButton"
 import { AccessDenied } from "@/app/components/dashboard/AccessDenied"
-import { hasAnyAccess } from "@/lib/permissions/can"
+import { hasAnyAccess, getMyPermissionLevel } from "@/lib/permissions/can"
 
 const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
   Active:   { bg: "#E8F5EC", color: "#3A8C50" },
@@ -26,21 +26,29 @@ function familyInitials(name: string) {
   return name.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase()
 }
 
-const columns: Column<FamilyWithDetails>[] = [
+function buildColumns(canDrillDown: boolean): Column<FamilyWithDetails>[] {
+  return [
   {
     key: "family",
     header: "Family",
     cell: (f) => {
       const ac = avatarColor(f.id)
-      return (
-        <Link href={`/dashboard/families/${f.id}`} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10 }}>
+      const inner = (
+        <>
           <span className="kh-avatar" style={{ background: ac + "22", color: ac, fontSize: 10, flexShrink: 0 }}>
             {familyInitials(f.name)}
           </span>
           <div>
             <div style={{ fontWeight: 600, fontSize: 13, color: "var(--kh-ink-900)" }}>{f.name}</div>
           </div>
+        </>
+      )
+      return canDrillDown ? (
+        <Link href={`/dashboard/families/${f.id}`} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10 }}>
+          {inner}
         </Link>
+      ) : (
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>{inner}</div>
       )
     },
   },
@@ -103,7 +111,7 @@ const columns: Column<FamilyWithDetails>[] = [
   {
     key: "actions",
     header: "",
-    cell: (s) => (
+    cell: (s: FamilyWithDetails) => (
       <Link
         href={`/dashboard/families/${s.id}`}
         style={{
@@ -114,8 +122,9 @@ const columns: Column<FamilyWithDetails>[] = [
         Open →
       </Link>
     ),
-  }
-]
+  },
+  ]
+}
 
 export default async function FamiliesPage() {
   const store = await cookies()
@@ -127,6 +136,12 @@ export default async function FamiliesPage() {
 
   const allowed = await hasAnyAccess(session, "families")
   if (!allowed) return <AccessDenied />
+
+  const level = await getMyPermissionLevel(session, "families")
+  const canDrillDown = level !== "view"
+  const canCreate = level === "edit" || level === "full"
+  const canExport = level === "edit" || level === "full"
+  const columns = buildColumns(canDrillDown)
 
   const families = await FamiliesService.getAllWithDetails(tenant_id)
 
@@ -147,8 +162,8 @@ export default async function FamiliesPage() {
           </nav>
         </div>
         <div className="kh-topbar-right">
-          <ExportFamiliesButton />
-          <AddFamilyModal />
+          {canExport && <ExportFamiliesButton /> }
+          {canCreate && <AddFamilyModal />}
         </div>
       </header>
 

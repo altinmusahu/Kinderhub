@@ -5,7 +5,7 @@ import { ClassesService } from "@/app/api/modules/classes/classes.service"
 import type { ClassWithRelations } from "@/app/api/modules/classes/classes.types"
 import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
 import { AccessDenied } from "@/app/components/dashboard/AccessDenied"
-import { hasAnyAccess } from "@/lib/permissions/can"
+import { hasAnyAccess, getMyPermissionLevel } from "@/lib/permissions/can"
 import { getTenant } from "@/lib/get-tenant"
 
 function initials(name: string | null): string {
@@ -150,6 +150,15 @@ export default async function ClassesPage() {
     // renders empty state below
   }
 
+  const level = await getMyPermissionLevel(session, "classes")
+  if (level === "own_only") {
+    classes = classes.filter((c) => c.lead_user_id === session.sub || c.assistant_user_id === session.sub)
+  }
+
+  // Creating a brand-new class requires "full" — there's no existing record for own_only
+  // to scope against yet, matching the POST /api/classes route's own can() check.
+  const canCreate = level === "full"
+
   const totalEnrolled = classes.reduce((sum, c) => sum + c.enrolled_count, 0)
   const totalWaitlist = classes.reduce((sum, c) => sum + c.waitlist_count, 0)
 
@@ -169,7 +178,7 @@ export default async function ClassesPage() {
             <CalendarDays size={13} /> <span className="kh-btn-label">Week view</span>
           </button>
         </div> */}
-        <AddClassModal />
+        {canCreate && <AddClassModal />}
       </header>
 
       <div className="kh-content">

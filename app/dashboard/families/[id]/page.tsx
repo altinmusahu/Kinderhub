@@ -7,6 +7,8 @@ import { avatarColor } from "@/components/ui/helper"
 import FamilyTabs from "./FamilyTabs"
 import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
 import { KhTooltip } from "@/components/ui/KhTooltip"
+import { AccessDenied } from "@/app/components/dashboard/AccessDenied"
+import { can } from "@/lib/permissions/can"
 
 function familyInitials(name: string) {
   return name.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase()
@@ -33,6 +35,10 @@ export default async function FamilyPage({ params }: { params: Promise<{ id: str
   } catch {
     return notFound()
   }
+
+  const canView = await can(session, "families", "view", id)
+  if (!canView) return <AccessDenied />
+  const canEdit = await can(session, "families", "edit", id)
 
   const color = avatarColor(family.id)
   const sc = STATUS_COLORS[family.status] ?? STATUS_COLORS.Active
@@ -168,7 +174,7 @@ export default async function FamilyPage({ params }: { params: Promise<{ id: str
         </div>
 
         {/* Tabs — client */}
-        <FamilyTabs family={family} />
+        <FamilyTabs family={family} canEdit={canEdit} />
       </div>
     </div>
   )

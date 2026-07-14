@@ -11,6 +11,8 @@ import ClassTabs from "./ClassTabs"
 import TakeAttendanceButton from "./TakeAttendanceButton"
 import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
 import { KhTooltip } from "@/components/ui/KhTooltip"
+import { AccessDenied } from "@/app/components/dashboard/AccessDenied"
+import { can } from "@/lib/permissions/can"
 
 // ── KPI ring ─────────────────────────────────────────────────
 
@@ -65,8 +67,9 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
 
   // Step 1: auth — let this throw to middleware if unauthorized
   let tenant_id: string
+  let session: Awaited<ReturnType<typeof getTenant>>
   try {
-    const session = await getTenant()
+    session = await getTenant()
     tenant_id = session.tenant_id
   } catch {
     return (
@@ -82,6 +85,11 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
     cls = await ClassesService.getById(id)
   } catch {
     // DB or network error — cls stays null
+  }
+
+  if (cls) {
+    const canView = await can(session, "classes", "view", id)
+    if (!canView) return <AccessDenied />
   }
 
   if (!cls) {
