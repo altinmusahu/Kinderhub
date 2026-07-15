@@ -18,9 +18,10 @@ export const TenantRepository = {
     return data
   },
 
+  // Signup happens before any user session exists, so tenant creation must go through the
+  // service-role client — there's no authenticated cookie for RLS to check against yet.
   async create(payload: CreateTenantDto): Promise<Tenant> {
-    const supabase = await client()
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("tenants")
       .insert([payload])
       .select()
@@ -40,9 +41,10 @@ export const TenantRepository = {
     return data
   },
 
+  // Used to roll back a just-created tenant if role seeding fails, in the same
+  // pre-auth signup context as create() — no session for RLS to check against yet.
   async delete(id: string): Promise<void> {
-    const supabase = await client()
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from("tenants")
       .delete()
       .eq("Id", id)
