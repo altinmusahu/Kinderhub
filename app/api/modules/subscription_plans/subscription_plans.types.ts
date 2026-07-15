@@ -4,6 +4,8 @@ export type SubscriptionPlan = {
   Name: string
   yearly_price: number
   is_active: boolean
+  stripe_product_id: string | null
+  stripe_price_id: string | null
 }
 
 export type CreateSubscriptionPlanDto = Omit<SubscriptionPlan, "id">

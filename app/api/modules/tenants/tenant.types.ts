@@ -3,6 +3,7 @@ export type Tenant = {
   Name: string
   Slug: string
   CreatedAt: string
+  stripe_customer_id: string | null
 }
 
 export type CreateTenantDto = {

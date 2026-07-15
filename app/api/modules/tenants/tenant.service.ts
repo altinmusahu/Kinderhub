@@ -29,4 +29,14 @@ export const TenantService = {
 
     return tenant
   },
+
+  async getByIdAsAdmin(id: string): Promise<Tenant> {
+    const tenant = await TenantRepository.findByIdAsAdmin(id)
+    if (!tenant) throw new Error("Tenant not found")
+    return tenant
+  },
+
+  async setStripeCustomerIdAsAdmin(id: string, stripeCustomerId: string): Promise<void> {
+    return TenantRepository.setStripeCustomerIdAsAdmin(id, stripeCustomerId)
+  },
 }

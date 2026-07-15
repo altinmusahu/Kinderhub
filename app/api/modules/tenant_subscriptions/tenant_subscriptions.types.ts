@@ -8,6 +8,8 @@ export type TenantSubscription = {
   price_at_purchase: number
   auto_renew: boolean
   created_at: string
+  stripe_checkout_session_id: string | null
+  stripe_subscription_id: string | null
 }
 
 export type TenantSubscriptionWithPlan = TenantSubscription & {

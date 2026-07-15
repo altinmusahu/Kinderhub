@@ -102,23 +102,22 @@ export default function SubscribeForm({ planId, planName, yearlyPrice }: Props) 
     setSubLoading(true)
 
     try {
-      const res = await fetch("/api/tenant_subscriptions", {
+      const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ TenantId: tenantId, PlanId: planId, AutoRenew: autoRenew }),
+        body: JSON.stringify({ tenant_id: tenantId, plan_id: planId, auto_renew: autoRenew }),
       })
 
       const json = await res.json()
 
       if (!res.ok) {
-        setSubErrors({ general: json.message ?? "Failed to create subscription" })
+        setSubErrors({ general: json.message ?? "Failed to start checkout" })
         return
       }
 
-      setStep("success")
+      window.location.href = json.url
     } catch {
       setSubErrors({ general: "Network error. Please try again." })
-    } finally {
       setSubLoading(false)
     }
   }
@@ -244,7 +243,7 @@ export default function SubscribeForm({ planId, planName, yearlyPrice }: Props) 
             className="flex-2 flex-grow inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 font-semibold text-white hover:bg-indigo-700 transition-colors disabled:opacity-60"
           >
             {subLoading && <Spinner size="sm" />}
-            {subLoading ? "Processing…" : "Confirm subscription"}
+            {subLoading ? "Redirecting to payment…" : "Continue to payment"}
           </button>
         </div>
       </form>

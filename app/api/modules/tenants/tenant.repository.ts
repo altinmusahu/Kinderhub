@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
+import { supabaseAdmin } from "@/lib/supabase-admin"
 import type { CreateTenantDto, Tenant } from "./tenant.types"
 
 async function client() {
@@ -46,5 +47,33 @@ export const TenantRepository = {
       .delete()
       .eq("Id", id)
     if (error) throw new Error(error.message)
-  }
+  },
+
+  async setStripeCustomerId(id: string, stripeCustomerId: string): Promise<void> {
+    const supabase = await client()
+    const { error } = await supabase
+      .from("tenants")
+      .update({ stripe_customer_id: stripeCustomerId })
+      .eq("Id", id)
+    if (error) throw new Error(error.message)
+  },
+
+  // Admin-scoped variant for contexts with no user session (e.g. Stripe webhooks).
+  async setStripeCustomerIdAsAdmin(id: string, stripeCustomerId: string): Promise<void> {
+    const { error } = await supabaseAdmin
+      .from("tenants")
+      .update({ stripe_customer_id: stripeCustomerId })
+      .eq("Id", id)
+    if (error) throw new Error(error.message)
+  },
+
+  async findByIdAsAdmin(id: string): Promise<Tenant | null> {
+    const { data, error } = await supabaseAdmin
+      .from("tenants")
+      .select("*")
+      .eq("Id", id)
+      .maybeSingle()
+    if (error) throw new Error(error.message)
+    return data
+  },
 }
