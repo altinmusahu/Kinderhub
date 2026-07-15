@@ -124,7 +124,7 @@ function AddItemRow({
   )
 }
 
-export default function ChecklistTab({ classId }: { classId: string }) {
+export default function ChecklistTab({ classId, readOnly = false, canDelete = false }: { classId: string; readOnly?: boolean; canDelete?: boolean }) {
   const [items, setItems] = useState<ClassChecklistItem[] | null>(null)
   const [progress, setProgress] = useState<KidChecklistProgress[]>([])
   const [loaded, setLoaded] = useState(false)
@@ -175,12 +175,14 @@ export default function ChecklistTab({ classId }: { classId: string }) {
             <p style={{ fontSize: 13, color: "var(--kh-ink-400)", textAlign: "center", margin: "0 0 4px" }}>
               No checklist items yet.
             </p>
-            <AddItemRow classId={classId} existingCategories={categories} onAdded={(item) => setItems((prev) => [...(prev ?? []), item])} />
+            {!readOnly && <AddItemRow classId={classId} existingCategories={categories} onAdded={(item) => setItems((prev) => [...(prev ?? []), item])} />}
           </div>
         ) : (
-          <div className="kh-card" style={{ padding: "12px 16px" }}>
-            <AddItemRow classId={classId} existingCategories={categories} onAdded={(item) => setItems((prev) => [...(prev ?? []), item])} />
-          </div>
+          !readOnly && (
+            <div className="kh-card" style={{ padding: "12px 16px" }}>
+              <AddItemRow classId={classId} existingCategories={categories} onAdded={(item) => setItems((prev) => [...(prev ?? []), item])} />
+            </div>
+          )
         )}
         {categories.map((cat) => {
             const rows = items.filter((i) => i.category === cat)
@@ -203,12 +205,14 @@ export default function ChecklistTab({ classId }: { classId: string }) {
                       ) : (
                         <span style={{ fontSize: 11, color: "var(--kh-ink-400)", background: "var(--kh-ink-50)", borderRadius: 999, padding: "2px 8px" }}>Optional</span>
                       )}
-                      <button onClick={() => deleteItem(r.id)} disabled={deletingId === r.id} title="Remove item" style={{ background: "none", border: "none", color: "var(--kh-ink-300)", cursor: deletingId === r.id ? "not-allowed" : "pointer", display: "flex" }}>
-                        {deletingId === r.id ? <Spinner size="sm" /> : <Trash2 size={13} />}
-                      </button>
+                      {canDelete && (
+                        <button onClick={() => deleteItem(r.id)} disabled={deletingId === r.id} title="Remove item" style={{ background: "none", border: "none", color: "var(--kh-ink-300)", cursor: deletingId === r.id ? "not-allowed" : "pointer", display: "flex" }}>
+                          {deletingId === r.id ? <Spinner size="sm" /> : <Trash2 size={13} />}
+                        </button>
+                      )}
                     </div>
                   ))}
-                  <AddItemRow classId={classId} category={cat} existingCategories={categories} onAdded={(item) => setItems((prev) => [...(prev ?? []), item])} />
+                  {!readOnly && <AddItemRow classId={classId} category={cat} existingCategories={categories} onAdded={(item) => setItems((prev) => [...(prev ?? []), item])} />}
                 </div>
               </div>
             )

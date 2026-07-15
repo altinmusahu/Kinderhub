@@ -14,7 +14,7 @@ export const ClassHubPostsService = {
     return ClassHubPostsRepository.update(id, tenantId, authorId, input)
   },
 
-  async delete(id: string, tenantId: string, authorId: string): Promise<void> {
-    return ClassHubPostsRepository.delete(id, tenantId, authorId)
+  async delete(id: string, tenantId: string): Promise<void> {
+    return ClassHubPostsRepository.delete(id, tenantId)
   },
 }

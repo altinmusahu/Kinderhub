@@ -31,11 +31,15 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 export async function DELETE(_req: NextRequest, { params }: Params) {
   try {
     const session = await getTenant()
-    const { postId } = await params
-    await ClassHubPostsService.delete(postId, session.tenant_id, session.sub)
+    const { id, postId } = await params
+
+    const allowed = await can(session, "hub", "full", id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to delete posts in this class's hub" }, { status: 403 })
+
+    await ClassHubPostsService.delete(postId, session.tenant_id)
     return new NextResponse(null, { status: 204 })
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    return NextResponse.json({ error: "You can only delete your own posts" }, { status: 403 })
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to delete post" }, { status: 500 })
   }
 }

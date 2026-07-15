@@ -9,9 +9,13 @@ type Params = { params: Promise<{ id: string; curriculumId: string }> }
 
 export async function GET(_req: NextRequest, { params }: Params) {
   try {
-    const { tenant_id } = await getTenant()
-    const { curriculumId } = await params
-    const items = await ClassCurriculumItemsService.getByCurriculumId(tenant_id, curriculumId)
+    const session = await getTenant()
+    const { id, curriculumId } = await params
+
+    const allowed = await can(session, "curriculum", "view", id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to view this class's curriculum" }, { status: 403 })
+
+    const items = await ClassCurriculumItemsService.getByCurriculumId(session.tenant_id, curriculumId)
     return NextResponse.json(items)
   } catch (error) {
     const status = error instanceof Error && error.message === "Unauthorized" ? 401 : 500

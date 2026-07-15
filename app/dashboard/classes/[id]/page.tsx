@@ -87,9 +87,31 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
     // DB or network error — cls stays null
   }
 
+  let canViewAttendance = false
+  let canEditAttendance = false
+  let canViewIncidents = false
+  let canEditIncidents = false
+  let canDeleteIncidents = false
+  let canViewCurriculum = false
+  let canEditCurriculum = false
+  let canDeleteCurriculum = false
+  let canViewHub = false
+  let canEditHub = false
+  let canDeleteHub = false
   if (cls) {
     const canView = await can(session, "classes", "view", id)
     if (!canView) return <AccessDenied />
+    canViewAttendance = await can(session, "attendance", "view", id)
+    canEditAttendance = await can(session, "attendance", "edit", id)
+    canViewIncidents = await can(session, "incidents", "view", { class_id: id })
+    canEditIncidents = await can(session, "incidents", "edit", { class_id: id })
+    canDeleteIncidents = await can(session, "incidents", "full", { class_id: id })
+    canViewCurriculum = await can(session, "curriculum", "view", id)
+    canEditCurriculum = await can(session, "curriculum", "edit", id)
+    canDeleteCurriculum = await can(session, "curriculum", "full", id)
+    canViewHub = await can(session, "hub", "view", id)
+    canEditHub = await can(session, "hub", "edit", id)
+    canDeleteHub = await can(session, "hub", "full", id)
   }
 
   if (!cls) {
@@ -142,7 +164,7 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
           <button className="kh-btn" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5 }}>
             <Mail size={13} /> <span className="kh-btn-label">Message room</span>
           </button>
-          <TakeAttendanceButton classId={id} className={cls.name} />
+          {canViewAttendance && <TakeAttendanceButton classId={id} className={cls.name} readOnly={!canEditAttendance} />}
         </div>
       </header>
 
@@ -186,7 +208,21 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
       </div>
 
       {/* Tabs + content (client component for interactivity) */}
-      <ClassTabs cls={cls} roster={roster} waitlist={waitlist} classId={id} />
+      <ClassTabs
+        cls={cls}
+        roster={roster}
+        waitlist={waitlist}
+        classId={id}
+        canViewIncidents={canViewIncidents}
+        canEditIncidents={canEditIncidents}
+        canDeleteIncidents={canDeleteIncidents}
+        canViewCurriculum={canViewCurriculum}
+        canEditCurriculum={canEditCurriculum}
+        canDeleteCurriculum={canDeleteCurriculum}
+        canViewHub={canViewHub}
+        canEditHub={canEditHub}
+        canDeleteHub={canDeleteHub}
+      />
     </div>
   )
 }

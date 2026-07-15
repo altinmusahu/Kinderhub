@@ -4,6 +4,7 @@ import { logActivity } from "@/lib/log-activity"
 import { exportToExcelBuffer, type ExcelColumn } from "@/lib/excel-export"
 import { FoodSuppliesService } from "@/app/api/modules/food_supplies/food_supplies.service"
 import type { FoodSupplyWithDetails } from "@/app/api/modules/food_supplies/food_supplies.types"
+import { can } from "@/lib/permissions/can"
 
 const SUPPLY_COLUMNS: ExcelColumn<FoodSupplyWithDetails>[] = [
   { header: "Date", width: 14, value: (s) => s.purchase_date },
@@ -17,6 +18,10 @@ const SUPPLY_COLUMNS: ExcelColumn<FoodSupplyWithDetails>[] = [
 export async function GET() {
   try {
     const session = await getTenant()
+
+    const allowed = await can(session, "food_supplies", "view")
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to view food supplies" }, { status: 403 })
+
     const supplies = await FoodSuppliesService.getAllForTenant(session.tenant_id)
     const buffer = await exportToExcelBuffer(supplies, SUPPLY_COLUMNS, { sheetName: "Food supplies", title: "Kinderhub — Food Supplies" })
 

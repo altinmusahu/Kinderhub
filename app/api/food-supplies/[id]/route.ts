@@ -8,9 +8,13 @@ type Params = { params: Promise<{ id: string }> }
 
 export async function GET(_req: NextRequest, { params }: Params) {
   try {
-    const { tenant_id } = await getTenant()
+    const session = await getTenant()
     const { id } = await params
-    const supply = await FoodSuppliesService.getById(id, tenant_id)
+
+    const allowed = await can(session, "food_supplies", "view")
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to view food supplies" }, { status: 403 })
+
+    const supply = await FoodSuppliesService.getById(id, session.tenant_id)
     return NextResponse.json(supply)
   } catch (e) {
     const status = e instanceof Error && e.message === "Unauthorized" ? 401

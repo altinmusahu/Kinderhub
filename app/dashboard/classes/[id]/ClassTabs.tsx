@@ -259,9 +259,127 @@ function ScheduleEditModal({
   )
 }
 
+function EditTeachersModal({
+  classId,
+  initial,
+  onClose,
+  onSaved,
+}: {
+  classId: string
+  initial: { lead_user_id: string; assistant_user_id: string | null }
+  onClose: () => void
+  onSaved: (v: { lead_user_id: string; assistant_user_id: string | null; lead_name: string | null; assistant_name: string | null }) => void
+}) {
+  const [users, setUsers] = useState<{ id: string; name: string; lastname: string }[]>([])
+  const [loadingUsers, setLoadingUsers] = useState(true)
+  const [leadUserId, setLeadUserId] = useState(initial.lead_user_id)
+  const [assistantUserId, setAssistantUserId] = useState(initial.assistant_user_id ?? "")
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    fetch("/api/users")
+      .then(res => res.json())
+      .then(data => setUsers(Array.isArray(data) ? data : []))
+      .catch(() => setUsers([]))
+      .finally(() => setLoadingUsers(false))
+  }, [])
+
+  async function save() {
+    if (!leadUserId) { setError("Select a lead teacher."); return }
+    setSaving(true)
+    setError("")
+    try {
+      const res = await fetch(`/api/classes/${classId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lead_user_id: leadUserId, assistant_user_id: assistantUserId || null }),
+      })
+      if (!res.ok) { const j = await res.json().catch(() => ({})); setError(j.error ?? "Failed to save."); return }
+      const lead = users.find(u => u.id === leadUserId)
+      const assistant = users.find(u => u.id === assistantUserId)
+      onSaved({
+        lead_user_id: leadUserId,
+        assistant_user_id: assistantUserId || null,
+        lead_name: lead ? `${lead.name} ${lead.lastname}` : null,
+        assistant_name: assistant ? `${assistant.name} ${assistant.lastname}` : null,
+      })
+      onClose()
+    } catch {
+      setError("Network error.")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div
+      style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(42,32,24,0.45)", backdropFilter: "blur(2px)", display: "flex", alignItems: "center", justifyContent: "center" }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div style={{ background: "var(--kh-surface)", borderRadius: 18, width: "100%", maxWidth: 420, boxShadow: "0 24px 60px rgba(0,0,0,0.18)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        {/* header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px 14px", borderBottom: "1px solid var(--kh-ink-100)" }}>
+          <div style={{ fontFamily: "var(--kh-font-serif)", fontSize: 20, color: "var(--kh-ink-900)", fontWeight: 400 }}>Edit teachers</div>
+          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 8, border: "1px solid var(--kh-ink-100)", background: "var(--kh-bg)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--kh-ink-500)" }}><X size={14} /></button>
+        </div>
+
+        <div style={{ padding: "16px 20px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+            <label style={{ fontSize: 11, fontFamily: "var(--kh-font-mono)", color: "var(--kh-ink-400)", textTransform: "uppercase", letterSpacing: ".06em" }}>Lead teacher</label>
+            <select
+              value={leadUserId}
+              onChange={e => setLeadUserId(e.target.value)}
+              disabled={loadingUsers}
+              style={{ border: "1px solid var(--kh-border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, background: "var(--kh-surface)", color: "var(--kh-ink-800)", outline: "none" }}
+            >
+              <option value="">{loadingUsers ? "Loading…" : "Select a lead teacher"}</option>
+              {users.map(u => (
+                <option key={u.id} value={u.id}>{u.name} {u.lastname}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+            <label style={{ fontSize: 11, fontFamily: "var(--kh-font-mono)", color: "var(--kh-ink-400)", textTransform: "uppercase", letterSpacing: ".06em" }}>Assistant teacher</label>
+            <select
+              value={assistantUserId}
+              onChange={e => setAssistantUserId(e.target.value)}
+              disabled={loadingUsers}
+              style={{ border: "1px solid var(--kh-border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, background: "var(--kh-surface)", color: "var(--kh-ink-800)", outline: "none" }}
+            >
+              <option value="">{loadingUsers ? "Loading…" : "None"}</option>
+              {users.map(u => (
+                <option key={u.id} value={u.id}>{u.name} {u.lastname}</option>
+              ))}
+            </select>
+          </div>
+
+          {error && <p style={{ fontSize: 12.5, color: "#D2592F", margin: 0 }}>{error}</p>}
+        </div>
+
+        {/* footer */}
+        <div style={{ padding: "12px 20px", borderTop: "1px solid var(--kh-ink-100)", display: "flex", gap: 8, justifyContent: "flex-end" }}>
+          <button onClick={onClose} style={{ padding: "8px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, border: "1px solid var(--kh-ink-200)", background: "var(--kh-bg)", color: "var(--kh-ink-700)", cursor: "pointer" }}>Cancel</button>
+          <button onClick={save} disabled={saving} style={{ padding: "8px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600, border: "none", background: saving ? "var(--kh-ink-200)" : "var(--kh-peach)", color: saving ? "var(--kh-ink-400)" : "#fff", cursor: saving ? "not-allowed" : "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
+            {saving ? <Spinner size="sm" /> : <Check size={13} />} {saving ? "Saving…" : "Save teachers"}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ScheduleTab({ cls }: { cls: ClassWithRelations }) {
   const [schedule, setSchedule] = useState<Schedule>((cls.schedule as Schedule) ?? {})
   const [editOpen, setEditOpen] = useState(false)
+  const [teachersEditOpen, setTeachersEditOpen] = useState(false)
+  const [teachers, setTeachers] = useState({
+    lead_user_id: cls.lead_user_id,
+    assistant_user_id: cls.assistant_user_id,
+    lead_name: cls.lead_name,
+    assistant_name: cls.assistant_name,
+  })
 
   const activeDays = ALL_DAYS.filter(d => schedule[d])
 
@@ -270,16 +388,22 @@ function ScheduleTab({ cls }: { cls: ClassWithRelations }) {
 
       {/* Info row: class dates + location + staff */}
       <div className="kh-card">
-        <div style={{ padding: "14px 16px 10px", borderBottom: "1px solid var(--kh-ink-100)" }}>
+        <div style={{ padding: "14px 16px 10px", borderBottom: "1px solid var(--kh-ink-100)", display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: "var(--kh-ink-800)" }}>Class info</span>
+          <button
+            onClick={() => setTeachersEditOpen(true)}
+            style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 7, fontSize: 12, fontWeight: 600, border: "1px solid var(--kh-border)", background: "var(--kh-bg)", color: "var(--kh-ink-600)", cursor: "pointer" }}
+          >
+            <Pencil size={11} /> Edit teachers
+          </button>
         </div>
         <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
           {[
             { label: "Start date", icon: <Clock size={13} />, value: cls.starts_at ?? "—" },
             { label: "End date",   icon: <Clock size={13} />, value: cls.ends_at   ?? "—" },
             { label: "Location",   icon: <MapPin size={13} />, value: cls.location_name ?? "—" },
-            { label: "Lead",       icon: <User size={13} />,   value: cls.lead_name ?? "—" },
-            { label: "Assistant",  icon: <User size={13} />,   value: cls.assistant_name ?? "—" },
+            { label: "Lead",       icon: <User size={13} />,   value: teachers.lead_name ?? "—" },
+            { label: "Assistant",  icon: <User size={13} />,   value: teachers.assistant_name ?? "—" },
           ].map(({ label, icon, value }) => (
             <div key={label} style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 13 }}>
               <span style={{ color: "var(--kh-ink-400)", display: "flex", alignItems: "center", gap: 6, width: 120, flexShrink: 0 }}>
@@ -290,7 +414,7 @@ function ScheduleTab({ cls }: { cls: ClassWithRelations }) {
             </div>
           ))}
         </div>
-        
+
         <div style={{ padding: "14px 16px 10px", borderBottom: "1px solid var(--kh-ink-100)", display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: "var(--kh-ink-800)" }}>Weekly schedule</span>
           <button
@@ -340,11 +464,20 @@ function ScheduleTab({ cls }: { cls: ClassWithRelations }) {
           onSaved={setSchedule}
         />
       )}
+
+      {teachersEditOpen && (
+        <EditTeachersModal
+          classId={cls.id}
+          initial={{ lead_user_id: teachers.lead_user_id, assistant_user_id: teachers.assistant_user_id }}
+          onClose={() => setTeachersEditOpen(false)}
+          onSaved={setTeachers}
+        />
+      )}
     </div>
   )
 }
 
-function TabStrip({ active, onChange }: { active: Tab; onChange: (tab: Tab) => void }) {
+function TabStrip({ tabs, active, onChange }: { tabs: readonly Tab[]; active: Tab; onChange: (tab: Tab) => void }) {
   const scrollerRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
@@ -390,7 +523,7 @@ function TabStrip({ active, onChange }: { active: Tab; onChange: (tab: Tab) => v
           padding: "0 16px",
           minWidth: "max-content",
         }}>
-          {TABS.map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => onChange(tab)}
@@ -428,18 +561,43 @@ export default function ClassTabs({
   roster,
   waitlist,
   classId,
+  canViewIncidents,
+  canEditIncidents,
+  canDeleteIncidents,
+  canViewCurriculum,
+  canEditCurriculum,
+  canDeleteCurriculum,
+  canViewHub,
+  canEditHub,
+  canDeleteHub,
 }: {
   cls: ClassWithRelations
   roster: Kids[]
   waitlist: WaitlistEntry[]
   classId: string
+  canViewIncidents: boolean
+  canEditIncidents: boolean
+  canDeleteIncidents: boolean
+  canViewCurriculum: boolean
+  canEditCurriculum: boolean
+  canDeleteCurriculum: boolean
+  canViewHub: boolean
+  canEditHub: boolean
+  canDeleteHub: boolean
 }) {
+  const visibleTabs = TABS.filter((tab) => {
+    if (tab === "Incidents") return canViewIncidents
+    if (tab === "Curriculum" || tab === "Checklist") return canViewCurriculum
+    if (tab === "Hub") return canViewHub
+    return true
+  })
   const [active, setActive] = useState<Tab>("Roster")
+  const effectiveActive = visibleTabs.includes(active) ? active : "Roster"
 
   return (
     <>
       {/* Tab strip — scrollable on mobile with nav arrows, pinned so it never scrolls out of view */}
-      <TabStrip active={active} onChange={setActive} />
+      <TabStrip tabs={visibleTabs} active={effectiveActive} onChange={setActive} />
 
       {/* Tab body */}
       <div style={{ padding: "18px 16px 40px", overflowY: "auto" }}>
@@ -464,35 +622,33 @@ export default function ClassTabs({
         </div>
 
         {/* Active tab content */}
-        {active === "Roster" && (
+        {effectiveActive === "Roster" && (
           <div className="kh-roster-row">
             <RosterTab cls={cls} roster={roster} classId={classId} />
             <WaitlistTable classId={classId} initial={waitlist} />
-            
+
             {/* Allergy card — shown on Roster tab only */}
-            {active === "Roster" && (
-              <div className="kh-card" style={{ borderColor: "var(--kh-pink-l)" }}>
-                <div style={{ padding: "14px 16px 10px", borderBottom: "1px solid var(--kh-ink-100)", display: "flex", alignItems: "center", gap: 8 }}>
-                  <Heart size={14} style={{ color: "var(--kh-pink)" }} />
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--kh-ink-800)" }}>Allergy &amp; medical</span>
-                </div>
-                <div style={{ padding: "12px 16px 14px", fontSize: 12.5, color: "var(--kh-ink-400)" }}>
-                  Medical &amp; allergy records coming soon.
-                </div>
+            <div className="kh-card" style={{ borderColor: "var(--kh-pink-l)" }}>
+              <div style={{ padding: "14px 16px 10px", borderBottom: "1px solid var(--kh-ink-100)", display: "flex", alignItems: "center", gap: 8 }}>
+                <Heart size={14} style={{ color: "var(--kh-pink)" }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--kh-ink-800)" }}>Allergy &amp; medical</span>
               </div>
-            )}
+              <div style={{ padding: "12px 16px 14px", fontSize: 12.5, color: "var(--kh-ink-400)" }}>
+                Medical &amp; allergy records coming soon.
+              </div>
+            </div>
           </div>
         )}
 
-        {active === "Schedule" && <ScheduleTab cls={cls} />}
+        {effectiveActive === "Schedule" && <ScheduleTab cls={cls} />}
 
-        {active === "Attendance"  && <AttendanceTab classId={classId} />}
-        {active === "Incidents"   && <IncidentsTab classId={classId} roster={roster} />}
-        {active === "Curriculum"  && <CurriculumTab classId={classId} />}
-        {active === "Checklist"   && <ChecklistTab classId={classId} />}
-        {active === "Progress"    && <ProgressTab classId={classId} />}
-        {active === "Hub"         && <HubTab classId={classId} />}
-        {active === "Documents"   && <DocumentsTab classId={classId} title={cls.name} />}
+        {effectiveActive === "Attendance"  && <AttendanceTab classId={classId} />}
+        {effectiveActive === "Incidents"   && canViewIncidents && <IncidentsTab classId={classId} roster={roster} readOnly={!canEditIncidents} canDelete={canDeleteIncidents} />}
+        {effectiveActive === "Curriculum"  && canViewCurriculum && <CurriculumTab classId={classId} readOnly={!canEditCurriculum} canDelete={canDeleteCurriculum} />}
+        {effectiveActive === "Checklist"   && canViewCurriculum && <ChecklistTab classId={classId} readOnly={!canEditCurriculum} canDelete={canDeleteCurriculum} />}
+        {effectiveActive === "Progress"    && <ProgressTab classId={classId} />}
+        {effectiveActive === "Hub"         && canViewHub && <HubTab classId={classId} readOnly={!canEditHub} canDelete={canDeleteHub} />}
+        {effectiveActive === "Documents"   && <DocumentsTab classId={classId} title={cls.name} />}
       </div>
     </>
   )

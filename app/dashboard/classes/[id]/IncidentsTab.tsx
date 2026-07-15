@@ -150,22 +150,17 @@ function ReportIncidentForm({
   )
 }
 
-export default function IncidentsTab({ classId, roster }: { classId: string; roster: Kids[] }) {
+export default function IncidentsTab({ classId, roster, readOnly = false, canDelete = false }: { classId: string; roster: Kids[]; readOnly?: boolean; canDelete?: boolean }) {
   const [incidents, setIncidents] = useState<IncidentWithDetails[] | null>(null)
-  const [myUserId, setMyUserId] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
 
   useEffect(() => {
     if (loaded) return
     setLoaded(true)
-    Promise.all([
-      fetch(`/api/classes/${classId}/incidents`).then((r) => r.json()),
-      fetch(`/api/auth/me`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-    ]).then(([incidentsData, me]) => {
-      setIncidents(Array.isArray(incidentsData) ? incidentsData : [])
-      setMyUserId(me?.sub ?? null)
-    })
+    fetch(`/api/classes/${classId}/incidents`)
+      .then((r) => r.json())
+      .then((incidentsData) => setIncidents(Array.isArray(incidentsData) ? incidentsData : []))
   }, [classId, loaded])
 
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -194,12 +189,14 @@ export default function IncidentsTab({ classId, roster }: { classId: string; ros
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <span style={{ fontSize: 13, fontWeight: 600, color: "var(--kh-ink-800)" }}>Incidents</span>
         <span style={{ fontSize: 11, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)" }}>{incidents.length} logged</span>
-        <button
-          onClick={() => setFormOpen(true)}
-          style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 8, fontSize: 12.5, fontWeight: 600, border: "none", background: "var(--kh-peach)", color: "#fff", cursor: "pointer" }}
-        >
-          <Plus size={13} /> Report incident
-        </button>
+        {!readOnly && (
+          <button
+            onClick={() => setFormOpen(true)}
+            style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 8, fontSize: 12.5, fontWeight: 600, border: "none", background: "var(--kh-peach)", color: "#fff", cursor: "pointer" }}
+          >
+            <Plus size={13} /> Report incident
+          </button>
+        )}
       </div>
 
       {incidents.length === 0 ? (
@@ -209,7 +206,6 @@ export default function IncidentsTab({ classId, roster }: { classId: string; ros
       ) : (
         incidents.map((inc) => {
           const tone = SEVERITY_TONE[inc.severity] ?? { bg: "var(--kh-ink-50)", color: "var(--kh-ink-600)" }
-          const isMine = myUserId !== null && inc.reported_by === myUserId
           return (
             <div key={inc.id} className="kh-card" style={{ padding: "14px 16px", borderColor: inc.severity === "High" ? "var(--kh-pink-l)" : undefined }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -223,7 +219,7 @@ export default function IncidentsTab({ classId, roster }: { classId: string; ros
                   {inc.severity}
                 </span>
                 <span style={{ marginLeft: "auto", fontSize: 10.5, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)" }}>{formatDateTime(inc.created_at)}</span>
-                {isMine && (
+                {canDelete && (
                   <button onClick={() => deleteIncident(inc.id)} disabled={deletingId === inc.id} title="Delete incident" style={{ background: "none", border: "none", color: "var(--kh-ink-300)", cursor: deletingId === inc.id ? "not-allowed" : "pointer", display: "flex" }}>
                     {deletingId === inc.id ? <Spinner size="sm" /> : <Trash2 size={13} />}
                   </button>

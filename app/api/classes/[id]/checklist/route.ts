@@ -9,9 +9,13 @@ type Params = { params: Promise<{ id: string }> }
 
 export async function GET(_req: NextRequest, { params }: Params) {
   try {
-    const { tenant_id } = await getTenant()
+    const session = await getTenant()
     const { id } = await params
-    const items = await ClassChecklistItemsService.getByClassId(tenant_id, id)
+
+    const allowed = await can(session, "curriculum", "view", id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to view this class's checklist" }, { status: 403 })
+
+    const items = await ClassChecklistItemsService.getByClassId(session.tenant_id, id)
     return NextResponse.json(items)
   } catch (error) {
     const status = error instanceof Error && error.message === "Unauthorized" ? 401 : 500

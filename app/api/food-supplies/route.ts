@@ -8,8 +8,12 @@ import { can } from "@/lib/permissions/can"
 
 export async function GET() {
   try {
-    const { tenant_id } = await getTenant()
-    const supplies = await FoodSuppliesService.getAllForTenant(tenant_id)
+    const session = await getTenant()
+
+    const allowed = await can(session, "food_supplies", "view")
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to view food supplies" }, { status: 403 })
+
+    const supplies = await FoodSuppliesService.getAllForTenant(session.tenant_id)
     return NextResponse.json(supplies)
   } catch (e) {
     const status = e instanceof Error && e.message === "Unauthorized" ? 401 : 500

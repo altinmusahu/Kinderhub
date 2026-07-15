@@ -9,9 +9,13 @@ type Params = { params: Promise<{ id: string; date: string }> }
 
 export async function GET(_req: NextRequest, { params }: Params) {
   try {
-    const { tenant_id } = await getTenant()
+    const session = await getTenant()
     const { id, date } = await params
-    const rows = await KidAttendanceService.getForClassAndDate(tenant_id, id, date)
+
+    const allowed = await can(session, "attendance", "view", id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to view attendance for this class" }, { status: 403 })
+
+    const rows = await KidAttendanceService.getForClassAndDate(session.tenant_id, id, date)
     return NextResponse.json(rows)
   } catch (error) {
     const status = error instanceof Error && error.message === "Unauthorized" ? 401 : 500

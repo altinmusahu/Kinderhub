@@ -18,12 +18,16 @@ function mondayOf(dateStr: string): string {
 
 export async function GET(req: NextRequest, { params }: Params) {
   try {
-    const { tenant_id } = await getTenant()
+    const session = await getTenant()
     const { id } = await params
+
+    const allowed = await can(session, "curriculum", "view", id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to view this class's menus" }, { status: 403 })
+
     const weekParam = req.nextUrl.searchParams.get("week")
     const weekStart = mondayOf(weekParam ?? new Date().toISOString().split("T")[0])
 
-    const cells = await ClassMenusService.getWeek(tenant_id, id, weekStart)
+    const cells = await ClassMenusService.getWeek(session.tenant_id, id, weekStart)
     return NextResponse.json({ weekStart, cells })
   } catch (e) {
     const status = e instanceof Error && e.message === "Unauthorized" ? 401 : 500

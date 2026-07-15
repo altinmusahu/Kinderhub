@@ -6,6 +6,10 @@ export const DocumentsService = {
     return DocumentsRepository.findAll(tenantId)
   },
 
+  async getById(id: string, tenantId: string): Promise<Documents | null> {
+    return DocumentsRepository.findById(id, tenantId)
+  },
+
   async getAllForTenant(tenantId: string): Promise<DocumentWithSubject[]> {
     const [{ familyName, userName, kidName }, documents] = await Promise.all([
       DocumentsRepository.findTenantSubjects(tenantId),

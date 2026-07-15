@@ -5,6 +5,7 @@ import { exportToExcelBuffer, type ExcelColumn } from "@/lib/excel-export"
 import { KidAttendanceService } from "@/app/api/modules/kid_attendance/kid_attendance.service"
 import { ClassesService } from "@/app/api/modules/classes/classes.service"
 import type { KidAttendanceWithDetails } from "@/app/api/modules/kid_attendance/kid_attendance.types"
+import { can } from "@/lib/permissions/can"
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -31,6 +32,10 @@ export async function GET(req: NextRequest, { params }: Params) {
   try {
     const session = await getTenant()
     const { id } = await params
+
+    const allowed = await can(session, "attendance", "view", id)
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to view attendance for this class" }, { status: 403 })
+
     const sp = req.nextUrl.searchParams
 
     const filters = {

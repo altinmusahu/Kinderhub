@@ -86,12 +86,14 @@ function Composer({ classId, onPosted }: { classId: string; onPosted: (p: ClassH
 function PostCard({
   post,
   isMine,
+  canDelete,
   classId,
   onUpdated,
   onDeleted,
 }: {
   post: ClassHubPostWithAuthor
   isMine: boolean
+  canDelete: boolean
   classId: string
   onUpdated: (p: ClassHubPostWithAuthor) => void
   onDeleted: (id: string) => void
@@ -149,14 +151,18 @@ function PostCard({
           <span style={{ width: 6, height: 6, borderRadius: "50%", background: tone.color }} /> {post.post_type}
         </span>
         <span style={{ marginLeft: "auto", fontSize: 10.5, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)" }}>{relativeTime(post.created_at)}</span>
-        {isMine && !editing && (
+        {!editing && (isMine || canDelete) && (
           <div style={{ display: "flex", gap: 4 }}>
-            <button onClick={() => { setEditing(true); setBody(post.body) }} title="Edit post" style={{ background: "none", border: "none", color: "var(--kh-ink-400)", cursor: "pointer", display: "flex" }}>
-              <Pencil size={12} />
-            </button>
-            <button onClick={handleDelete} disabled={deleting} title="Delete post" style={{ background: "none", border: "none", color: "var(--kh-ink-400)", cursor: deleting ? "not-allowed" : "pointer", display: "flex" }}>
-              {deleting ? <Spinner size="sm" /> : <Trash2 size={12} />}
-            </button>
+            {isMine && (
+              <button onClick={() => { setEditing(true); setBody(post.body) }} title="Edit post" style={{ background: "none", border: "none", color: "var(--kh-ink-400)", cursor: "pointer", display: "flex" }}>
+                <Pencil size={12} />
+              </button>
+            )}
+            {canDelete && (
+              <button onClick={handleDelete} disabled={deleting} title="Delete post" style={{ background: "none", border: "none", color: "var(--kh-ink-400)", cursor: deleting ? "not-allowed" : "pointer", display: "flex" }}>
+                {deleting ? <Spinner size="sm" /> : <Trash2 size={12} />}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -282,7 +288,7 @@ function AddEventForm({ classId, onAdded }: { classId: string; onAdded: (e: Clas
   )
 }
 
-export default function HubTab({ classId }: { classId: string }) {
+export default function HubTab({ classId, readOnly = false, canDelete = false }: { classId: string; readOnly?: boolean; canDelete?: boolean }) {
   const [posts, setPosts] = useState<ClassHubPostWithAuthor[] | null>(null)
   const [rules, setRules] = useState<ClassRule[]>([])
   const [events, setEvents] = useState<ClassEvent[]>([])
@@ -330,7 +336,7 @@ export default function HubTab({ classId }: { classId: string }) {
     <div className="kh-tab-split-grid">
       {/* LEFT — composer + feed */}
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <Composer classId={classId} onPosted={(p) => setPosts((prev) => [p, ...(prev ?? [])])} />
+        {!readOnly && <Composer classId={classId} onPosted={(p) => setPosts((prev) => [p, ...(prev ?? [])])} />}
 
         {posts.length === 0 ? (
           <div className="kh-card" style={{ padding: "32px 16px", textAlign: "center", fontSize: 13, color: "var(--kh-ink-400)" }}>
@@ -341,7 +347,8 @@ export default function HubTab({ classId }: { classId: string }) {
             <PostCard
               key={p.id}
               post={p}
-              isMine={myUserId !== null && p.author_id === myUserId}
+              isMine={!readOnly && myUserId !== null && p.author_id === myUserId}
+              canDelete={canDelete}
               classId={classId}
               onUpdated={(updated) => setPosts((prev) => (prev ?? []).map((x) => (x.id === updated.id ? updated : x)))}
               onDeleted={(id) => setPosts((prev) => (prev ?? []).filter((x) => x.id !== id))}
@@ -366,13 +373,15 @@ export default function HubTab({ classId }: { classId: string }) {
                 <div key={r.id} style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "9px 0", borderTop: i === 0 ? "none" : "1px solid var(--kh-ink-50)" }}>
                   <span style={{ fontFamily: "var(--kh-font-mono)", fontSize: 11, color: "var(--kh-peach-d)", fontWeight: 600, marginTop: 1 }}>{String(i + 1).padStart(2, "0")}</span>
                   <div style={{ flex: 1, fontSize: 12.5, color: "var(--kh-ink-800)", lineHeight: 1.5 }}>{r.rule_text}</div>
-                  <button onClick={() => deleteRule(r.id)} disabled={deletingRuleId === r.id} style={{ background: "none", border: "none", color: "var(--kh-ink-300)", cursor: deletingRuleId === r.id ? "not-allowed" : "pointer", display: "flex" }}>
-                    {deletingRuleId === r.id ? <Spinner size="sm" /> : <Trash2 size={12} />}
-                  </button>
+                  {canDelete && (
+                    <button onClick={() => deleteRule(r.id)} disabled={deletingRuleId === r.id} style={{ background: "none", border: "none", color: "var(--kh-ink-300)", cursor: deletingRuleId === r.id ? "not-allowed" : "pointer", display: "flex" }}>
+                      {deletingRuleId === r.id ? <Spinner size="sm" /> : <Trash2 size={12} />}
+                    </button>
+                  )}
                 </div>
               ))
             )}
-            <AddRuleRow classId={classId} onAdded={(r) => setRules((prev) => [...prev, r])} />
+            {!readOnly && <AddRuleRow classId={classId} onAdded={(r) => setRules((prev) => [...prev, r])} />}
           </div>
         </div>
 
@@ -405,7 +414,7 @@ export default function HubTab({ classId }: { classId: string }) {
           </div>
         </div>
 
-        <AddEventForm classId={classId} onAdded={(e) => setEvents((prev) => [...prev, e].sort((a, b) => a.starts_at.localeCompare(b.starts_at)))} />
+        {!readOnly && <AddEventForm classId={classId} onAdded={(e) => setEvents((prev) => [...prev, e].sort((a, b) => a.starts_at.localeCompare(b.starts_at)))} />}
       </div>
     </div>
   )

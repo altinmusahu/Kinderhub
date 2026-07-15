@@ -197,6 +197,8 @@ function PeriodCard({
   period,
   expanded,
   items,
+  readOnly,
+  canDelete,
   onToggle,
   onDeleted,
   onStatusChanged,
@@ -207,6 +209,8 @@ function PeriodCard({
   period: ClassCurriculumWithCreator
   expanded: boolean
   items: ClassCurriculumItem[] | undefined
+  readOnly: boolean
+  canDelete: boolean
   onToggle: () => void
   onDeleted: (id: string) => void
   onStatusChanged: (p: ClassCurriculumWithCreator) => void
@@ -265,18 +269,26 @@ function PeriodCard({
         <span style={{ fontSize: 11.5, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)" }}>{fmtDate(period.period_start)} – {fmtDate(period.period_end)}</span>
         {period.theme && <span style={{ fontSize: 11.5, color: "var(--kh-peach-d)" }}>{period.theme}</span>}
         <div style={{ flex: 1 }} />
-        <button
-          onClick={toggleStatus}
-          disabled={togglingStatus}
-          title="Toggle status"
-          style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "2px 8px", borderRadius: 999, fontSize: 11.5, fontWeight: 500, background: tone.bg, color: tone.color, border: "none", cursor: togglingStatus ? "not-allowed" : "pointer", textTransform: "capitalize" }}
-        >
-          {togglingStatus ? <Spinner size="sm" /> : <span style={{ width: 6, height: 6, borderRadius: "50%", background: tone.dot }} />} {period.status}
-        </button>
+        {readOnly ? (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "2px 8px", borderRadius: 999, fontSize: 11.5, fontWeight: 500, background: tone.bg, color: tone.color, textTransform: "capitalize" }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: tone.dot }} /> {period.status}
+          </span>
+        ) : (
+          <button
+            onClick={toggleStatus}
+            disabled={togglingStatus}
+            title="Toggle status"
+            style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "2px 8px", borderRadius: 999, fontSize: 11.5, fontWeight: 500, background: tone.bg, color: tone.color, border: "none", cursor: togglingStatus ? "not-allowed" : "pointer", textTransform: "capitalize" }}
+          >
+            {togglingStatus ? <Spinner size="sm" /> : <span style={{ width: 6, height: 6, borderRadius: "50%", background: tone.dot }} />} {period.status}
+          </button>
+        )}
         <span style={{ fontSize: 11, color: "var(--kh-ink-400)" }}>{period.created_by_name ?? "Unknown"}</span>
-        <button onClick={handleDelete} disabled={deleting} title="Delete period" style={{ background: "none", border: "none", color: "var(--kh-ink-300)", cursor: deleting ? "not-allowed" : "pointer", display: "flex" }}>
-          {deleting ? <Spinner size="sm" /> : <Trash2 size={13} />}
-        </button>
+        {canDelete && (
+          <button onClick={handleDelete} disabled={deleting} title="Delete period" style={{ background: "none", border: "none", color: "var(--kh-ink-300)", cursor: deleting ? "not-allowed" : "pointer", display: "flex" }}>
+            {deleting ? <Spinner size="sm" /> : <Trash2 size={13} />}
+          </button>
+        )}
       </div>
 
       {expanded && (
@@ -301,20 +313,22 @@ function PeriodCard({
                   {item.description && <div style={{ fontSize: 12, color: "var(--kh-ink-600)", marginTop: 3 }}>{item.description}</div>}
                   {item.materials_needed && <div style={{ fontSize: 11, color: "var(--kh-ink-400)", marginTop: 3 }}>Materials: {item.materials_needed}</div>}
                 </div>
-                <button onClick={() => deleteItem(item.id)} disabled={deletingItemId === item.id} title="Remove activity" style={{ background: "none", border: "none", color: "var(--kh-ink-300)", cursor: deletingItemId === item.id ? "not-allowed" : "pointer", display: "flex", marginTop: 2 }}>
-                  {deletingItemId === item.id ? <Spinner size="sm" /> : <Trash2 size={12} />}
-                </button>
+                {canDelete && (
+                  <button onClick={() => deleteItem(item.id)} disabled={deletingItemId === item.id} title="Remove activity" style={{ background: "none", border: "none", color: "var(--kh-ink-300)", cursor: deletingItemId === item.id ? "not-allowed" : "pointer", display: "flex", marginTop: 2 }}>
+                    {deletingItemId === item.id ? <Spinner size="sm" /> : <Trash2 size={12} />}
+                  </button>
+                )}
               </div>
             ))
           )}
-          <AddCurriculumItemRow classId={classId} curriculumId={period.id} onAdded={(item) => onItemAdded(period.id, item)} />
+          {!readOnly && <AddCurriculumItemRow classId={classId} curriculumId={period.id} onAdded={(item) => onItemAdded(period.id, item)} />}
         </div>
       )}
     </div>
   )
 }
 
-export default function CurriculumTab({ classId }: { classId: string }) {
+export default function CurriculumTab({ classId, readOnly = false, canDelete = false }: { classId: string; readOnly?: boolean; canDelete?: boolean }) {
   const [periods, setPeriods] = useState<ClassCurriculumWithCreator[] | null>(null)
   const [itemsByPeriod, setItemsByPeriod] = useState<Record<string, ClassCurriculumItem[]>>({})
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -354,7 +368,7 @@ export default function CurriculumTab({ classId }: { classId: string }) {
         <BookOpen size={15} style={{ color: "var(--kh-peach)" }} />
         <span style={{ fontSize: 13, fontWeight: 600, color: "var(--kh-ink-800)" }}>Curriculum plans</span>
         <div style={{ flex: 1 }} />
-        {!showNewForm && (
+        {!readOnly && !showNewForm && (
           <button
             onClick={() => setShowNewForm(true)}
             style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 11px", borderRadius: 7, fontSize: 12, fontWeight: 600, border: "1px solid var(--kh-border)", background: "var(--kh-bg)", color: "var(--kh-ink-600)", cursor: "pointer" }}
@@ -364,7 +378,7 @@ export default function CurriculumTab({ classId }: { classId: string }) {
         )}
       </div>
 
-      {showNewForm && (
+      {!readOnly && showNewForm && (
         <NewPeriodForm
           classId={classId}
           onCancel={() => setShowNewForm(false)}
@@ -393,6 +407,8 @@ export default function CurriculumTab({ classId }: { classId: string }) {
             period={period}
             expanded={expandedId === period.id}
             items={itemsByPeriod[period.id]}
+            readOnly={readOnly}
+            canDelete={canDelete}
             onToggle={() => toggleExpand(period)}
             onDeleted={(id) => {
               setPeriods((prev) => (prev ?? []).filter((p) => p.id !== id))

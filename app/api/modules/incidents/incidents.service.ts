@@ -12,7 +12,7 @@ export const IncidentsService = {
     return IncidentsRepository.create(input)
   },
 
-  async delete(id: string, tenantId: string, reportedBy: string): Promise<void> {
-    return IncidentsRepository.delete(id, tenantId, reportedBy)
+  async delete(id: string, tenantId: string): Promise<void> {
+    return IncidentsRepository.delete(id, tenantId)
   },
 }

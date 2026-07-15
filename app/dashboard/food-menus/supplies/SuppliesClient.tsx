@@ -6,6 +6,7 @@ import { DataTable, Column } from "@/app/components/dashboard/DataTable"
 import ExportSuppliesButton from "./ExportSuppliesButton"
 import { UploadReceiptModal } from "./UploadReceiptModal"
 import { ReceiptViewer } from "./ReceiptViewer"
+import { DeleteSupplyButton } from "./DeleteSupplyButton"
 import { avatarColor, initials } from "@/components/ui/helper"
 import type { FoodSupplyWithDetails } from "@/app/api/modules/food_supplies/food_supplies.types"
 
@@ -31,13 +32,25 @@ function mode(values: (string | null)[]): string | null {
   return best
 }
 
-export function SuppliesClient({ initialSupplies }: { initialSupplies: FoodSupplyWithDetails[] }) {
+export function SuppliesClient({
+  initialSupplies,
+  canEdit = false,
+  canDelete = false,
+}: {
+  initialSupplies: FoodSupplyWithDetails[]
+  canEdit?: boolean
+  canDelete?: boolean
+}) {
   const [supplies, setSupplies] = useState(initialSupplies)
   const [uploadOpen, setUploadOpen] = useState(false)
   const [viewing, setViewing] = useState<FoodSupplyWithDetails | null>(null)
 
   function handleSaved(supply: FoodSupplyWithDetails) {
     setSupplies(prev => [supply, ...prev])
+  }
+
+  function handleDeleted(id: string) {
+    setSupplies(prev => prev.filter(s => s.id !== id))
   }
 
   const now = new Date()
@@ -86,14 +99,17 @@ export function SuppliesClient({ initialSupplies }: { initialSupplies: FoodSuppl
     {
       key: "view", header: "",
       cell: s => (
-        <button
-          type="button"
-          onClick={() => setViewing(s)}
-          title={s.receipt_url ? "View receipt" : "View items"}
-          style={{ background: "none", border: "none", color: "var(--kh-ink-400)", cursor: "pointer", display: "flex" }}
-        >
-          {s.receipt_url ? <Camera size={14} /> : <Eye size={14} />}
-        </button>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <button
+            type="button"
+            onClick={() => setViewing(s)}
+            title={s.receipt_url ? "View receipt" : "View items"}
+            style={{ background: "none", border: "none", color: "var(--kh-ink-400)", cursor: "pointer", display: "flex" }}
+          >
+            {s.receipt_url ? <Camera size={14} /> : <Eye size={14} />}
+          </button>
+          {canDelete && <DeleteSupplyButton supplyId={s.id} onDeleted={handleDeleted} />}
+        </div>
       ),
     },
   ]
@@ -107,17 +123,19 @@ export function SuppliesClient({ initialSupplies }: { initialSupplies: FoodSuppl
         </div>
         <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
           <ExportSuppliesButton />
-          <button
-            type="button"
-            onClick={() => setUploadOpen(true)}
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              padding: "8px 16px", borderRadius: 9, fontSize: 13, fontWeight: 600,
-              border: "none", cursor: "pointer", background: "var(--kh-peach)", color: "#fff",
-            }}
-          >
-            <Plus size={14} /> Upload receipt
-          </button>
+          {canEdit && (
+            <button
+              type="button"
+              onClick={() => setUploadOpen(true)}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                padding: "8px 16px", borderRadius: 9, fontSize: 13, fontWeight: 600,
+                border: "none", cursor: "pointer", background: "var(--kh-peach)", color: "#fff",
+              }}
+            >
+              <Plus size={14} /> Upload receipt
+            </button>
+          )}
         </div>
       </div>
 
@@ -144,29 +162,31 @@ export function SuppliesClient({ initialSupplies }: { initialSupplies: FoodSuppl
         </div>
       </div>
 
-      <div className="kh-card" style={{
-        display: "flex", alignItems: "center", gap: 14, padding: "14px 18px", marginBottom: 16,
-        background: "var(--kh-sage-bg)", border: "1px solid #CFE3C6",
-      }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--kh-surface)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--kh-sage-d)", flexShrink: 0 }}>
-          <Camera size={17} />
+      {canEdit && (
+        <div className="kh-card" style={{
+          display: "flex", alignItems: "center", gap: 14, padding: "14px 18px", marginBottom: 16,
+          background: "var(--kh-sage-bg)", border: "1px solid #CFE3C6",
+        }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--kh-surface)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--kh-sage-d)", flexShrink: 0 }}>
+            <Camera size={17} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--kh-ink-900)" }}>Just came back from the market?</div>
+            <div style={{ fontSize: 12, color: "var(--kh-ink-600)", marginTop: 1 }}>Snap a photo of the receipt — we&apos;ll read the items and total, then you confirm before it saves.</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setUploadOpen(true)}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6, flexShrink: 0,
+              padding: "8px 16px", borderRadius: 9, fontSize: 13, fontWeight: 600,
+              border: "none", cursor: "pointer", background: "var(--kh-peach)", color: "#fff",
+            }}
+          >
+            <Camera size={13} /> Upload receipt
+          </button>
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--kh-ink-900)" }}>Just came back from the market?</div>
-          <div style={{ fontSize: 12, color: "var(--kh-ink-600)", marginTop: 1 }}>Snap a photo of the receipt — we&apos;ll read the items and total, then you confirm before it saves.</div>
-        </div>
-        <button
-          type="button"
-          onClick={() => setUploadOpen(true)}
-          style={{
-            display: "inline-flex", alignItems: "center", gap: 6, flexShrink: 0,
-            padding: "8px 16px", borderRadius: 9, fontSize: 13, fontWeight: 600,
-            border: "none", cursor: "pointer", background: "var(--kh-peach)", color: "#fff",
-          }}
-        >
-          <Camera size={13} /> Upload receipt
-        </button>
-      </div>
+      )}
 
       {supplies.length === 0 ? (
         <div className="kh-card" style={{ padding: "48px 24px", textAlign: "center" }}>

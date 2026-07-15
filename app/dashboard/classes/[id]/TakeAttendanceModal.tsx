@@ -21,7 +21,6 @@ const STATUS_TONE: Record<string, { bg: string; color: string; label: string }> 
   in: { bg: "var(--kh-sage-bg)", color: "var(--kh-sage-d)", label: "Checked in" },
   late: { bg: "#FEF3E2", color: "#B07A1A", label: "Late" },
   out: { bg: "var(--kh-ink-50)", color: "var(--kh-ink-600)", label: "Checked out" },
-  absent: { bg: "#FDEAEA", color: "#C0392B", label: "Absent" },
   pending: { bg: "var(--kh-ink-50)", color: "var(--kh-ink-400)", label: "Not arrived" },
 }
 
@@ -110,63 +109,15 @@ function CheckoutDetail({
   )
 }
 
-function AbsentDetail({
-  classId,
-  kidId,
-  kidName,
-  onSaved,
-  onToast,
-}: {
-  classId: string
-  kidId: string
-  kidName: string
-  onSaved: (row: KidAttendanceWithDetails) => void
-  onToast: (message: string) => void
-}) {
-  const [reason, setReason] = useState("")
-  const [saving, setSaving] = useState(false)
-  const today = new Date().toISOString().split("T")[0]
-
-  async function save() {
-    setSaving(true)
-    try {
-      const res = await fetch(`/api/classes/${classId}/attendance/${today}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kid_id: kidId, action: "absent", absent_reason: reason.trim() || null }),
-      })
-      if (res.ok) {
-        onSaved(await res.json())
-        onToast(`${kidName} marked absent.`)
-        notifyAttendanceUpdated(classId)
-      }
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div style={{ marginLeft: 37, marginTop: 8, display: "flex", alignItems: "center", gap: 8 }}>
-      <div style={{ fontSize: 10.5, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)", textTransform: "uppercase", letterSpacing: ".06em", flexShrink: 0 }}>Reason</div>
-      <input
-        value={reason}
-        onChange={(e) => setReason(e.target.value)}
-        onBlur={save}
-        placeholder="Why the child is absent…"
-        style={{ flex: 1, border: "1px solid var(--kh-ink-100)", borderRadius: 9, padding: "7px 10px", fontSize: 12, color: "var(--kh-ink-800)", background: "var(--kh-bg)", outline: "none" }}
-      />
-      {saving && <span style={{ fontSize: 11, color: "var(--kh-ink-400)" }}>Saving…</span>}
-    </div>
-  )
-}
-
 export default function TakeAttendanceModal({
   classId,
   className,
+  readOnly = false,
   onClose,
 }: {
   classId: string
   className: string
+  readOnly?: boolean
   onClose: () => void
 }) {
   const [rows, setRows] = useState<KidAttendanceWithDetails[] | null>(null)
@@ -244,7 +195,6 @@ export default function TakeAttendanceModal({
     in: rows?.filter((r) => r.status === "in").length ?? 0,
     late: rows?.filter((r) => r.status === "late").length ?? 0,
     out: rows?.filter((r) => r.status === "out").length ?? 0,
-    absent: rows?.filter((r) => r.status === "absent").length ?? 0,
     pending: rows?.filter((r) => r.status === "pending").length ?? 0,
   }
 
@@ -262,7 +212,7 @@ export default function TakeAttendanceModal({
               <Check size={19} color="#fff" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: "var(--kh-font-serif)", fontSize: 21, color: "var(--kh-ink-900)" }}>Take attendance — {className}</div>
+              <div style={{ fontFamily: "var(--kh-font-serif)", fontSize: 21, color: "var(--kh-ink-900)" }}>{readOnly ? "Attendance" : "Take attendance"} — {className}</div>
               <div style={{ fontSize: 12, color: "var(--kh-ink-500)", marginTop: 1 }}>{new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</div>
             </div>
             <div style={{ fontFamily: "var(--kh-font-mono)", fontSize: 12, color: "var(--kh-ink-500)", padding: "6px 10px", background: "var(--kh-surface)", border: "1px solid var(--kh-ink-100)", borderRadius: 9, flexShrink: 0 }}>
@@ -272,11 +222,13 @@ export default function TakeAttendanceModal({
               <X size={17} />
             </button>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 14, paddingBottom: 6 }}>
-            <button onClick={markAllPresent} disabled={markingAll} style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, padding: "5px 10px", border: "1px solid var(--kh-border)", borderRadius: 7, background: "var(--kh-bg)", color: "var(--kh-ink-600)", cursor: markingAll ? "not-allowed" : "pointer", opacity: markingAll ? 0.6 : 1 }}>
-              {markingAll ? <Spinner size="sm" /> : <Check size={12} />} {markingAll ? "Marking…" : "Mark all present"}
-            </button>
-          </div>
+          {!readOnly && (
+            <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 14, paddingBottom: 6 }}>
+              <button onClick={markAllPresent} disabled={markingAll} style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, padding: "5px 10px", border: "1px solid var(--kh-border)", borderRadius: 7, background: "var(--kh-bg)", color: "var(--kh-ink-600)", cursor: markingAll ? "not-allowed" : "pointer", opacity: markingAll ? 0.6 : 1 }}>
+                {markingAll ? <Spinner size="sm" /> : <Check size={12} />} {markingAll ? "Marking…" : "Mark all present"}
+              </button>
+            </div>
+          )}
         </div>
 
         {toast && (
@@ -308,32 +260,27 @@ export default function TakeAttendanceModal({
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 500, color: tone.color, background: tone.bg, borderRadius: 999, padding: "2px 8px" }}>
                       <span style={{ width: 6, height: 6, borderRadius: "50%", background: tone.color }} /> {tone.label}
                     </span>
-                    <div style={{ display: "flex", gap: 5 }}>
-                      {r.status === "pending" ? (
-                        <>
-                          <button onClick={() => quickAction(r.kid_id, r.kid_name ?? "Child", "check_in")} disabled={pendingKidId === r.kid_id} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, padding: "4px 10px", border: "none", borderRadius: 7, background: "var(--kh-peach)", color: "#fff", cursor: pendingKidId === r.kid_id ? "not-allowed" : "pointer", opacity: pendingKidId === r.kid_id ? 0.6 : 1 }}>
-                            {pendingKidId === r.kid_id && <Spinner size="sm" />} Check in
+                    {!readOnly && (
+                      <div style={{ display: "flex", gap: 5 }}>
+                        {r.status === "pending" ? (
+                          <>
+                            <button onClick={() => quickAction(r.kid_id, r.kid_name ?? "Child", "check_in")} disabled={pendingKidId === r.kid_id} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, padding: "4px 10px", border: "none", borderRadius: 7, background: "var(--kh-peach)", color: "#fff", cursor: pendingKidId === r.kid_id ? "not-allowed" : "pointer", opacity: pendingKidId === r.kid_id ? 0.6 : 1 }}>
+                              {pendingKidId === r.kid_id && <Spinner size="sm" />} Check in
+                            </button>
+                          </>
+                        ) : r.status === "in" || r.status === "late" ? (
+                          <button onClick={() => quickAction(r.kid_id, r.kid_name ?? "Child", "check_out")} disabled={pendingKidId === r.kid_id} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, padding: "4px 10px", border: "1px solid var(--kh-border)", borderRadius: 7, background: "var(--kh-bg)", color: "var(--kh-ink-600)", cursor: pendingKidId === r.kid_id ? "not-allowed" : "pointer", opacity: pendingKidId === r.kid_id ? 0.6 : 1 }}>
+                            {pendingKidId === r.kid_id && <Spinner size="sm" />} Check out
                           </button>
-                          <button onClick={() => setExpandedKidId(expandedKidId === r.kid_id ? null : r.kid_id)} style={{ fontSize: 11.5, padding: "4px 10px", border: "1px solid var(--kh-border)", borderRadius: 7, background: "var(--kh-bg)", color: "var(--kh-ink-600)", cursor: "pointer" }}>Absent</button>
-                        </>
-                      ) : r.status === "in" || r.status === "late" ? (
-                        <button onClick={() => quickAction(r.kid_id, r.kid_name ?? "Child", "check_out")} disabled={pendingKidId === r.kid_id} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, padding: "4px 10px", border: "1px solid var(--kh-border)", borderRadius: 7, background: "var(--kh-bg)", color: "var(--kh-ink-600)", cursor: pendingKidId === r.kid_id ? "not-allowed" : "pointer", opacity: pendingKidId === r.kid_id ? 0.6 : 1 }}>
-                          {pendingKidId === r.kid_id && <Spinner size="sm" />} Check out
-                        </button>
-                      ) : (
-                        <button onClick={() => setExpandedKidId(expandedKidId === r.kid_id ? null : r.kid_id)} style={{ fontSize: 11.5, padding: "4px 10px", border: "1px solid var(--kh-border)", borderRadius: 7, background: "var(--kh-bg)", color: "var(--kh-ink-600)", cursor: "pointer" }}>Edit</button>
-                      )}
-                    </div>
+                        ) : (
+                          <button onClick={() => setExpandedKidId(expandedKidId === r.kid_id ? null : r.kid_id)} style={{ fontSize: 11.5, padding: "4px 10px", border: "1px solid var(--kh-border)", borderRadius: 7, background: "var(--kh-bg)", color: "var(--kh-ink-600)", cursor: "pointer" }}>Edit</button>
+                        )}
+                      </div>
+                    )}
                   </div>
 
-                  {r.status === "absent" && (
-                    <AbsentDetail classId={classId} kidId={r.kid_id} kidName={r.kid_name ?? "Child"} onSaved={(row) => updateRow(r.kid_id, row)} onToast={setToast} />
-                  )}
-                  {(r.status === "out" || expandedKidId === r.kid_id) && r.status !== "absent" && r.status !== "pending" && (
+                  {!readOnly && (r.status === "out" || expandedKidId === r.kid_id) && r.status !== "pending" && (
                     <CheckoutDetail classId={classId} kidId={r.kid_id} kidName={r.kid_name ?? "Child"} onSaved={(row) => { updateRow(r.kid_id, row); setExpandedKidId(null) }} onToast={setToast} />
-                  )}
-                  {r.status === "pending" && expandedKidId === r.kid_id && (
-                    <AbsentDetail classId={classId} kidId={r.kid_id} kidName={r.kid_name ?? "Child"} onSaved={(row) => { updateRow(r.kid_id, row); setExpandedKidId(null) }} onToast={setToast} />
                   )}
                 </div>
               )
@@ -344,7 +291,7 @@ export default function TakeAttendanceModal({
         {/* Footer */}
         <div style={{ padding: "13px 22px", borderTop: "1px solid var(--kh-ink-100)", display: "flex", alignItems: "center", gap: 10, background: "var(--kh-bg)" }}>
           <span style={{ fontSize: 11.5, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)" }}>
-            {counts.in} in · {counts.late} late · {counts.out} out · {counts.absent} absent · {counts.pending} pending
+            {counts.in} in · {counts.late} late · {counts.out} out · {counts.pending} pending
           </span>
           <div style={{ flex: 1 }} />
           <button onClick={onClose} style={{ padding: "7px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, border: "1px solid var(--kh-ink-200)", background: "var(--kh-surface)", color: "var(--kh-ink-700)", cursor: "pointer" }}>Close</button>

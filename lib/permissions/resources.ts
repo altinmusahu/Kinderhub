@@ -18,6 +18,16 @@ export const RESOURCES = [
 export type ResourceKey = typeof RESOURCES[number]["key"]
 export type PermissionLevel = "none" | "view" | "edit" | "full" | "own_only"
 
+// Resources where "own_only" means a direct ownership match (e.g. classes.lead_user_id / staff.id
+// equal to the logged-in user), selectable from the Roles & Permissions UI. Other resources may
+// still resolve "own_only" internally (derived via a class/kid lookup, e.g. curriculum, incidents)
+// for roles configured before this restriction, but that level is no longer offered as a new choice.
+export const OWN_ONLY_RESOURCES: ResourceKey[] = ["classes", "staff"]
+
+export function supportsOwnOnly(resource: ResourceKey): boolean {
+  return OWN_ONLY_RESOURCES.includes(resource)
+}
+
 export const PERMISSION_LEVELS: { value: PermissionLevel; label: string }[] = [
   { value: "none", label: "No access" },
   { value: "view", label: "View" },

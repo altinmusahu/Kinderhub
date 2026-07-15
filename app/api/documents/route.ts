@@ -2,12 +2,16 @@ import { NextRequest, NextResponse } from "next/server"
 import { getTenant } from "@/lib/get-tenant"
 import { logActivity } from "@/lib/log-activity"
 import { DocumentsService } from "../modules/documents/documents.service"
-import { can } from "@/lib/permissions/can"
+import { can, hasAnyAccess } from "@/lib/permissions/can"
 
 export async function GET() {
   try {
-    const { tenant_id } = await getTenant()
-    const documents = await DocumentsService.getAllForTenant(tenant_id)
+    const session = await getTenant()
+
+    const allowed = await hasAnyAccess(session, "documents")
+    if (!allowed) return NextResponse.json({ error: "You don't have permission to view documents" }, { status: 403 })
+
+    const documents = await DocumentsService.getAllForTenant(session.tenant_id)
     return NextResponse.json(documents)
   } catch (error) {
     const status = error instanceof Error && error.message === "Unauthorized" ? 401 : 500

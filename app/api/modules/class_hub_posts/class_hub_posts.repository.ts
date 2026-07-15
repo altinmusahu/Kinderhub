@@ -68,15 +68,14 @@ export const ClassHubPostsRepository = {
     }
   },
 
-  async delete(id: string, tenantId: string, authorId: string): Promise<void> {
+  async delete(id: string, tenantId: string): Promise<void> {
     const { data, error } = await supabaseAdmin
       .from("class_hub_posts")
       .delete()
       .eq("id", id)
       .eq("tenant_id", tenantId)
-      .eq("author_id", authorId)
       .select("id")
     if (error) throw new Error(error.message)
-    if (!data || data.length === 0) throw new Error("Post not found or not owned by this user")
+    if (!data || data.length === 0) throw new Error("Post not found")
   },
 }

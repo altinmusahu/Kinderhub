@@ -58,15 +58,14 @@ export const IncidentsRepository = {
     }
   },
 
-  async delete(id: string, tenantId: string, reportedBy: string): Promise<void> {
+  async delete(id: string, tenantId: string): Promise<void> {
     const { data, error } = await supabaseAdmin
       .from("incidents")
       .delete()
       .eq("id", id)
       .eq("tenant_id", tenantId)
-      .eq("reported_by", reportedBy)
       .select("id")
     if (error) throw new Error(error.message)
-    if (!data || data.length === 0) throw new Error("Incident not found or not owned by this user")
+    if (!data || data.length === 0) throw new Error("Incident not found")
   },
 }

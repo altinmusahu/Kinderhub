@@ -1,6 +1,6 @@
 "use client"
 
-import { RESOURCES, PERMISSION_LEVELS, type PermissionLevel, type ResourceKey } from "@/lib/permissions/resources"
+import { RESOURCES, PERMISSION_LEVELS, supportsOwnOnly, type PermissionLevel, type ResourceKey } from "@/lib/permissions/resources"
 import type { RoleWithPermissions } from "@/app/api/modules/roles/roles.types"
 
 export const LEVEL_STYLE: Record<PermissionLevel, { bg: string; color: string; dot: string; label: string }> = {
@@ -48,6 +48,15 @@ function LevelCell({
 }) {
   if (!editable) return <LevelBadge level={level} />
 
+  // Keep "own_only" selectable only for resources with a direct-ownership check. If a role was
+  // seeded with "own_only" on a resource that no longer offers it (e.g. curriculum, derived via
+  // class lookup), keep showing its current value so the select doesn't silently show the wrong
+  // thing — but it drops out of the list as soon as the admin picks something else.
+  const allowOwnOnly = supportsOwnOnly(resource) || level === "own_only"
+  const options = allowOwnOnly
+    ? PERMISSION_LEVELS
+    : PERMISSION_LEVELS.filter(l => l.value !== "own_only")
+
   return (
     <select
       value={level}
@@ -58,7 +67,7 @@ function LevelCell({
         fontWeight: 500, cursor: "pointer", outline: "none",
       }}
     >
-      {PERMISSION_LEVELS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+      {options.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
     </select>
   )
 }

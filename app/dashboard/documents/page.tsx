@@ -8,7 +8,8 @@ import { DataTable, Column } from "@/app/components/dashboard/DataTable"
 import MobileMenuButton from "@/app/components/dashboard/MobileMenuButton"
 import UploadDocumentModal from "@/components/ui/UploadDocumentModal"
 import { AccessDenied } from "@/app/components/dashboard/AccessDenied"
-import { hasAnyAccess } from "@/lib/permissions/can"
+import { hasAnyAccess, getMyPermissionLevel } from "@/lib/permissions/can"
+import DeleteDocumentButton from "./DeleteDocumentButton"
 
 function fileName(url: string) {
   const withoutQuery = url.split("?")[0]
@@ -32,60 +33,63 @@ function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).map(w => w[0]).join("").slice(0, 2).toUpperCase()
 }
 
-const columns: Column<DocumentWithSubject>[] = [
-  {
-    key: "name",
-    header: "Document",
-    cell: (d) => (
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <span style={{ fontSize: 16 }}>📄</span>
-        <span style={{ fontSize: 13, fontWeight: 500, color: "var(--kh-ink-800)" }}>{fileName(d.storage_path)}</span>
-      </div>
-    ),
-  },
-  {
-    key: "type",
-    header: "Attached to",
-    cell: (d) => {
-      const tc = TYPE_COLORS[d.subject_type ?? ""] ?? "var(--kh-ink-400)"
-      return d.subject_type ? (
-        <span style={{ fontSize: 11, fontWeight: 500, color: tc, background: tc + "18", borderRadius: 99, padding: "2px 8px" }}>{d.subject_type}</span>
-      ) : (
-        <span style={{ fontSize: 11, color: "var(--kh-ink-400)" }}>—</span>
-      )
-    },
-  },
-  {
-    key: "subject",
-    header: "Family / Staff / Child",
-    cell: (d) => {
-      const id = d.family_id ?? d.user_id ?? d.kid_id ?? d.id
-      const ac = avatarColor(id)
-      const name = d.subject_name ?? "Unknown"
-      return (
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span className="kh-avatar" style={{ background: ac + "22", color: ac, width: 22, height: 22, fontSize: 9 }}>{initials(name)}</span>
-          <span style={{ fontSize: 12, color: "var(--kh-ink-600)" }}>{name}</span>
+function buildColumns(canDelete: boolean): Column<DocumentWithSubject>[] {
+  return [
+    {
+      key: "name",
+      header: "Document",
+      cell: (d) => (
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 16 }}>📄</span>
+          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--kh-ink-800)" }}>{fileName(d.storage_path)}</span>
         </div>
-      )
+      ),
     },
-  },
-  {
-    key: "date",
-    header: "Date",
-    cellStyle: { fontSize: 12, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)" },
-    cell: (d) => new Date(d.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
-  },
-  {
-    key: "actions",
-    header: "",
-    cell: (d) => (
-      <div style={{ display: "flex", gap: 6 }}>
-        <a href={d.file_url} target="_blank" rel="noopener noreferrer" className="kh-btn" style={{ padding: "3px 8px", fontSize: 11, textDecoration: "none" }}>View</a>
-      </div>
-    ),
-  },
-]
+    {
+      key: "type",
+      header: "Attached to",
+      cell: (d) => {
+        const tc = TYPE_COLORS[d.subject_type ?? ""] ?? "var(--kh-ink-400)"
+        return d.subject_type ? (
+          <span style={{ fontSize: 11, fontWeight: 500, color: tc, background: tc + "18", borderRadius: 99, padding: "2px 8px" }}>{d.subject_type}</span>
+        ) : (
+          <span style={{ fontSize: 11, color: "var(--kh-ink-400)" }}>—</span>
+        )
+      },
+    },
+    {
+      key: "subject",
+      header: "Family / Staff / Child",
+      cell: (d) => {
+        const id = d.family_id ?? d.user_id ?? d.kid_id ?? d.id
+        const ac = avatarColor(id)
+        const name = d.subject_name ?? "Unknown"
+        return (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span className="kh-avatar" style={{ background: ac + "22", color: ac, width: 22, height: 22, fontSize: 9 }}>{initials(name)}</span>
+            <span style={{ fontSize: 12, color: "var(--kh-ink-600)" }}>{name}</span>
+          </div>
+        )
+      },
+    },
+    {
+      key: "date",
+      header: "Date",
+      cellStyle: { fontSize: 12, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)" },
+      cell: (d) => new Date(d.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+    },
+    {
+      key: "actions",
+      header: "",
+      cell: (d) => (
+        <div style={{ display: "flex", gap: 6 }}>
+          <a href={d.file_url} target="_blank" rel="noopener noreferrer" className="kh-btn" style={{ padding: "3px 8px", fontSize: 11, textDecoration: "none" }}>View</a>
+          {canDelete && <DeleteDocumentButton documentId={d.id} />}
+        </div>
+      ),
+    },
+  ]
+}
 
 export default async function DocumentsPage() {
   const store = await cookies()
@@ -96,6 +100,10 @@ export default async function DocumentsPage() {
 
   const allowed = await hasAnyAccess(session, "documents")
   if (!allowed) return <AccessDenied />
+
+  const level = await getMyPermissionLevel(session, "documents")
+  const canUpload = level === "edit" || level === "full" || level === "own_only"
+  const canDelete = level === "full"
 
   let documents: DocumentWithSubject[] = []
   try {
@@ -127,7 +135,7 @@ export default async function DocumentsPage() {
           </nav>
         </div>
         <div className="kh-topbar-right">
-          <UploadDocumentModal />
+          {canUpload && <UploadDocumentModal />}
         </div>
       </header>
 
@@ -154,7 +162,7 @@ export default async function DocumentsPage() {
           </div>
         ) : (
           <DataTable
-            columns={columns}
+            columns={buildColumns(canDelete)}
             rows={documents}
             getRowKey={(d) => d.id}
           />
