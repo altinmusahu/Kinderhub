@@ -35,7 +35,7 @@ export const TenantRepository = {
     const { data, error } = await supabase
       .from("tenants")
       .select("*")
-      .eq("Id", id)
+      .eq("id", id)
       .maybeSingle()
     if (error) throw new Error(error.message)
     return data
@@ -47,7 +47,7 @@ export const TenantRepository = {
     const { error } = await supabaseAdmin
       .from("tenants")
       .delete()
-      .eq("Id", id)
+      .eq("id", id)
     if (error) throw new Error(error.message)
   },
 
@@ -56,7 +56,7 @@ export const TenantRepository = {
     const { error } = await supabase
       .from("tenants")
       .update({ stripe_customer_id: stripeCustomerId })
-      .eq("Id", id)
+      .eq("id", id)
     if (error) throw new Error(error.message)
   },
 
@@ -65,7 +65,7 @@ export const TenantRepository = {
     const { error } = await supabaseAdmin
       .from("tenants")
       .update({ stripe_customer_id: stripeCustomerId })
-      .eq("Id", id)
+      .eq("id", id)
     if (error) throw new Error(error.message)
   },
 
@@ -73,7 +73,7 @@ export const TenantRepository = {
     const { data, error } = await supabaseAdmin
       .from("tenants")
       .select("*")
-      .eq("Id", id)
+      .eq("id", id)
       .maybeSingle()
     if (error) throw new Error(error.message)
     return data

@@ -15,15 +15,12 @@ export const TenantService = {
   },
 
   async create(input: CreateTenantInput): Promise<Tenant> {
-    const tenant = await TenantRepository.create({
-      ...input,
-      CreatedAt: new Date().toISOString().split("T")[0],
-    })
+    const tenant = await TenantRepository.create(input)
 
     try {
-      await RolesService.seedDefaultRoles(tenant.Id)
+      await RolesService.seedDefaultRoles(tenant.id)
     } catch (error) {
-      await TenantRepository.delete(tenant.Id).catch(() => {})
+      await TenantRepository.delete(tenant.id).catch(() => {})
       throw error
     }
 

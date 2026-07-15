@@ -75,7 +75,7 @@ export default function SubscribeForm({ planId, planName, yearlyPrice }: Props) 
       const res = await fetch("/api/tenants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ Name: tenantName, Slug: tenantSlug }),
+        body: JSON.stringify({ name: tenantName, slug: tenantSlug }),
       })
 
       const json = await res.json()
@@ -85,7 +85,7 @@ export default function SubscribeForm({ planId, planName, yearlyPrice }: Props) 
         return
       }
 
-      setTenantId(json.Id)
+      setTenantId(json.id)
       setStep("subscription")
     } catch {
       setTenantErrors({ general: "Network error. Please try again." })

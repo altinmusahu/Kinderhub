@@ -36,11 +36,11 @@ export async function POST(req: NextRequest) {
     let stripeCustomerId = tenant.stripe_customer_id
     if (!stripeCustomerId) {
       const customer = await stripe.customers.create({
-        name: tenant.Name,
-        metadata: { tenant_id: tenant.Id },
+        name: tenant.name,
+        metadata: { tenant_id: tenant.id },
       })
       stripeCustomerId = customer.id
-      await TenantService.setStripeCustomerIdAsAdmin(tenant.Id, stripeCustomerId)
+      await TenantService.setStripeCustomerIdAsAdmin(tenant.id, stripeCustomerId)
     }
 
     const today = new Date()
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     const fmt = (d: Date) => d.toISOString().split("T")[0]
 
     const pendingSubscription = await TenantSubscriptionService.create({
-      tenant_id: tenant.Id,
+      tenant_id: tenant.id,
       plan_id: plan.id,
       status: "pending",
       starts_at: fmt(today),
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
       success_url: `${origin}/subscribe/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/subscribe?plan_id=${plan.id}`,
       metadata: {
-        tenant_id: tenant.Id,
+        tenant_id: tenant.id,
         plan_id: plan.id,
         tenant_subscription_id: pendingSubscription.id,
       },

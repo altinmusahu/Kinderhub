@@ -1,8 +1,8 @@
 import { z } from "zod"
 
 export const createTenantSchema = z.object({
-  Name: z.string().min(1, "Name is required"),
-  Slug: z.string().min(1, "Slug is required"),
+  name: z.string().min(1, "Name is required"),
+  slug: z.string().min(1, "Slug is required"),
 })
 
 export const updateTenantSchema = createTenantSchema.partial()
