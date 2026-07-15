@@ -14,6 +14,7 @@ async function getPermissionLevel(session: SessionPayload, resource: ResourceKey
     .maybeSingle()
   if (userError) throw new Error(userError.message)
   if (!user?.role_id) return "none"
+  
 
   const { data: perm, error: permError } = await supabaseAdmin
     .from("role_permissions")
