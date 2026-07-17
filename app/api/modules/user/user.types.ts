@@ -43,6 +43,8 @@ export type UserWithWorkTrackingAndDepartment = {
   department_name: string | null
   position_name: string | null
   profile_picture_url: string | null
+  salary: number | null
+  salary_symbol: string | null
 }
 
 export type CreateUserDto = Omit<User, "id">

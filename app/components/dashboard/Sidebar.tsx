@@ -33,16 +33,18 @@ function ArchMarkSVG({ size = 32 }: { size?: number }) {
   )
 }
 
+// badge: "families" | "staff" | "classes" reads a live count from navCounts at render time;
+// a literal number keeps the old hardcoded value (no backend to count from yet); null hides it.
 const WORKSPACE_ITEMS = [
-  { href: "/dashboard",           icon: LayoutDashboard, label: "Overview",  badge: null, resources: null },
-  { href: "/dashboard/families",  icon: Users,           label: "Families",  badge: 124,  resources: ["families"] },
-  { href: "/dashboard/staff",     icon: UserSquare2,     label: "Staff",     badge: 18,   resources: ["staff"] },
-  { href: "/dashboard/classes",   icon: BookOpen,        label: "Classes",   badge: 5,    resources: ["classes"] },
-  { href: "/dashboard/food-menus", icon: Utensils,       label: "Food & menus", badge: null, resources: ["food_supplies", "curriculum"] },
-  { href: "/dashboard/billing",   icon: Receipt,         label: "Billing",   badge: 9,    resources: ["billing"] },
-  { href: "/dashboard/messages",  icon: MessageSquare,   label: "Messages",  badge: 3,    resources: ["messages"] },
-  { href: "/dashboard/documents", icon: FileText,        label: "Documents", badge: null, resources: ["documents"] },
-] satisfies { href: string; icon: typeof Users; label: string; badge: number | null; resources: ResourceKey[] | null }[]
+  { href: "/dashboard",           icon: LayoutDashboard, label: "Overview",  badge: null,      resources: null },
+  { href: "/dashboard/families",  icon: Users,           label: "Families",  badge: "families" as const, resources: ["families"] },
+  { href: "/dashboard/staff",     icon: UserSquare2,     label: "Staff",     badge: "staff" as const,    resources: ["staff"] },
+  { href: "/dashboard/classes",   icon: BookOpen,        label: "Classes",   badge: "classes" as const,  resources: ["classes"] },
+  { href: "/dashboard/food-menus", icon: Utensils,       label: "Food & menus", badge: null,   resources: ["food_supplies", "curriculum"] },
+  { href: "/dashboard/billing",   icon: Receipt,         label: "Billing",   badge: 9,         resources: ["billing"] },
+  { href: "/dashboard/messages",  icon: MessageSquare,   label: "Messages",  badge: 3,         resources: ["messages"] },
+  { href: "/dashboard/documents", icon: FileText,        label: "Documents", badge: null,      resources: ["documents"] },
+] satisfies { href: string; icon: typeof Users; label: string; badge: number | "families" | "staff" | "classes" | null; resources: ResourceKey[] | null }[]
 
 const TOOLS_ITEMS = [
   { href: "/dashboard/calendar", icon: Calendar, label: "Calendar", resources: ["calendar"] },
@@ -62,6 +64,13 @@ type Props = {
   onMobileClose?: () => void
   currentUser: { name: string; avatarUrl: string | null }
   permissions: Record<ResourceKey, PermissionLevel>
+  navCounts: { families: number; staff: number; classes: number }
+}
+
+function resolveBadge(badge: number | "families" | "staff" | "classes" | null, navCounts: Props["navCounts"]): number | null {
+  if (badge === null) return null
+  if (typeof badge === "number") return badge
+  return navCounts[badge]
 }
 
 function initialsFromName(name: string): string {
@@ -84,7 +93,7 @@ function SidebarAvatar({ name, avatarUrl }: { name: string; avatarUrl: string | 
   )
 }
 
-export default function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose, currentUser, permissions }: Props) {
+export default function Sidebar({ collapsed, onToggle, mobileOpen = false, onMobileClose, currentUser, permissions, navCounts }: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const [loggingOut, setLoggingOut] = useState(false)
@@ -169,8 +178,9 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen = false, onMob
       <div className="kh-sidebar-section" style={{ flex: 1, overflowY: "auto" }}>
         {showLabels && <div className="kh-sidebar-section-label">Workspace</div>}
         <nav className="kh-sidebar-nav">
-          {workspaceItems.map(({ href, icon: Icon, label, badge }) => {
+          {workspaceItems.map(({ href, icon: Icon, label, badge: rawBadge }) => {
             const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href))
+            const badge = resolveBadge(rawBadge, navCounts)
             return (
               <Link
                 key={href}

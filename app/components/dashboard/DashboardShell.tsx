@@ -13,10 +13,11 @@ type Props = {
   activityError: string | null
   currentUser: { name: string; avatarUrl: string | null }
   permissions: Record<ResourceKey, PermissionLevel>
+  navCounts: { families: number; staff: number; classes: number }
   children: ReactNode
 }
 
-export default function DashboardShell({ activityItems, activityError, currentUser, permissions, children }: Props) {
+export default function DashboardShell({ activityItems, activityError, currentUser, permissions, navCounts, children }: Props) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activityCollapsed, setActivityCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -83,6 +84,7 @@ export default function DashboardShell({ activityItems, activityError, currentUs
           onMobileClose={() => setMobileOpen(false)}
           currentUser={currentUser}
           permissions={permissions}
+          navCounts={navCounts}
         />
 
         <div

@@ -10,6 +10,8 @@ const stats = [
   { label: "Overdue balances",value: "$1,560",delta: "2 families",deltaColor: "pink"  },
 ]
 
+const myLeaveBalance = { daysLeft: 12, entitled: 20, used: 5 }
+
 const rooms = [
   { name: "Sunbeam",   age: "3–5y",    pres: 13, cap: 16, color: "#E8866A", lead: "PR", leadName: "Priya R."  },
   { name: "Meadow",    age: "2–3y",    pres: 11, cap: 12, color: "#6BA07C", lead: "MA", leadName: "Marcus A." },
@@ -72,7 +74,6 @@ export default function DashboardPage() {
         </div>
         <div className="kh-topbar-right">
           <span className="kh-topbar-date">Today · Thu, Apr 24</span>
-          <button className="kh-btn">+ New</button>
           <button className="kh-btn kh-btn--primary">✦ Daily brief</button>
         </div>
       </header>
@@ -92,7 +93,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Stat cards — responsive grid via CSS class */}
-        <div className="kh-stats-grid">
+        <div className="kh-stats-grid kh-stats-grid--5">
           {stats.map((s, i) => (
             <div key={i} className="kh-card kh-stat-card">
               <div className="kh-stat-label">{s.label}</div>
@@ -107,6 +108,22 @@ export default function DashboardPage() {
               )}
             </div>
           ))}
+
+          {/* My leave balance */}
+          <div className="kh-card kh-stat-card">
+            <div className="kh-stat-label">My leave balance</div>
+            <div className="kh-stat-value-row">
+              <span className="kh-stat-value">{myLeaveBalance.daysLeft} days left</span>
+            </div>
+            <div className="kh-stat-sub">
+              of {myLeaveBalance.entitled} entitled · {myLeaveBalance.used} used
+            </div>
+            <div style={{ marginTop: 8 }}>
+              <button className="kh-btn kh-btn--primary" style={{ fontSize: 12 }}>
+                Request leave
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Rooms + Attention — responsive two-col */}

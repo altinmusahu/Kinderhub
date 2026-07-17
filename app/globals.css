@@ -832,6 +832,10 @@
   gap: 12px;
 }
 
+.kh-stats-grid--5 {
+  grid-template-columns: repeat(5, 1fr);
+}
+
 .kh-stat-card {
   padding: 16px 18px 14px;
 }
@@ -1575,6 +1579,9 @@
 @media (min-width: 1280px) {
   .kh-stats-grid {
     grid-template-columns: repeat(4, 1fr);
+  }
+  .kh-stats-grid--5 {
+    grid-template-columns: repeat(5, 1fr);
   }
   .kh-two-col {
     grid-template-columns: 1fr 1fr;

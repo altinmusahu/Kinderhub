@@ -12,6 +12,7 @@ export const createUserSchema = z.object({
   date_of_birth: z.string().min(1, "Date of birth is required"),
   department_id: z.string().uuid("Invalid department ID").nullable().optional().default(null),
   position_name: z.string().nullable().optional().default(null),
+  entitled_leave_days: z.coerce.number().min(0).nullable().optional().default(null),
   street: z.string().optional().nullable().default(null),
   house_number: z.string().optional().nullable().default(null),
   city: z.string().optional().nullable().default(null),

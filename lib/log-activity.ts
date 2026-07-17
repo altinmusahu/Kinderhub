@@ -26,6 +26,7 @@ export type ActivityEntity =
   | "Food supply"
   | "Class menu"
   | "Role"
+  | "Leave request"
 
 function formatDate(date: Date): string {
   const d = date.getDate().toString().padStart(2, "0")

@@ -129,6 +129,11 @@ export const UserRepository = {
         user_profiles (
           file_url,
           created_at
+        ),
+        salary_tracking!salary_tracking_user_id_fkey (
+          salary,
+          is_active,
+          currency:currency_id ( symbol )
         )
       `)
       .eq("tenant_id", tenantId)
@@ -152,6 +157,9 @@ export const UserRepository = {
         ? supabaseAdmin.storage.from("profiles").getPublicUrl(latestProfile.file_url).data.publicUrl
         : null
 
+      const activeSalary = (u.salary_tracking ?? []).find((s: any) => s.is_active) ?? null
+      const salaryCurrency = Array.isArray(activeSalary?.currency) ? activeSalary.currency[0] : activeSalary?.currency
+
       return {
         id: u.id,
         name: u.name,
@@ -165,6 +173,8 @@ export const UserRepository = {
         department_id: wt?.department_id ?? null,
         department_name: dept?.name ?? null,
         position_name: wt?.position_name ?? null,
+        salary: activeSalary?.salary ?? null,
+        salary_symbol: salaryCurrency?.symbol ?? null,
       }
     })
   },

@@ -48,6 +48,9 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
   const joinedDate = new Date(user.user.created_at).toLocaleDateString("en-US", {
     year: "numeric", month: "long", day: "numeric",
   })
+  const tenureYears = (Math.floor(
+    (Date.now() - new Date(user.user.created_at).getTime()) / (365.25 * 86_400_000) * 10
+  ) / 10).toFixed(1).replace(/\.0$/, "")
 
   return (
     <div className="kh-page">
@@ -65,6 +68,12 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
           </nav>
         </div>
         <div className="kh-topbar-right">
+          <Link href="/dashboard/messages">
+            <button className="kh-btn">✉ Message</button>
+          </Link>
+          <Link href={`/dashboard/staff/${id}?tab=Schedule`}>
+            <button className="kh-btn">🗓 Schedule</button>
+          </Link>
           <Link href="/dashboard/staff">
             <button className="kh-btn">← Back</button>
           </Link>
@@ -101,14 +110,9 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
                 </span>
               </div>
               <div style={{ fontSize: 13.5, color: "var(--kh-ink-600)", marginTop: 3 }}>
-                {user.user.role || "Staff Member"}
+                {[user.user.role || "Staff Member", user.department_name, user.position_name].filter(Boolean).join(" · ")}
               </div>
               <div style={{ display: "flex", gap: 18, marginTop: 10, fontSize: 12, color: "var(--kh-ink-500)", flexWrap: "wrap" }}>
-                {user.position_name && (
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                    {user.position_name}
-                  </span>
-                )}
                 {user.user.email && (
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -126,21 +130,21 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
                   </span>
                 )}
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: "var(--kh-font-mono)", fontSize: 11 }}>
-                  ID: {user.user.id.slice(0, 8).toUpperCase()}
+                  {user.user.role || "Staff Member"} · ID: {user.user.id.slice(0, 8).toUpperCase()}
                 </span>
               </div>
             </div>
 
-            {/* Quick stats */}
+            {/* Quick stats — only tiles backed by real data (no time-clock/attendance tracking yet) */}
             <div style={{
               display: "flex", gap: 24, padding: "14px 20px",
               background: "var(--kh-surface)", border: "1px solid var(--kh-border)",
               borderRadius: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.06)", flexShrink: 0,
             }}>
               <div>
-                <div style={{ fontSize: 10, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)", textTransform: "uppercase", letterSpacing: ".06em" }}>Joined</div>
+                <div style={{ fontSize: 10, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)", textTransform: "uppercase", letterSpacing: ".06em" }}>Tenure</div>
                 <div style={{ fontFamily: "var(--kh-font-serif)", fontSize: 18, color: "var(--kh-ink-900)", marginTop: 4 }}>
-                  {new Date(user.user.created_at).getFullYear()}
+                  {tenureYears} yr
                 </div>
                 <div style={{ fontSize: 11, color: "var(--kh-ink-400)" }}>since {joinedDate}</div>
               </div>
@@ -151,14 +155,6 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
                   {user.user.is_active ? "Active" : "Inactive"}
                 </div>
                 <div style={{ fontSize: 11, color: "var(--kh-ink-400)" }}>employment</div>
-              </div>
-              <div style={{ width: 1, background: "var(--kh-border)" }} />
-              <div>
-                <div style={{ fontSize: 10, color: "var(--kh-ink-400)", fontFamily: "var(--kh-font-mono)", textTransform: "uppercase", letterSpacing: ".06em" }}>Role</div>
-                <div style={{ fontFamily: "var(--kh-font-serif)", fontSize: 18, color: "var(--kh-ink-900)", marginTop: 4 }}>
-                  {user.user.role ? user.user.role.slice(0, 1).toUpperCase() : "—"}
-                </div>
-                <div style={{ fontSize: 11, color: "var(--kh-ink-400)" }}>{user.user.role || "not set"}</div>
               </div>
               <div style={{ width: 1, background: "var(--kh-border)" }} />
               <div>
@@ -178,7 +174,7 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
         </div>
 
         {/* All tabs + content — client component */}
-        <EmployeeTabs user={user} userId={id} canEdit={canEdit} />
+        <EmployeeTabs user={user} userId={id} canEdit={canEdit} viewerRole={session.role} />
       </div>
     </div>
   )

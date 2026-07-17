@@ -11,7 +11,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   const { items, error } = await fetchActivityItems()
 
   const session = await getTenant()
-  const [{ data: userRow }, profile] = await Promise.all([
+  const [{ data: userRow }, profile, familiesCount, staffCount, classesCount] = await Promise.all([
     supabaseAdmin
       .from("users")
       .select("name, lastname, role_id")
@@ -19,7 +19,16 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       .eq("tenant_id", session.tenant_id)
       .maybeSingle(),
     UserProfilesService.getByUser(session.sub).catch(() => null),
+    supabaseAdmin.from("families").select("id", { count: "exact", head: true }).eq("tenant_id", session.tenant_id)
+      .then(({ count }) => count ?? 0),
+    supabaseAdmin.from("users").select("id", { count: "exact", head: true }).eq("tenant_id", session.tenant_id)
+      .then(({ count }) => count ?? 0),
+    // classes aren't tenant-scoped in the schema yet (matches ClassesRepository.findAll elsewhere)
+    supabaseAdmin.from("classes").select("id", { count: "exact", head: true })
+      .then(({ count }) => count ?? 0),
   ])
+
+  const navCounts = { families: familiesCount, staff: staffCount, classes: classesCount }
 
   const currentUser = {
     name: userRow ? `${userRow.name} ${userRow.lastname}` : session.email,
@@ -41,7 +50,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   }
 
   return (
-    <DashboardShell activityItems={items} activityError={error} currentUser={currentUser} permissions={permissions}>
+    <DashboardShell activityItems={items} activityError={error} currentUser={currentUser} permissions={permissions} navCounts={navCounts}>
       {children}
     </DashboardShell>
   )

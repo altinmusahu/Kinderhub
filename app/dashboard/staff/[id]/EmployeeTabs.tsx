@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useSearchParams } from "next/navigation"
 import type { UserById } from "@/app/api/modules/user/user.types"
 import { PersonalCard }   from "./components/PersonalCard"
 import { AccountCard }    from "./components/AccountCard"
@@ -9,8 +10,9 @@ import { ScheduleTab }    from "./components/ScheduleTab"
 import { DocumentsTab }   from "./components/DocumentsTab"
 import { SalaryTab }      from "./components/SalaryTab"
 import { SalaryCard } from "./components/SalaryCard"
+import { LeavesTab } from "./components/LeavesTab"
 
-const TABS = ["Overview", "Salary", "Schedule", "Documents"] as const
+const TABS = ["Overview", "Salary", "Leaves", "Schedule", "Documents"] as const
 type Tab = typeof TABS[number]
 
 function OverviewTab({ user, userId }: { user: UserById; userId: string }) {
@@ -28,27 +30,23 @@ function OverviewTab({ user, userId }: { user: UserById; userId: string }) {
   )
 }
 
-export default function EmployeeTabs({ user, userId, canEdit }: { user: UserById; userId: string; canEdit: boolean }) {
-  const [active, setActive] = useState<Tab>("Overview")
+function isTab(value: string | null): value is Tab {
+  return !!value && (TABS as readonly string[]).includes(value)
+}
+
+export default function EmployeeTabs({ user, userId, canEdit, viewerRole }: { user: UserById; userId: string; canEdit: boolean; viewerRole: string }) {
+  const searchParams = useSearchParams()
+  const initialTab = searchParams.get("tab")
+  const [active, setActive] = useState<Tab>(isTab(initialTab) ? initialTab : "Overview")
 
   return (
     <>
-      <div style={{ display: "flex", gap: 18, padding: "0 28px" }}>
+      <div className="kh-tabs" style={{ margin: "0 28px" }}>
         {TABS.map(t => (
           <button
             key={t}
+            className={`kh-tab${active === t ? " kh-tab--active" : ""}`}
             onClick={() => setActive(t)}
-            style={{
-              padding: "10px 2px",
-              fontSize: 13,
-              background: "none",
-              border: "none",
-              borderBottom: active === t ? "2px solid var(--kh-peach)" : "2px solid transparent",
-              color: active === t ? "var(--kh-ink-900)" : "var(--kh-ink-500)",
-              fontWeight: active === t ? 600 : 500,
-              cursor: "pointer",
-              fontFamily: "inherit",
-            }}
           >
             {t}
           </button>
@@ -57,6 +55,7 @@ export default function EmployeeTabs({ user, userId, canEdit }: { user: UserById
 
       {active === "Overview"  && <OverviewTab  user={user} userId={userId} />}
       {active === "Salary"    && <SalaryTab    userId={userId} />}
+      {active === "Leaves"    && <LeavesTab    userId={userId} canReview={canEdit} viewerRole={viewerRole} />}
       {active === "Schedule"  && <ScheduleTab  userId={userId} />}
       {active === "Documents" && <DocumentsTab userId={userId} title="Employees files" canEdit={canEdit} />}
     </>

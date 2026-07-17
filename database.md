@@ -11,7 +11,6 @@ Data table of user, that we register information, role and other properties
 | `lastname` | `varchar` |  |
 | `phone_number` | `text` |  |
 | `personal_number` | `text` |  |
-| `role` | `varchar` |  |
 | `created_at` | `date` |  |
 | `is_active` | `bool` |  |
 | `date_of_birth` | `date` |  |
@@ -19,7 +18,9 @@ Data table of user, that we register information, role and other properties
 | `password_hash` | `text` |  |
 | `is_first_login_executed` | `bool` |  |
 | `email` | `text` |  Unique |
-| `role_id` | `uuid` | Nullable, references `roles(id)` — added via `supabase/migrations/20260714100342_add_users_role_id.sql`. `role` (above) is intentionally left in place; not yet backfilled or dropped (manual follow-up) |
+| `role_id` | `uuid` | Nullable, references `roles(id)` — added via `supabase/migrations/20260714100342_add_users_role_id.sql` |
+
+> **Correction**: the old free-text `role` column documented here previously has since been **dropped** from the live table (confirmed by direct query — `select role from users` now fails with `column users.role does not exist`). `SessionPayload.role` (JWT claim) and code paths that still write/read `users.role` (`UserRepository.createWithId`, `user.types.ts`) are now out of sync with the schema — `POST /api/users` currently fails with `Could not find the 'role' column of 'users' in the schema cache`. See PROJECT_OVERVIEW.md Known Issues.
 
 ## Table `roles`
 
@@ -436,6 +437,47 @@ Data table of salary tracking per user
 | `salary` | `numeric` |  |
 | `is_active` | `bool` |  |
 | `currency_id` | `uuid` |  |
+
+## Table `leave_requests`
+
+Data table of staff leave/vacation requests (annual, sick, unpaid, etc.), submitted by an employee and approved/rejected by a manager. Schema was authored and applied directly by the user (not via a migration file in `supabase/migrations/`).
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `uuid` | Primary, default `gen_random_uuid()` |
+| `tenant_id` | `uuid` |  |
+| `user_id` | `uuid` | references `users(id)` |
+| `leave_type` | `text` | One of `annual` / `sick` / `unpaid` / `maternity` / `paternity` / `bereavement` / `personal` |
+| `start_date` | `date` |  |
+| `end_date` | `date` |  |
+| `total_days` | `numeric` | Computed at submission time by the app (weekdays only, weekends excluded — see `LeaveRequestsService`), not by a DB trigger |
+| `reason` | `text` | Nullable |
+| `status` | `text` | One of `pending` / `approved` / `rejected` / `cancelled`, default `pending` |
+| `reviewed_by` | `uuid` | Nullable, references `users(id)` |
+| `reviewed_at` | `timestamptz` | Nullable |
+| `review_note` | `text` | Nullable |
+| `created_at` | `timestamptz` | default `now()` |
+
+## Table `leave_balances`
+
+Per-employee, per-year annual leave entitlement. One row per `(user_id, year, leave_type)`. There's no seeding UI beyond the app get-or-create pattern described below — rows are created lazily.
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `uuid` | Primary, default `gen_random_uuid()` |
+| `tenant_id` | `uuid` |  |
+| `user_id` | `uuid` | references `users(id)` |
+| `year` | `integer` |  |
+| `leave_type` | `text` | default `'annual'` — only `annual` is used by the app today |
+| `entitled_days` | `numeric` |  |
+| `carried_over` | `numeric` | default `0` — unused days brought forward from the prior year |
+| `created_at` | `timestamptz` | default `now()` |
+
+`UNIQUE(user_id, year, leave_type)`.
 
 ## Table `class_hub_posts`
 

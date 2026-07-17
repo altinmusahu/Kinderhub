@@ -17,6 +17,7 @@ export default function AddStaffModal({ triggerLabel = "+ Add staff" }: { trigge
     personal_number: "", role: "", department_id: "", position_name: "",
     is_active: true, date_of_birth: "",
     street: "", house_number: "", city: "", postal_code: "", country: "",
+    entitled_leave_days: "22",
   })
 
   function set(k: string, v: string | boolean) { setForm(f => ({ ...f, [k]: v })) }
@@ -32,7 +33,7 @@ export default function AddStaffModal({ triggerLabel = "+ Add staff" }: { trigge
       })
       if (res.ok) {
         setOpen(false)
-        setForm({ name: "", lastname: "", email: "", phone_number: "", personal_number: "", role: "", department_id: "", position_name: "", is_active: true, date_of_birth: "", street: "", house_number: "", city: "", postal_code: "", country: "" })
+        setForm({ name: "", lastname: "", email: "", phone_number: "", personal_number: "", role: "", department_id: "", position_name: "", is_active: true, date_of_birth: "", street: "", house_number: "", city: "", postal_code: "", country: "", entitled_leave_days: "22" })
         router.refresh()
       } else {
         const j = await res.json().catch(() => ({}))
@@ -105,6 +106,9 @@ export default function AddStaffModal({ triggerLabel = "+ Add staff" }: { trigge
               </MField>
               <MField label="Position title" optional colSpan={2} hint='Free-text label shown on schedules, e.g. "Room assistant".'>
                 <MInput value={form.position_name} onChange={e => set("position_name", e.target.value)} placeholder="Room assistant · Sunbeam" />
+              </MField>
+              <MField label="Annual leave days" hint="Vacation days entitled per year">
+                <MInput type="number" min={0} step={0.5} value={form.entitled_leave_days} onChange={e => set("entitled_leave_days", e.target.value)} />
               </MField>
             </MGrid>
           </MSection>
