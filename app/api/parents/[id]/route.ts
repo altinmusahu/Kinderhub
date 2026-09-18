@@ -26,6 +26,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       is_active:       body.is_active       ?? true,
       address:         body.address         ?? "",
       pick_up:         body.pick_up         ?? false,
+      // These five are new/optional — only touch them when the caller actually sends a
+      // value, so a narrow call (e.g. just flipping the custody-file flag after an
+      // upload) can't wipe out fields it never meant to touch.
+      email:                           body.email                          !== undefined ? (body.email || null) : undefined,
+      work_phone_number:               body.work_phone_number              !== undefined ? (body.work_phone_number || null) : undefined,
+      has_legal_custody:               body.has_legal_custody              !== undefined ? body.has_legal_custody : undefined,
+      custody_notes:                   body.custody_notes                  !== undefined ? (body.custody_notes || null) : undefined,
+      has_legal_custody_file_uploaded: body.has_legal_custody_file_uploaded !== undefined ? body.has_legal_custody_file_uploaded : undefined,
     })
 
     logActivity(session, "updated", "Parent", `${body.firstname} ${body.lastname}`)

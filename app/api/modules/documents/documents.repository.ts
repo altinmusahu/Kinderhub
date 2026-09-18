@@ -19,27 +19,31 @@ export const DocumentsRepository = {
     familyName: Map<string, string>
     userName: Map<string, string>
     kidName: Map<string, string>
+    parentName: Map<string, string>
   }> {
-    const [{ data: families, error: famError }, { data: users, error: userError }, { data: kids, error: kidError }] = await Promise.all([
+    const [{ data: families, error: famError }, { data: users, error: userError }, { data: kids, error: kidError }, { data: parents, error: parentError }] = await Promise.all([
       supabaseAdmin.from("families").select("id, name").eq("tenant_id", tenantId),
       supabaseAdmin.from("users").select("id, name, lastname").eq("tenant_id", tenantId),
       supabaseAdmin.from("kids").select("id, firstname, lastname").eq("tenant_id", tenantId),
+      supabaseAdmin.from("parents").select("id, firstname, lastname").eq("tenant_id", tenantId),
     ])
     if (famError) throw new Error(famError.message)
     if (userError) throw new Error(userError.message)
     if (kidError) throw new Error(kidError.message)
+    if (parentError) throw new Error(parentError.message)
 
     return {
       familyName: new Map((families ?? []).map((f) => [f.id, f.name])),
       userName: new Map((users ?? []).map((u) => [u.id, `${u.name} ${u.lastname}`])),
       kidName: new Map((kids ?? []).map((k) => [k.id, `${k.firstname} ${k.lastname}`])),
+      parentName: new Map((parents ?? []).map((p) => [p.id, `${p.firstname} ${p.lastname}`])),
     }
   },
 
   async findAllRaw(): Promise<Documents[]> {
     const { data, error } = await supabaseAdmin
       .from("documents")
-      .select("id, file_url, kid_id, user_id, family_id, class_id, created_at")
+      .select("id, file_url, kid_id, user_id, family_id, parent_id, class_id, created_at")
       .order("created_at", { ascending: false })
     if (error) throw new Error(error.message)
     return data ?? []

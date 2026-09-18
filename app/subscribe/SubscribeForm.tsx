@@ -138,7 +138,7 @@ export default function SubscribeForm({ planId, planName, yearlyPrice }: Props) 
           href="/"
           className="mt-8 inline-block text-indigo-600 font-semibold hover:underline"
         >
-          ← Back to home
+          Back to home
         </Link>
       </div>
     )
@@ -235,7 +235,7 @@ export default function SubscribeForm({ planId, planName, yearlyPrice }: Props) 
             onClick={() => setStep("tenant")}
             className="flex-1 rounded-xl border border-gray-300 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
           >
-            ← Back
+            Back
           </button>
           <button
             type="submit"

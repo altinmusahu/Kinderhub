@@ -17,6 +17,7 @@ export type FamilyWithDetails = {
   created_at: string
   primary_contact: string | null   // firstname + lastname of first parent
   kids_count: number
+  needs_custody_file: boolean      // true if a guardian has legal custody but hasn't uploaded proof yet
 }
 
 export type CreateFamiliesDto = {
@@ -40,6 +41,11 @@ export type FamilyParent = {
   date_of_birth: string
   personal_number: string
   created_at: string
+  email: string | null
+  work_phone_number: string | null
+  has_legal_custody: boolean | null
+  custody_notes: string | null
+  has_legal_custody_file_uploaded: boolean | null
 }
 
 export type FamilyKid = {
@@ -61,4 +67,5 @@ export type FamilyDetail = {
   created_at: string
   parents: FamilyParent[]
   kids: FamilyKid[]
+  needs_custody_file: boolean
 }

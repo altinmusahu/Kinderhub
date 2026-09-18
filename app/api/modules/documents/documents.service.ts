@@ -11,7 +11,7 @@ export const DocumentsService = {
   },
 
   async getAllForTenant(tenantId: string): Promise<DocumentWithSubject[]> {
-    const [{ familyName, userName, kidName }, documents] = await Promise.all([
+    const [{ familyName, userName, kidName, parentName }, documents] = await Promise.all([
       DocumentsRepository.findTenantSubjects(tenantId),
       DocumentsRepository.findAllRaw(),
     ])
@@ -19,6 +19,7 @@ export const DocumentsService = {
     const scoped = documents.filter((d) =>
       (d.kid_id && kidName.has(d.kid_id)) ||
       (d.user_id && userName.has(d.user_id)) ||
+      (d.parent_id && parentName.has(d.parent_id)) ||
       (d.family_id && familyName.has(d.family_id))
     )
 
@@ -31,10 +32,12 @@ export const DocumentsService = {
         ? kidName.get(d.kid_id)
         : d.user_id
         ? userName.get(d.user_id)
+        : d.parent_id
+        ? parentName.get(d.parent_id)
         : d.family_id
         ? familyName.get(d.family_id)
         : null
-      const subjectType = d.kid_id ? "Child" : d.user_id ? "Staff" : d.family_id ? "Family" : null
+      const subjectType = d.kid_id ? "Child" : d.user_id ? "Staff" : d.parent_id ? "Parent" : d.family_id ? "Family" : null
 
       return {
         id: d.id,
@@ -43,6 +46,7 @@ export const DocumentsService = {
         kid_id: d.kid_id,
         user_id: d.user_id,
         family_id: d.family_id,
+        parent_id: d.parent_id ?? null,
         subject_name: subjectName ?? null,
         subject_type: subjectType,
         created_at: d.created_at,
@@ -52,17 +56,17 @@ export const DocumentsService = {
   },
 
   async upload(input: UploadDocumentInput): Promise<DocumentWithSubject> {
-    const { file, kid_id, user_id, family_id, class_id } = input
-    if (!kid_id && !user_id && !family_id) {
-      throw new Error("Select a family, staff member, or child for this document")
+    const { file, kid_id, user_id, family_id, parent_id, class_id } = input
+    if (!kid_id && !user_id && !family_id && !parent_id) {
+      throw new Error("Select a family, staff member, parent, or child for this document")
     }
 
-    const ownerId = kid_id ?? user_id ?? family_id
+    const ownerId = kid_id ?? user_id ?? parent_id ?? family_id
     const storagePath = `${ownerId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`
 
     await DocumentsRepository.uploadFile(storagePath, file)
 
-    const created = await DocumentsRepository.create({ file_url: storagePath, kid_id, user_id, family_id, class_id })
+    const created = await DocumentsRepository.create({ file_url: storagePath, kid_id, user_id, family_id, parent_id, class_id })
     const signedUrl = await DocumentsRepository.createSignedUrl(storagePath)
 
     return {
@@ -72,9 +76,10 @@ export const DocumentsService = {
       kid_id: created.kid_id,
       user_id: created.user_id,
       family_id: created.family_id,
+      parent_id: created.parent_id,
       class_id: created.class_id,
       subject_name: null,
-      subject_type: kid_id ? "Child" : user_id ? "Staff" : "Family",
+      subject_type: kid_id ? "Child" : user_id ? "Staff" : parent_id ? "Parent" : "Family",
       created_at: created.created_at,
     }
   },

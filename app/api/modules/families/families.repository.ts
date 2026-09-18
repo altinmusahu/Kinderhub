@@ -16,7 +16,7 @@ export const FamiliesRepository = {
       .from("families")
       .select(`
         id, name, status, plan, balance, created_at,
-        parents ( id, firstname, lastname ),
+        parents ( id, firstname, lastname, has_legal_custody, has_legal_custody_file_uploaded ),
         kids ( id )
       `)
       .eq("tenant_id", tenantId)
@@ -24,16 +24,18 @@ export const FamiliesRepository = {
     if (error) throw new Error(error.message)
 
     return (data ?? []).map((f: any) => {
-      const primary = Array.isArray(f.parents) ? f.parents[0] : null
+      const parents = Array.isArray(f.parents) ? f.parents : []
+      const primary = parents[0] ?? null
       return {
-        id:              f.id,
-        name:            f.name,
-        status:          f.status,
-        plan:            f.plan,
-        balance:         Number(f.balance ?? 0),
-        created_at:      f.created_at,
-        primary_contact: primary ? `${primary.firstname} ${primary.lastname}` : null,
-        kids_count:      Array.isArray(f.kids) ? f.kids.length : 0,
+        id:                 f.id,
+        name:               f.name,
+        status:             f.status,
+        plan:               f.plan,
+        balance:            Number(f.balance ?? 0),
+        created_at:         f.created_at,
+        primary_contact:    primary ? `${primary.firstname} ${primary.lastname}` : null,
+        kids_count:         Array.isArray(f.kids) ? f.kids.length : 0,
+        needs_custody_file: parents.some((p: { has_legal_custody: boolean | null; has_legal_custody_file_uploaded: boolean | null }) => p.has_legal_custody === true && p.has_legal_custody_file_uploaded !== true),
       }
     })
   },
@@ -43,7 +45,7 @@ export const FamiliesRepository = {
       .from("families")
       .select(`
         id, name, status, plan, balance, created_at,
-        parents ( id, firstname, lastname, phone_number, address, pick_up, is_active, date_of_birth, personal_number, created_at ),
+        parents ( id, firstname, lastname, phone_number, address, pick_up, is_active, date_of_birth, personal_number, created_at, email, work_phone_number, has_legal_custody, custody_notes, has_legal_custody_file_uploaded ),
         kids    ( id, firstname, lastname, date_of_birth, gender, personal_number, class_id )
       `)
       .eq("id", id)
@@ -51,17 +53,19 @@ export const FamiliesRepository = {
       .maybeSingle()
     if (error) throw new Error(error.message)
     if (!data) return null
+    const parents = Array.isArray(data.parents)
+      ? [...data.parents].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      : []
     return {
-      id:         data.id,
-      name:       data.name,
-      status:     data.status,
-      plan:       data.plan,
-      balance:    Number(data.balance ?? 0),
-      created_at: data.created_at,
-      parents:    Array.isArray(data.parents)
-        ? [...data.parents].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-        : [],
-      kids:       Array.isArray(data.kids)    ? data.kids    : [],
+      id:                 data.id,
+      name:               data.name,
+      status:             data.status,
+      plan:               data.plan,
+      balance:            Number(data.balance ?? 0),
+      created_at:         data.created_at,
+      parents,
+      kids:               Array.isArray(data.kids) ? data.kids : [],
+      needs_custody_file: parents.some((p: { has_legal_custody: boolean | null; has_legal_custody_file_uploaded: boolean | null }) => p.has_legal_custody === true && p.has_legal_custody_file_uploaded !== true),
     }
   },
 

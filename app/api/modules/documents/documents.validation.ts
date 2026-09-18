@@ -5,6 +5,7 @@ export const createDocumentSchema = z.object({
   kid_id: z.string().nullable().optional().default(null),
   user_id: z.string().nullable().optional().default(null),
   family_id: z.string().nullable().optional().default(null),
+  parent_id: z.string().nullable().optional().default(null),
 })
 
 export const updateDocumentSchema = createDocumentSchema.partial()

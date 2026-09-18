@@ -11,6 +11,11 @@ export const createParentsSchema = z.object({
   address:         z.string().default(""),
   pick_up:         z.boolean().default(false),
   tenant_id:       z.string().min(1, "Tenant is required"),
+  email:                          z.string().email().nullable().optional().default(null),
+  work_phone_number:              z.string().nullable().optional().default(null),
+  has_legal_custody:              z.boolean().nullable().optional().default(null),
+  custody_notes:                  z.string().nullable().optional().default(null),
+  has_legal_custody_file_uploaded: z.boolean().nullable().optional().default(null),
 })
 
 export const updateParentsSchema = createParentsSchema.partial()

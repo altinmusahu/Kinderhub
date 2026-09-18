@@ -75,7 +75,7 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
             <button className="kh-btn">🗓 Schedule</button>
           </Link>
           <Link href="/dashboard/staff">
-            <button className="kh-btn">← Back</button>
+            <button className="kh-btn">Back</button>
           </Link>
         </div>
       </header>

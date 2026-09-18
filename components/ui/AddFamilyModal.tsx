@@ -12,13 +12,22 @@ const STEPS = [
   { t: "Review",    d: "Confirm & create" },
 ]
 
-type Guardian = { firstname: string; lastname: string; phone_number: string; address: string; pick_up: boolean; personal_number: string; date_of_birth: string }
+type Guardian = {
+  firstname: string; lastname: string; phone_number: string; address: string
+  pick_up: boolean; personal_number: string; date_of_birth: string
+  email: string; work_phone_number: string
+  has_legal_custody: boolean; custody_notes: string
+  custody_file: File | null // uploaded to `documents` (parent_id) once the guardian exists — see handleSubmit
+}
 type Kid = { firstname: string; lastname: string; date_of_birth: string; gender: string; personal_number: string }
 type ClassOption = { id: string; name: string; average_year: string; capacity: number; enrolled: number; lead_name: string | null; location_name: string | null }
 // Per-kid class assignment: class_id chosen, and whether it goes to waitlist
 type KidAssignment = { class_id: string; waitlist: boolean; note: string }
 
-const emptyGuardian = (): Guardian => ({ firstname: "", lastname: "", phone_number: "", address: "", pick_up: false, personal_number: "", date_of_birth: "" })
+const emptyGuardian = (): Guardian => ({
+  firstname: "", lastname: "", phone_number: "", address: "", pick_up: false, personal_number: "", date_of_birth: "",
+  email: "", work_phone_number: "", has_legal_custody: false, custody_notes: "", custody_file: null,
+})
 const emptyKid = (): Kid => ({ firstname: "", lastname: "", date_of_birth: "", gender: "", personal_number: "" })
 const emptyAssignment = (): KidAssignment => ({ class_id: "", waitlist: false, note: "" })
 
@@ -118,7 +127,7 @@ function close() {
     setClasses([])
   }
 
-  function setG(i: number, k: keyof Guardian, v: string | boolean) {
+  function setG(i: number, k: keyof Guardian, v: string | boolean | File | null) {
     setGuardians(gs => gs.map((g, idx) => idx === i ? { ...g, [k]: v } : g))
   }
   function setK(i: number, k: keyof Kid, v: string) {
@@ -158,9 +167,30 @@ function close() {
             phone_number: g.phone_number, personal_number: g.personal_number,
             date_of_birth: g.date_of_birth, address: g.address,
             pick_up: g.pick_up, is_active: true,
+            email: g.email || null, work_phone_number: g.work_phone_number || null,
+            has_legal_custody: g.has_legal_custody, custody_notes: g.custody_notes || null,
           }),
         })
         if (!res.ok) { setError("Failed to create guardian."); return }
+        const createdGuardian = await res.json()
+
+        // A guardian flagged with legal custody starts with the file "not uploaded" (set
+        // server-side) — the family shows a warrant for it until this file lands.
+        if (g.has_legal_custody && g.custody_file) {
+          const fd = new FormData()
+          fd.append("file", g.custody_file)
+          fd.append("parent_id", createdGuardian.id)
+          fd.append("family_id", fam.id)
+          const docRes = await fetch("/api/documents", { method: "POST", body: fd })
+          if (!docRes.ok) { setError(`Guardian created, but the custody file for ${g.firstname} failed to upload. Add it from the family page.`); return }
+
+          const flagRes = await fetch(`/api/parents/${createdGuardian.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ has_legal_custody_file_uploaded: true }),
+          })
+          if (!flagRes.ok) { setError(`Custody file uploaded for ${g.firstname}, but couldn't confirm it. Check the family page.`); return }
+        }
       }
 
       // Step 3: create kids + enroll or waitlist
@@ -208,9 +238,9 @@ function close() {
   const footerContent = (
     <>
       <MBtn variant="ghost" onClick={step === 0 ? close : () => setStep(s => s - 1)}>
-        {step === 0 ? "Cancel" : "← Back"}
+        {step === 0 ? "Cancel" : "Back"}
       </MBtn>
-      {step < 4 && <MBtn variant="accent" onClick={() => setStep(s => s + 1)}>Continue →</MBtn>}
+      {step < 4 && <MBtn variant="accent" onClick={() => setStep(s => s + 1)}>Continue</MBtn>}
       {step === 4 && <MBtn variant="accent" disabled={saving} onClick={handleSubmit}>{saving ? "Creating…" : "Create family"}</MBtn>}
     </>
   )
@@ -244,7 +274,7 @@ function close() {
                   </MField>
                   <MField label="Status" required>
                     <MSelect value={family.status} onChange={e => setFamily(f => ({ ...f, status: e.target.value }))}>
-                      <option>Active</option><option>Waitlist</option><option>Paused</option>
+                      <option>Active</option><option>Waitlist</option>
                     </MSelect>
                   </MField>
                   <MField label="Plan" required>
@@ -283,10 +313,36 @@ function close() {
                       <MField label="Date of birth" required><MInput type="date" value={g.date_of_birth} onChange={e => setG(i, "date_of_birth", e.target.value)} /></MField>
                       <MField label="Personal number" required><MInput value={g.personal_number} onChange={e => setG(i, "personal_number", e.target.value)} placeholder="ID number" /></MField>
                       <MField label="Address" optional><MInput value={g.address} onChange={e => setG(i, "address", e.target.value)} placeholder="Street, city" /></MField>
+                      <MField label="Email" optional><MInput type="email" value={g.email} onChange={e => setG(i, "email", e.target.value)} placeholder="name@example.com" /></MField>
+                      <MField label="Work phone" optional><MInput value={g.work_phone_number} onChange={e => setG(i, "work_phone_number", e.target.value)} placeholder="+1 (415) 555-0000" /></MField>
                     </MGrid>
-                    <div style={{ marginTop: 12 }}>
+                    <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
                       <MToggle on={g.pick_up} onChange={v => setG(i, "pick_up", v)} title="Authorized for pickup" desc="Can collect children" />
+                      <MToggle
+                        on={g.has_legal_custody}
+                        onChange={v => setG(i, "has_legal_custody", v)}
+                        title="Has legal custody"
+                        desc="Requires proof on file — the family shows a warning until it's uploaded"
+                      />
                     </div>
+
+                    {g.has_legal_custody && (
+                      <div style={{ marginTop: 12, padding: 12, borderRadius: 11, background: "var(--kh-ink-50)", border: "1px solid var(--kh-border)", display: "flex", flexDirection: "column", gap: 10 }}>
+                        <MField label="Custody notes" optional hint="e.g. court order reference, custody schedule">
+                          <MInput value={g.custody_notes} onChange={e => setG(i, "custody_notes", e.target.value)} placeholder="Optional notes for staff" />
+                        </MField>
+                        <MField label="Proof of custody" optional hint="Upload now, or later from the family's page">
+                          <input
+                            type="file"
+                            onChange={e => setG(i, "custody_file", e.target.files?.[0] ?? null)}
+                            style={{ fontSize: 12.5, color: "var(--kh-ink-600)" }}
+                          />
+                        </MField>
+                        {!g.custody_file && (
+                          <span style={{ fontSize: 11.5, color: "#B0631A" }}>⚠ Without a file, this family will show a “custody file needed” warning.</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
                 <button type="button" onClick={() => setGuardians(gs => [...gs, emptyGuardian()])}

@@ -119,7 +119,7 @@ export function StaffDirectoryTab({ staff }: { staff: UserWithWorkTrackingAndDep
             fontSize: 12, color: "var(--kh-peach)", textDecoration: "none", fontWeight: 500,
           }}
         >
-          Open →
+          Open
         </Link>
       ),
     },

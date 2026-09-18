@@ -21,6 +21,7 @@ const TYPE_COLORS: Record<string, string> = {
   Family: "#6BA07C",
   Staff:  "#C9AE4E",
   Child:  "#D97F8C",
+  Parent: "#6A9EC8",
 }
 
 const AVATAR_COLORS = ["#E8866A", "#6BA07C", "#C9AE4E", "#D97F8C", "#6A9EC8", "#A07CB4", "#7CA0B4"]
@@ -59,9 +60,9 @@ function buildColumns(canDelete: boolean): Column<DocumentWithSubject>[] {
     },
     {
       key: "subject",
-      header: "Family / Staff / Child",
+      header: "Family / Staff / Parent / Child",
       cell: (d) => {
-        const id = d.family_id ?? d.user_id ?? d.kid_id ?? d.id
+        const id = d.kid_id ?? d.user_id ?? d.parent_id ?? d.family_id ?? d.id
         const ac = avatarColor(id)
         const name = d.subject_name ?? "Unknown"
         return (
@@ -115,12 +116,14 @@ export default async function DocumentsPage() {
   const familyCount = documents.filter(d => d.subject_type === "Family").length
   const staffCount = documents.filter(d => d.subject_type === "Staff").length
   const childCount = documents.filter(d => d.subject_type === "Child").length
+  const parentCount = documents.filter(d => d.subject_type === "Parent").length
 
   const stats = [
     { label: "Total documents", value: String(documents.length) },
     { label: "Family",          value: String(familyCount), color: "#6BA07C" },
     { label: "Staff",           value: String(staffCount),  color: "#B07A1A" },
     { label: "Child",           value: String(childCount),  color: "#C0392B" },
+    { label: "Parent",          value: String(parentCount), color: "#3A6EA5" },
   ]
 
   return (
@@ -145,7 +148,7 @@ export default async function DocumentsPage() {
           <p className="kh-sub">{documents.length} document{documents.length !== 1 ? "s" : ""}</p>
         </div>
 
-        <div className="kh-stats-grid" style={{ marginBottom: 4 }}>
+        <div className="kh-stats-grid kh-stats-grid--5" style={{ marginBottom: 4 }}>
           {stats.map((s, i) => (
             <div key={i} className="kh-card kh-stat-card">
               <div className="kh-stat-label">{s.label}</div>

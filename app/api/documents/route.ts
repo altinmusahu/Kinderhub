@@ -30,12 +30,13 @@ export async function POST(req: NextRequest) {
     const kid_id = (formData.get("kid_id") as string | null) || null
     const user_id = (formData.get("user_id") as string | null) || null
     const family_id = (formData.get("family_id") as string | null) || null
+    const parent_id = (formData.get("parent_id") as string | null) || null
     const class_id = (formData.get("class_id") as string | null) || null
 
-    const allowed = await can(session, "documents", "edit", { kid_id, user_id, family_id, class_id })
+    const allowed = await can(session, "documents", "edit", { kid_id, user_id, family_id, parent_id, class_id })
     if (!allowed) return NextResponse.json({ message: "You don't have permission to upload this document" }, { status: 403 })
 
-    const document = await DocumentsService.upload({ file, kid_id, user_id, family_id, class_id })
+    const document = await DocumentsService.upload({ file, kid_id, user_id, family_id, parent_id, class_id })
 
     logActivity(session, "added", "Document", file.name)
 

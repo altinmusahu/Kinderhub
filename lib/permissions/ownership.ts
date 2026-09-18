@@ -2,7 +2,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin"
 import type { SessionPayload } from "@/lib/auth"
 import type { ResourceKey } from "./resources"
 
-export type DocumentSubject = { kid_id?: string | null; family_id?: string | null; user_id?: string | null; class_id?: string | null }
+export type DocumentSubject = { kid_id?: string | null; family_id?: string | null; user_id?: string | null; class_id?: string | null; parent_id?: string | null }
 export type ClassScoped = { class_id: string }
 type OwnershipCheckArg = string | DocumentSubject | ClassScoped
 type OwnershipChecker = (session: SessionPayload, arg: OwnershipCheckArg) => Promise<boolean>
@@ -30,6 +30,18 @@ async function isKidInOwnClass(session: SessionPayload, kidId: string): Promise<
   return isClassLeadOrAssistant(session, data.class_id)
 }
 
+async function isParentsFamilyInOwnClass(session: SessionPayload, parentId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from("parents")
+    .select("family_id")
+    .eq("id", parentId)
+    .eq("tenant_id", session.tenant_id)
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  if (!data?.family_id) return false
+  return isFamilyInOwnClass(session, data.family_id)
+}
+
 async function isFamilyInOwnClass(session: SessionPayload, familyId: string): Promise<boolean> {
   const { data, error } = await supabaseAdmin
     .from("kids")
@@ -54,6 +66,7 @@ function asId(arg: OwnershipCheckArg): string {
 async function checkDocumentSubject(session: SessionPayload, subject: DocumentSubject): Promise<boolean> {
   if (subject.kid_id) return isKidInOwnClass(session, subject.kid_id)
   if (subject.family_id) return isFamilyInOwnClass(session, subject.family_id)
+  if (subject.parent_id) return isParentsFamilyInOwnClass(session, subject.parent_id)
   if (subject.user_id) return subject.user_id === session.sub
   if (subject.class_id) return isClassLeadOrAssistant(session, subject.class_id)
   return false
@@ -97,7 +110,7 @@ const OWNERSHIP_CHECKERS: Partial<Record<ResourceKey, OwnershipChecker>> = {
 
     const { data, error } = await supabaseAdmin
       .from("documents")
-      .select("kid_id, user_id, family_id, class_id")
+      .select("kid_id, user_id, family_id, class_id, parent_id")
       .eq("id", arg)
       .eq("tenant_id", session.tenant_id)
       .maybeSingle()

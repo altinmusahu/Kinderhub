@@ -9,8 +9,8 @@ export const SubscriptionPlanService = {
 
   async getById(plan_id: string): Promise<SubscriptionPlan> {
     const subscriptionPlans = await SubscriptionPlanRepository.findById(plan_id)
-    if (!subscriptionPlans) throw new Error("Subscription plan not found")
-    return subscriptionPlans
+    // if (!subscriptionPlans) throw new Error("Subscription plan not found")
+    return subscriptionPlans ?? { id: plan_id, code: "unknown", Name: "Unknown Plan", yearly_price: 0, is_active: false, stripe_product_id: null, stripe_price_id: null }
   },
 
   // Creates the plan's Stripe product/price the first time it's checked out, then reuses it.

@@ -22,7 +22,7 @@ export default async function SubscribeSuccessPage({ searchParams }: Props) {
           href="/"
           className="mt-8 inline-block text-indigo-600 font-semibold hover:underline"
         >
-          ← Back to home
+          Back to home
         </Link>
       </div>
     </div>

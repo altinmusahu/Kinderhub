@@ -24,9 +24,11 @@ export function DocumentsTab({ userId, familyId, title, canEdit = true }: { user
 
   async function load() {
     if (loaded) return
-    if(userId === undefined && userId === null) return
+    if (!userId && !familyId) return
     setLoading(true)
-    const res = await fetch(`/api/users/${userId}/documents`)
+    const res = userId
+      ? await fetch(`/api/users/${userId}/documents`)
+      : await fetch(`/api/families/${familyId}/documents`)
     const data = await res.json()
     setDocs(Array.isArray(data) ? data : [])
     setLoading(false)

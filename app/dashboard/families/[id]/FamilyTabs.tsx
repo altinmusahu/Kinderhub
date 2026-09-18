@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import type { FamilyDetail, FamilyParent, FamilyKid } from "@/app/api/modules/families/families.types"
 import type { ClassTransferEvent } from "@/app/api/modules/waitlist/waitlist.types"
 import AddParentButton from "./AddParentButton"
@@ -70,6 +71,54 @@ function ChildrenCard({ kids, familyId, canEdit }: { kids: FamilyKid[]; familyId
   )
 }
 
+function CustodyFileUpload({ parentId, familyId }: { parentId: string; familyId: string }) {
+  const router = useRouter()
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState("")
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    setError("")
+    try {
+      const fd = new FormData()
+      fd.append("file", file)
+      fd.append("parent_id", parentId)
+      fd.append("family_id", familyId)
+      const docRes = await fetch("/api/documents", { method: "POST", body: fd })
+      if (!docRes.ok) throw new Error()
+
+      const flagRes = await fetch(`/api/parents/${parentId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ has_legal_custody_file_uploaded: true }),
+      })
+      if (!flagRes.ok) throw new Error()
+
+      router.refresh()
+    } catch {
+      setError("Upload failed. Please try again.")
+    } finally {
+      setUploading(false)
+      e.target.value = ""
+    }
+  }
+
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+      <input type="file" id={`custody-upload-${parentId}`} style={{ display: "none" }} onChange={handleUpload} />
+      <label htmlFor={`custody-upload-${parentId}`} style={{ cursor: uploading ? "not-allowed" : "pointer" }}>
+        <span className="kh-status-badge" style={{ background: "#FDF0E3", color: "#B0631A" }}>
+          <span className="kh-pill-dot" style={{ background: "#D2892F" }} />
+          {uploading ? "Uploading…" : "⚠ Upload custody file"}
+        </span>
+      </label>
+      {error && <span style={{ fontSize: 11, color: "#D2592F" }}>{error}</span>}
+    </span>
+  )
+}
+
 function ParentsCard({ parents, familyId, showButton }: { parents: FamilyParent[]; familyId: string, showButton: boolean }) {
   return (
     <div className="kh-card" style={{ padding: "18px 20px" }}>
@@ -123,8 +172,31 @@ function ParentsCard({ parents, familyId, showButton }: { parents: FamilyParent[
                   ) : null}
                 </div>
               </div>
+              {p.has_legal_custody && (
+                <div style={{ marginBottom: 10 }}>
+                  {p.has_legal_custody_file_uploaded ? (
+                    <span className="kh-status-badge" style={{ background: "#E8F5EC", color: "#3A8C50" }}>
+                      <span className="kh-pill-dot" style={{ background: "#3A8C50" }} />
+                      Custody file on record
+                    </span>
+                  ) : showButton ? (
+                    <CustodyFileUpload parentId={p.id} familyId={familyId} />
+                  ) : (
+                    <span
+                      title="Proof of legal custody hasn't been uploaded yet"
+                      className="kh-status-badge"
+                      style={{ background: "#FDF0E3", color: "#B0631A" }}
+                    >
+                      <span className="kh-pill-dot" style={{ background: "#D2892F" }} />
+                      ⚠ Custody file needed
+                    </span>
+                  )}
+                </div>
+              )}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 16px" }}>
                 {[
+                  ["Email", p.email || "—"],
+                  ["Work phone", p.work_phone_number || "—"],
                   ["Address", p.address || "—"],
                   ["Date of birth", p.date_of_birth ? new Date(p.date_of_birth).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"],
                   ["Personal No.", p.personal_number || "—"],
@@ -134,6 +206,12 @@ function ParentsCard({ parents, familyId, showButton }: { parents: FamilyParent[
                     <div style={{ fontSize: 12.5, color: "var(--kh-ink-800)", marginTop: 1 }}>{value}</div>
                   </div>
                 ))}
+                {p.has_legal_custody && p.custody_notes && (
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <div style={{ fontSize: 10.5, color: "var(--kh-ink-400)", textTransform: "uppercase", letterSpacing: ".05em" }}>Custody notes</div>
+                    <div style={{ fontSize: 12.5, color: "var(--kh-ink-800)", marginTop: 1 }}>{p.custody_notes}</div>
+                  </div>
+                )}
               </div>
             </div>
           ))}

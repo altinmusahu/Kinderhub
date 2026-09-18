@@ -67,7 +67,7 @@ export default async function FamilyPage({ params }: { params: Promise<{ id: str
         </div>
         <div className="kh-topbar-right">
           <Link href="/dashboard/families">
-            <button className="kh-btn">← Back</button>
+            <button className="kh-btn">Back</button>
           </Link>
         </div>
       </header>

@@ -17,6 +17,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
       kid_id: document.kid_id,
       user_id: document.user_id,
       family_id: document.family_id,
+      parent_id: document.parent_id,
       class_id: document.class_id,
     })
     if (!allowed) return NextResponse.json({ error: "You don't have permission to delete this document" }, { status: 403 })

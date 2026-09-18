@@ -22,7 +22,7 @@ export default async function SubscribePage({ searchParams }: Props) {
     <div className="min-h-screen bg-gray-50 flex items-start justify-center px-4 py-16">
       <div className="w-full max-w-md">
         <Link href="/" className="text-sm text-indigo-600 hover:underline mb-6 inline-block">
-          ← Back
+          Back
         </Link>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Complete your subscription</h1>
         <p className="text-gray-500 text-sm mb-8">

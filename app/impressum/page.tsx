@@ -122,7 +122,7 @@ export default function ImpressumPage() {
 
           <div className="pt-6 border-t border-[#EBDFC9]">
             <Link href="/contact" className="text-[#D2592F] hover:underline text-sm font-medium">
-              ← Back to Contact
+              Back to Contact
             </Link>
           </div>
         </div>

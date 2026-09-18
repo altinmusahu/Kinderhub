@@ -7,8 +7,9 @@ import { Modal, MField, MSection, MSelect, MBtn, MGrid, MSegmented } from "./Mod
 type Family = { id: string; name: string }
 type Staff = { id: string; name: string; lastname: string }
 type Kid = { id: string; firstname: string; lastname: string }
+type Parent = { id: string; firstname: string; lastname: string }
 
-const TARGETS = ["Family", "Staff", "Child"] as const
+const TARGETS = ["Family", "Staff", "Child", "Parent"] as const
 type Target = typeof TARGETS[number]
 
 export default function UploadDocumentModal({ triggerLabel = "+ Upload document" }: { triggerLabel?: string }) {
@@ -25,6 +26,7 @@ export default function UploadDocumentModal({ triggerLabel = "+ Upload document"
   const [families, setFamilies] = useState<Family[]>([])
   const [staff, setStaff] = useState<Staff[]>([])
   const [kids, setKids] = useState<Kid[]>([])
+  const [parents, setParents] = useState<Parent[]>([])
   const [loadingOptions, setLoadingOptions] = useState(false)
 
   useEffect(() => {
@@ -34,10 +36,12 @@ export default function UploadDocumentModal({ triggerLabel = "+ Upload document"
       fetch("/api/families").then(r => r.json()).catch(() => []),
       fetch("/api/users").then(r => r.json()).catch(() => []),
       fetch("/api/kids").then(r => r.json()).catch(() => []),
-    ]).then(([f, s, k]) => {
+      fetch("/api/parents").then(r => r.json()).catch(() => []),
+    ]).then(([f, s, k, p]) => {
       setFamilies(Array.isArray(f) ? f : [])
       setStaff(Array.isArray(s) ? s : [])
       setKids(Array.isArray(k) ? k : [])
+      setParents(Array.isArray(p) ? p : [])
     }).finally(() => setLoadingOptions(false))
   }, [open])
 
@@ -62,6 +66,7 @@ export default function UploadDocumentModal({ triggerLabel = "+ Upload document"
       if (target === "Family") fd.append("family_id", subjectId)
       if (target === "Staff") fd.append("user_id", subjectId)
       if (target === "Child") fd.append("kid_id", subjectId)
+      if (target === "Parent") fd.append("parent_id", subjectId)
 
       const res = await fetch("/api/documents", { method: "POST", body: fd })
       if (res.ok) {
@@ -74,7 +79,7 @@ export default function UploadDocumentModal({ triggerLabel = "+ Upload document"
     })
   }
 
-  const options = target === "Family" ? families : target === "Staff" ? staff : kids
+  const options = target === "Family" ? families : target === "Staff" ? staff : target === "Child" ? kids : parents
 
   return (
     <>
@@ -84,7 +89,7 @@ export default function UploadDocumentModal({ triggerLabel = "+ Upload document"
         open={open}
         onClose={close}
         title="Upload document"
-        sub="Attach a file to a family, staff member, or child"
+        sub="Attach a file to a family, staff member, parent, or child"
         icon="📄"
         iconBg="#FEF0E8"
         iconColor="#B24420"
@@ -109,6 +114,7 @@ export default function UploadDocumentModal({ triggerLabel = "+ Upload document"
                   {target === "Family" && families.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                   {target === "Staff" && staff.map(s => <option key={s.id} value={s.id}>{s.name} {s.lastname}</option>)}
                   {target === "Child" && kids.map(k => <option key={k.id} value={k.id}>{k.firstname} {k.lastname}</option>)}
+                  {target === "Parent" && parents.map(p => <option key={p.id} value={p.id}>{p.firstname} {p.lastname}</option>)}
                 </MSelect>
               </MField>
             </MGrid>
